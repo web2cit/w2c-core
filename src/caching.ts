@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import * as Citoid from "./citoid";
+// import * as Citoid from "./citoid";
 
 abstract class ResponseCache {
   timestamp = "";
@@ -42,7 +42,7 @@ class HttpCache extends ResponseCache {
 }
 
 class CitoidCache extends ResponseCache {
-  constructor(url) {
+  constructor(url: string) {
     super(url);
   }
 
