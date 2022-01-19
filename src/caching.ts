@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-// import * as Citoid from "./citoid";
+import { translateUrl, MediaWikiBaseFieldCitation } from "./citoid";
 
 abstract class ResponseCache {
   timestamp = "";
@@ -42,17 +42,24 @@ class HttpCache extends ResponseCache {
 }
 
 class CitoidCache extends ResponseCache {
+  citation: MediaWikiBaseFieldCitation | undefined;
+
   constructor(url: string) {
     super(url);
   }
 
   refresh(): Promise<void> {
     this.refreshPromise = new Promise<void>((resolve, reject) => {
-      fetch(this.url).then((response) => {
-        //
-      });
+      translateUrl(this.url)
+        .then((citation) => {
+          this.timestamp = new Date().toISOString();
+          this.citation = citation;
+          resolve();
+        })
+        .catch((reason) => {
+          reject(reason);
+        });
     });
-    fetch(this.url);
     return this.refreshPromise;
   }
 }

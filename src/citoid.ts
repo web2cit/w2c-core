@@ -1,47 +1,73 @@
-// how to get the Citoid server response
+import fetch, { Headers } from "node-fetch";
+import { HTTPResponseError } from "./errors";
 
-// how to parse the Citoid server response
+export const API_ENDPOINT =
+  "https://en.wikipedia.org/api/rest_v1/data/citation/";
 
-// basefield definition
-// at least one non-creator field mapped to it
-// creator field is firstCreator for at least one item type
-export interface MediaWikiBaseFieldCitation {
+type CitoidRequestFormat = "mediawiki" | "mediawiki-basefields" | "zotero";
+// | 'bibtex'
+// | 'wikibase'
+
+export function translateUrl(
+  query: string,
+  format: CitoidRequestFormat = "mediawiki-basefields",
+  language?: string
+): Promise<CitoidCitation> {
+  const url = [API_ENDPOINT, format, encodeURIComponent(query)].join("/");
+  const headers = new Headers();
+  headers.append("accept", "application/json; charset=utf-8;");
+  if (language) headers.append("Accept-Language", language);
+
+  return new Promise<CitoidCitation>((resolve, reject) => {
+    fetch(url, { headers })
+      .then(async (response) => {
+        if (response.ok) {
+          const citations: Array<CitoidCitation> = await response.json();
+          // url queries should return only one citation
+          // https://www.mediawiki.org/wiki/Citoid/API#Successful_response_in_mediawiki_format
+          resolve(citations[0]);
+        } else {
+          // the response contains client (4xx) or server (5xx) error responses
+          // see https://github.com/node-fetch/node-fetch#handling-client-and-server-errors
+          const error = new HTTPResponseError(response);
+          if (response.status === 504) {
+            // response.body = upstream request timeout
+            reject(error);
+          } else if (response.status === 520) {
+            // custom 520 response that returns a citation object
+            // even if no data is able to be retrieved
+            // https://www.mediawiki.org/wiki/Citoid/API#Unsuccessful_response
+            reject(error);
+          } else {
+            // some errors will return a problem json
+            // https://www.mediawiki.org/wiki/HyperSwitch/errors
+            reject(error);
+          }
+        }
+      })
+      .catch((reason) => {
+        // see https://github.com/node-fetch/node-fetch/blob/main/docs/ERROR-HANDLING.md
+        // All operational errors other than aborted requests are rejected with a FetchError.
+        reject(reason);
+      });
+  });
+}
+
+// todo: split mediawikicitation fields into first and last
+
+interface RequiredFields {
   // required - https://www.mediawiki.org/wiki/Citoid/API#Field_names
   itemType: ItemType;
   title: string;
   url: string;
 
-  // creators (basefield creator types only)
-  attorneyAgent: Array<Creator>;
-  author: Array<Creator>;
-  bookAuthor: Array<Creator>;
-  castMember: Array<Creator>;
-  commenter: Array<Creator>;
-  composer: Array<Creator>;
-  contributor: Array<Creator>;
-  cosponsor: Array<Creator>;
-  counsel: Array<Creator>;
-  editor: Array<Creator>;
-  guest: Array<Creator>;
-  interviewer: Array<Creator>;
-  producer: Array<Creator>;
-  recipient: Array<Creator>;
-  reviewedAuthor: Array<Creator>;
-  scriptwriter: Array<Creator>;
-  seriesEditor: Array<Creator>;
-  translator: Array<Creator>;
-  wordsBy: Array<Creator>;
+  //
+  tags: Array<Tag>;
+  key: string;
+  version: 0;
+}
 
-  // mediawiki
-  // https://www.mediawiki.org/wiki/Citoid/API#Field_names
-  isbn: Array<string>; // array in mediawiki format
-  issn: Array<string>; // array in mediawiki format
-  PMCID: string;
-  PMID: string;
-  oclc: string;
-  source: Array<MetadataSource>;
-
-  // zotero (basefields only)
+interface BaseFields {
   abstractNote: string;
   accessDate: string;
   applicationNumber: string;
@@ -96,27 +122,10 @@ export interface MediaWikiBaseFieldCitation {
   type: string;
   versionNumber: string;
   volume: string;
-
-  //
-  tags: Array<Tag>;
-  key: string;
-  version: 0;
 }
 
-export interface MediaWikiCitation extends MediaWikiBaseFieldCitation {
-  // creators (non-basefield creator types)
-  artist: Array<Creator>; // non-basefield mediawiki
-  cartographer: Array<Creator>; // non-basefield mediawiki
-  director: Array<Creator>; // non-basefield mediawiki
-  interviewee: Array<Creator>; // non-basefield mediawiki
-  inventor: Array<Creator>; // non-basefield mediawiki
-  performer: Array<Creator>; // non-basefield mediawiki
-  podcaster: Array<Creator>; // non-basefield mediawiki
-  presenter: Array<Creator>; // non-basefield mediawiki
-  programmer: Array<Creator>; // non-basefield mediawiki
-  sponsor: Array<Creator>; // non-basefield mediawiki
-
-  // zotero (non-basefields only)
+interface NonBaseFields {
+  // NO field is mapped to this field in ANY item type
   artworkMedium: string;
   audioFileType: string;
   audioRecordingFormat: string;
@@ -165,7 +174,95 @@ export interface MediaWikiCitation extends MediaWikiBaseFieldCitation {
   websiteType: string;
 }
 
-type Creator = [FirstName: string, LastName: string];
+interface MediaWikiFields {
+  // https://www.mediawiki.org/wiki/Citoid/API#Field_names
+  isbn: Array<string>; // array in mediawiki format
+  issn: Array<string>; // array in mediawiki format
+  PMCID: string;
+  PMID: string;
+  oclc: string;
+  source: Array<MetadataSource>;
+}
+
+interface ZoteroFields {
+  creators: Array<ZoteroCreator>;
+  ISBN: string;
+  ISSN: string;
+}
+
+type BaseCreatorType =
+  | "attorneyAgent"
+  | "author"
+  | "bookAuthor"
+  | "castMember"
+  | "commenter"
+  | "composer"
+  | "contributor"
+  | "cosponsor"
+  | "counsel"
+  | "editor"
+  | "guest"
+  | "interviewer"
+  | "producer"
+  | "recipient"
+  | "reviewedAuthor"
+  | "scriptwriter"
+  | "seriesEditor"
+  | "translator"
+  | "wordsBy";
+
+type NonBaseCreatorType =
+  | "artist"
+  | "cartographer"
+  | "director"
+  | "interviewee"
+  | "inventor"
+  | "performer"
+  | "podcaster"
+  | "presenter"
+  | "programmer"
+  | "sponsor";
+
+type BaseMWCreatorFields = Record<BaseCreatorType, Array<MediaWikiCreator>>;
+type NonBaseMWCreatorFields = Record<
+  NonBaseCreatorType,
+  Array<MediaWikiCreator>
+>;
+
+interface OneFieldZoteroCreator {
+  firstName: string;
+  lastName: string;
+  creatorType: BaseCreatorType | NonBaseCreatorType;
+}
+
+interface TwoFieldZoteroCreator {
+  name: string;
+  creatorType: BaseCreatorType | NonBaseCreatorType;
+}
+
+type ZoteroCreator = OneFieldZoteroCreator | TwoFieldZoteroCreator;
+
+type MediaWikiCreator = [FirstName: string, LastName: string];
+
+export type ZoteroCitation = RequiredFields &
+  Partial<BaseFields & NonBaseFields & ZoteroFields>;
+
+export type MediaWikiCitation = RequiredFields &
+  Partial<
+    BaseFields &
+      NonBaseFields &
+      BaseMWCreatorFields &
+      NonBaseMWCreatorFields &
+      MediaWikiFields
+  >;
+
+export type MediaWikiBaseFieldCitation = RequiredFields &
+  Partial<BaseFields & BaseMWCreatorFields & MediaWikiFields>;
+
+type CitoidCitation =
+  | MediaWikiCitation
+  | MediaWikiBaseFieldCitation
+  | ZoteroCitation;
 
 // https://aurimasv.github.io/z2csl/typeMap.xml
 type ItemType =
