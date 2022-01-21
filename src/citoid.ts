@@ -53,8 +53,6 @@ export function translateUrl(
   });
 }
 
-// todo: split mediawikicitation fields into first and last
-
 interface RequiredFields {
   // required - https://www.mediawiki.org/wiki/Citoid/API#Field_names
   itemType: ItemType;
@@ -67,122 +65,141 @@ interface RequiredFields {
   version: 0;
 }
 
-interface BaseFields {
-  abstractNote: string;
-  accessDate: string;
-  applicationNumber: string;
-  archive: string;
-  archiveLocation: string;
-  artworkSize: string;
-  assignee: string;
-  callNumber: string;
-  code: string;
-  codeNumber: string;
-  committee: string;
-  conferenceName: string;
-  country: string;
-  court: string;
-  date: string;
-  DOI: string;
-  edition: string;
-  extra: string;
-  filingDate: string;
-  history: string;
-  issue: string;
-  issuingAuthority: string;
-  journalAbbreviation: string;
-  language: string;
-  legalStatus: string;
-  legislativeBody: string;
-  libraryCatalog: string;
-  medium: string;
-  meetingName: string;
-  number: string;
-  numberOfVolumes: string;
-  numPages: string;
-  pages: string;
-  place: string;
-  priorityNumbers: string;
-  programmingLanguage: string;
-  publicationTitle: string;
-  publisher: string;
-  references: string;
-  reporter: string;
-  rights: string;
-  runningTime: string;
-  scale: string;
-  section: string;
-  series: string;
-  seriesNumber: string;
-  seriesText: string;
-  seriesTitle: string;
-  session: string;
-  shortTitle: string;
-  system: string;
-  type: string;
-  versionNumber: string;
-  volume: string;
-}
+export const BASE_FIELDS = [
+  "abstractNote",
+  "accessDate",
+  "applicationNumber",
+  "archive",
+  "archiveLocation",
+  "artworkSize",
+  "assignee",
+  "callNumber",
+  "code",
+  "codeNumber",
+  "committee",
+  "conferenceName",
+  "country",
+  "court",
+  "date",
+  "DOI",
+  "edition",
+  "extra",
+  "filingDate",
+  "history",
+  "issue",
+  "issuingAuthority",
+  "journalAbbreviation",
+  "language",
+  "legalStatus",
+  "legislativeBody",
+  "libraryCatalog",
+  "medium",
+  "meetingName",
+  "number",
+  "numberOfVolumes",
+  "numPages",
+  "pages",
+  "place",
+  "priorityNumbers",
+  "programmingLanguage",
+  "publicationTitle",
+  "publisher",
+  "references",
+  "reporter",
+  "rights",
+  "runningTime",
+  "scale",
+  "section",
+  "series",
+  "seriesNumber",
+  "seriesText",
+  "seriesTitle",
+  "session",
+  "shortTitle",
+  "system",
+  "type",
+  "versionNumber",
+  "volume",
+] as const;
+type BaseField = typeof BASE_FIELDS[number];
+type BaseFields = Record<BaseField, string>;
 
-interface NonBaseFields {
+export const NON_BASE_FIELDS = [
   // NO field is mapped to this field in ANY item type
-  artworkMedium: string;
-  audioFileType: string;
-  audioRecordingFormat: string;
-  billNumber: string;
-  blogTitle: string;
-  bookTitle: string;
-  caseName: string;
-  codePages: string;
-  codeVolume: string;
-  company: string;
-  dateDecided: string;
-  dateEnacted: string;
-  dictionaryTitle: string;
-  distributor: string;
-  docketNumber: string;
-  documentNumber: string;
-  encyclopediaTitle: string;
-  episodeNumber: string;
-  firstPage: string;
-  forumTitle: string;
-  genre: string;
-  institution: string;
-  interviewMedium: string;
-  issueDate: string;
-  label: string;
-  letterType: string;
-  manuscriptType: string;
-  mapType: string;
-  nameOfAct: string;
-  network: string;
-  patentNumber: string;
-  postType: string;
-  presentationType: string;
-  proceedingsTitle: string;
-  programTitle: string;
-  publicLawNumber: string;
-  reporterVolume: string;
-  reportNumber: string;
-  reportType: string;
-  studio: string;
-  subject: string;
-  thesisType: string;
-  university: string;
-  videoRecordingFormat: string;
-  websiteTitle: string;
-  websiteType: string;
-}
+  "artworkMedium",
+  "audioFileType",
+  "audioRecordingFormat",
+  "billNumber",
+  "blogTitle",
+  "bookTitle",
+  "caseName",
+  "codePages",
+  "codeVolume",
+  "company",
+  "dateDecided",
+  "dateEnacted",
+  "dictionaryTitle",
+  "distributor",
+  "docketNumber",
+  "documentNumber",
+  "encyclopediaTitle",
+  "episodeNumber",
+  "firstPage",
+  "forumTitle",
+  "genre",
+  "institution",
+  "interviewMedium",
+  "issueDate",
+  "label",
+  "letterType",
+  "manuscriptType",
+  "mapType",
+  "nameOfAct",
+  "network",
+  "patentNumber",
+  "postType",
+  "presentationType",
+  "proceedingsTitle",
+  "programTitle",
+  "publicLawNumber",
+  "reporterVolume",
+  "reportNumber",
+  "reportType",
+  "studio",
+  "subject",
+  "thesisType",
+  "university",
+  "videoRecordingFormat",
+  "websiteTitle",
+  "websiteType",
+] as const;
+type NonBaseField = typeof NON_BASE_FIELDS[number];
+type NonBaseFields = Record<NonBaseField, string>;
 
-interface MediaWikiFields {
+const MEDIA_WIKI_FIELDS = [
   // https://www.mediawiki.org/wiki/Citoid/API#Field_names
-  isbn: Array<string>; // array in mediawiki format
-  issn: Array<string>; // array in mediawiki format
-  PMCID: string;
-  PMID: string;
-  oclc: string;
-  source: Array<MetadataSource>;
-}
+  "isbn",
+  "issn",
+  "PMCID",
+  "PMID",
+  "oclc",
+  "source",
+] as const;
+type MediaWikiField = typeof MEDIA_WIKI_FIELDS[number];
+
+// see https://github.com/Microsoft/TypeScript/issues/24274
+type Implements<T, R extends T> = R;
+type MediaWikiFields = Implements<
+  Record<MediaWikiField, string | Array<string>>,
+  {
+    isbn: Array<string>; // array in mediawiki format
+    issn: Array<string>; // array in mediawiki format
+    PMCID: string;
+    PMID: string;
+    oclc: string;
+    source: Array<MetadataSource>;
+  }
+>;
 
 interface ZoteroFields {
   creators: Array<ZoteroCreator>;
@@ -190,38 +207,42 @@ interface ZoteroFields {
   ISSN: string;
 }
 
-type BaseCreatorType =
-  | "attorneyAgent"
-  | "author"
-  | "bookAuthor"
-  | "castMember"
-  | "commenter"
-  | "composer"
-  | "contributor"
-  | "cosponsor"
-  | "counsel"
-  | "editor"
-  | "guest"
-  | "interviewer"
-  | "producer"
-  | "recipient"
-  | "reviewedAuthor"
-  | "scriptwriter"
-  | "seriesEditor"
-  | "translator"
-  | "wordsBy";
+export const BASE_CREATOR_TYPES = [
+  "attorneyAgent",
+  "author",
+  "bookAuthor",
+  "castMember",
+  "commenter",
+  "composer",
+  "contributor",
+  "cosponsor",
+  "counsel",
+  "editor",
+  "guest",
+  "interviewer",
+  "producer",
+  "recipient",
+  "reviewedAuthor",
+  "scriptwriter",
+  "seriesEditor",
+  "translator",
+  "wordsBy",
+] as const;
+type BaseCreatorType = typeof BASE_CREATOR_TYPES[number];
 
-type NonBaseCreatorType =
-  | "artist"
-  | "cartographer"
-  | "director"
-  | "interviewee"
-  | "inventor"
-  | "performer"
-  | "podcaster"
-  | "presenter"
-  | "programmer"
-  | "sponsor";
+export const NON_BASE_CREATOR_TYPES = [
+  "artist",
+  "cartographer",
+  "director",
+  "interviewee",
+  "inventor",
+  "performer",
+  "podcaster",
+  "presenter",
+  "programmer",
+  "sponsor",
+] as const;
+type NonBaseCreatorType = typeof NON_BASE_CREATOR_TYPES[number];
 
 type BaseMWCreatorFields = Record<BaseCreatorType, Array<MediaWikiCreator>>;
 type NonBaseMWCreatorFields = Record<
@@ -264,44 +285,71 @@ type CitoidCitation =
   | MediaWikiBaseFieldCitation
   | ZoteroCitation;
 
-// https://aurimasv.github.io/z2csl/typeMap.xml
-type ItemType =
-  | "artwork"
-  | "attachment"
-  | "audioRecording"
-  | "bill"
-  | "blogPost"
-  | "book"
-  | "bookSection"
-  | "case"
-  | "computerProgram"
-  | "conferencePaper"
-  | "dictionaryEntry"
-  | "document"
-  | "email"
-  | "encyclopediaArticle"
-  | "film"
-  | "forumPost"
-  | "hearing"
-  | "instantMessage"
-  | "interview"
-  | "journalArticle"
-  | "letter"
-  | "magazineArticle"
-  | "manuscript"
-  | "map"
-  | "newspaperArticle"
-  | "note"
-  | "patent"
-  | "podcast"
-  | "presentation"
-  | "radioBroadcast"
-  | "report"
-  | "statute"
-  | "thesis"
-  | "tvBroadcast"
-  | "videoRecording"
-  | "webpage";
+// todo: parse output function
+// todo: split mediawikicitation fields into first and last
+// todo: convert array of tag objects into array of strings
+// todo: specify a CustomCitoidField type with all possible fields in output
+export type CustomCitoidCitation = MediaWikiBaseFieldCitation;
+export type CustomCitoidField = keyof Omit<
+  MediaWikiBaseFieldCitation,
+  "tags" | "key" | "version" | "source"
+>;
+const CUSTOM_CITOID_FIELDS = Array.prototype.concat(
+  ["itemType", "title", "url"], // required fields without tags, key & version
+  ["tags"], // other required fields without key & version
+  BASE_FIELDS,
+  BASE_CREATOR_TYPES,
+  MEDIA_WIKI_FIELDS.filter((field) => !["source"].includes(field))
+);
+
+// user-defined type guard
+// see https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards
+export function isCustomCitoidField(
+  field: unknown
+): field is CustomCitoidField {
+  return CUSTOM_CITOID_FIELDS.includes(field as CustomCitoidField);
+}
+
+const ITEM_TYPES = [
+  // https://aurimasv.github.io/z2csl/typeMap.xml
+  "artwork",
+  "attachment",
+  "audioRecording",
+  "bill",
+  "blogPost",
+  "book",
+  "bookSection",
+  "case",
+  "computerProgram",
+  "conferencePaper",
+  "dictionaryEntry",
+  "document",
+  "email",
+  "encyclopediaArticle",
+  "film",
+  "forumPost",
+  "hearing",
+  "instantMessage",
+  "interview",
+  "journalArticle",
+  "letter",
+  "magazineArticle",
+  "manuscript",
+  "map",
+  "newspaperArticle",
+  "note",
+  "patent",
+  "podcast",
+  "presentation",
+  "radioBroadcast",
+  "report",
+  "statute",
+  "thesis",
+  "tvBroadcast",
+  "videoRecording",
+  "webpage",
+] as const;
+type ItemType = typeof ITEM_TYPES[number];
 
 interface Tag {
   tag: string;

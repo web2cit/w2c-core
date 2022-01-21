@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { HttpCache, CitoidCache } from "./caching";
 
 class TargetUrl {
   domain: string;
@@ -12,16 +13,10 @@ class TargetUrl {
     const url = new URL(urlString);
     this.domain = url.hostname;
     this.path = url.pathname + url.search;
-  }
-
-  refreshHttp() {
-    // asynchronously update the http cache
-    // should it return something?
-    // how would the user know its status? loading, done, failed
-  }
-
-  refreshCitoid() {
-    //
+    this.cache = {
+      http: new HttpCache(urlString),
+      citoid: new CitoidCache(urlString),
+    };
   }
 }
 

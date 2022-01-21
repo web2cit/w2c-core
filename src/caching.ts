@@ -2,33 +2,43 @@ import fetch from "node-fetch";
 import { translateUrl, MediaWikiBaseFieldCitation } from "./citoid";
 
 abstract class ResponseCache {
-  timestamp = "";
+  data: CacheData | undefined;
   url: string;
-  abstract refresh(): Promise<void>;
-  refreshPromise: Promise<void> | undefined;
+  abstract refresh(): Promise<CacheData>;
+  refreshPromise: Promise<CacheData> | undefined;
 
   constructor(urlString: string) {
     this.url = urlString;
   }
 }
 
-class HttpCache extends ResponseCache {
-  body = "";
-  headers: Map<string, string> = new Map();
+interface CacheData {
+  timestamp: string;
+}
 
+interface HttpCacheData extends CacheData {
+  body: string;
+  headers: Map<string, string>;
+}
+
+class HttpCache extends ResponseCache {
+  data: HttpCacheData | undefined;
+  refreshPromise: Promise<HttpCacheData> | undefined;
   constructor(url: string) {
     super(url);
   }
 
-  refresh(): Promise<void> {
-    this.refreshPromise = new Promise<void>((resolve, reject) => {
+  refresh(): Promise<HttpCacheData> {
+    this.refreshPromise = new Promise<HttpCacheData>((resolve, reject) => {
       fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
-            this.timestamp = new Date().toISOString();
-            this.headers = new Map(response.headers);
-            this.body = await response.text();
-            resolve();
+            this.data = {
+              body: await response.text(),
+              headers: new Map(response.headers),
+              timestamp: new Date().toISOString(),
+            };
+            resolve(this.data);
           } else {
             reject("response status not ok");
           }
@@ -37,30 +47,36 @@ class HttpCache extends ResponseCache {
           reject(reason);
         });
     });
-    return this.refreshPromise;
+    return this.refreshPromise as Promise<HttpCacheData>;
   }
 }
 
-class CitoidCache extends ResponseCache {
-  citation: MediaWikiBaseFieldCitation | undefined;
+interface CitoidCacheData extends CacheData {
+  citation: MediaWikiBaseFieldCitation;
+}
 
+class CitoidCache extends ResponseCache {
+  data: CitoidCacheData | undefined;
+  refreshPromise: Promise<CitoidCacheData> | undefined;
   constructor(url: string) {
     super(url);
   }
 
-  refresh(): Promise<void> {
-    this.refreshPromise = new Promise<void>((resolve, reject) => {
+  refresh(): Promise<CitoidCacheData> {
+    this.refreshPromise = new Promise<CitoidCacheData>((resolve, reject) => {
       translateUrl(this.url)
         .then((citation) => {
-          this.timestamp = new Date().toISOString();
-          this.citation = citation;
-          resolve();
+          this.data = {
+            citation: citation,
+            timestamp: new Date().toISOString(),
+          };
+          resolve(this.data);
         })
         .catch((reason) => {
           reject(reason);
         });
     });
-    return this.refreshPromise;
+    return this.refreshPromise as Promise<CitoidCacheData>;
   }
 }
 

@@ -19,8 +19,9 @@ describe("HTTP Cache", () => {
   beforeEach(async () => {
     const { __setMockResponseMap } = (await import(
       "node-fetch"
-    )) as typeof import("node-fetch") & // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module // TypeScript does not know that node-fetch has been mocked
-    { __setMockResponseMap: (responseMap: Map<string, Response>) => void };
+    )) as typeof import("node-fetch") & { // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module // TypeScript does not know that node-fetch has been mocked
+      __setMockResponseMap: (responseMap: Map<string, Response>) => void;
+    };
 
     __setMockResponseMap(MOCK_RESPONSE_MAP);
   });
@@ -29,9 +30,9 @@ describe("HTTP Cache", () => {
     const urlString = "https://diegodlh.conversodromo.com.ar/";
     const cache = new HttpCache(urlString);
     expect(cache.url).toBe(urlString);
-    return cache.refresh().then(() => {
-      expect(cache.body).toMatch("test body");
-      expect(cache.headers.get("test-header")).toBe("test-value");
+    return cache.refresh().then((data) => {
+      expect(data.body).toMatch("test body");
+      expect(data.headers.get("test-header")).toBe("test-value");
     });
   });
 });
@@ -70,8 +71,8 @@ describe("Citoid Cache", () => {
   test("citoid cache refresh", () => {
     const cache = new CitoidCache(sampleUrl);
     expect(cache.url).toBe(sampleUrl);
-    return cache.refresh().then(() => {
-      expect(cache.citation).toStrictEqual(sampleCitation);
+    return cache.refresh().then((data) => {
+      expect(data.citation).toStrictEqual(sampleCitation);
     });
   });
 });
