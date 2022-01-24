@@ -1,11 +1,19 @@
 jest.mock("node-fetch");
 
 import { HttpCache, CitoidCache } from "./caching";
-import {
-  MediaWikiBaseFieldCitation,
-  API_ENDPOINT as CITOID_ENDPOINT,
-} from "./citoid";
+import { fetchSimpleCitation, SimpleCitoidCitation } from "./citoid";
 import { Response } from "node-fetch";
+
+jest.mock("./citoid", () => {
+  const originalModule = jest.requireActual("./citoid");
+  return {
+    ...originalModule,
+    fetchSimpleCitation: jest.fn(),
+  };
+});
+const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
+  typeof fetchSimpleCitation
+>;
 
 describe("HTTP Cache", () => {
   const MOCK_RESPONSE_MAP: Map<string, Response> = new Map();
@@ -19,7 +27,8 @@ describe("HTTP Cache", () => {
   beforeEach(async () => {
     const { __setMockResponseMap } = (await import(
       "node-fetch"
-    )) as typeof import("node-fetch") & { // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module // TypeScript does not know that node-fetch has been mocked
+    )) as typeof import("node-fetch") & {
+      // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module // TypeScript does not know that node-fetch has been mocked
       __setMockResponseMap: (responseMap: Map<string, Response>) => void;
     };
 
@@ -30,7 +39,7 @@ describe("HTTP Cache", () => {
     const urlString = "https://diegodlh.conversodromo.com.ar/";
     const cache = new HttpCache(urlString);
     expect(cache.url).toBe(urlString);
-    return cache.refresh().then((data) => {
+    return cache.getData().then((data) => {
       expect(data.body).toMatch("test body");
       expect(data.headers.get("test-header")).toBe("test-value");
     });
@@ -38,40 +47,22 @@ describe("HTTP Cache", () => {
 });
 
 describe("Citoid Cache", () => {
-  const MOCK_RESPONSE_MAP: Map<string, Response> = new Map();
-
   const sampleUrl = "https://example.com/article1";
-  const sampleCitation: MediaWikiBaseFieldCitation = {
-    key: "ABC",
+  const sampleCitation: SimpleCitoidCitation = {
+    itemType: "website",
     title: "Sample article",
+    tags: ["first tag", "second tag"],
     url: sampleUrl,
-    tags: [],
-    version: 0,
-    itemType: "webpage",
+    authorFirst: ["John", "Jane"],
+    authorLast: ["Doe", "Smith"],
   };
-  MOCK_RESPONSE_MAP.set(
-    [
-      CITOID_ENDPOINT,
-      "mediawiki-basefields",
-      encodeURIComponent(sampleUrl),
-    ].join("/"),
-    new Response(JSON.stringify([sampleCitation]))
-  );
-
-  beforeEach(async () => {
-    const { __setMockResponseMap } = (await import(
-      "node-fetch"
-    )) as typeof import("node-fetch") & {
-      __setMockResponseMap: (responseMap: Map<string, Response>) => void;
-    };
-
-    __setMockResponseMap(MOCK_RESPONSE_MAP);
-  });
-
   test("citoid cache refresh", () => {
     const cache = new CitoidCache(sampleUrl);
     expect(cache.url).toBe(sampleUrl);
-    return cache.refresh().then((data) => {
+
+    mockFetchSimpleCitation.mockResolvedValue(sampleCitation);
+
+    return cache.fetchData().then((data) => {
       expect(data.citation).toStrictEqual(sampleCitation);
     });
   });

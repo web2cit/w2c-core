@@ -1,14 +1,31 @@
 import fetch from "node-fetch";
-import { translateUrl, MediaWikiBaseFieldCitation } from "./citoid";
+import { fetchSimpleCitation, SimpleCitoidCitation } from "./citoid";
 
 abstract class ResponseCache {
-  data: CacheData | undefined;
   url: string;
-  abstract refresh(): Promise<CacheData>;
-  refreshPromise: Promise<CacheData> | undefined;
+  abstract getData(refresh: boolean): Promise<CacheData>;
+  abstract fetchData(): Promise<CacheData>;
+  // if using this["_dataPromise"] below, can't make this protected; see
+  // https://stackoverflow.com/questions/68748602/typescript-get-correct-return-type-in-subclass-of-abstract-class
+  protected _dataPromise: Promise<CacheData> | undefined;
+  protected _refreshing: boolean;
 
   constructor(urlString: string) {
     this.url = urlString;
+    this._refreshing = false;
+  }
+
+  // getData(refresh = false): ReturnType<this["fetchData"]> {
+  // getData(refresh = false): Exclude<this["_dataPromise"], undefined> {
+  // getData(refresh = false): this["_dataPromise"] {
+  protected _getData(refresh = false): Promise<CacheData> {
+    if (this._dataPromise === undefined) {
+      return (this._dataPromise = this.fetchData());
+    } else if (refresh && !this._refreshing) {
+      return (this._dataPromise = this.fetchData());
+    } else {
+      return this._dataPromise;
+    }
   }
 }
 
@@ -22,24 +39,30 @@ interface HttpCacheData extends CacheData {
 }
 
 class HttpCache extends ResponseCache {
-  data: HttpCacheData | undefined;
-  refreshPromise: Promise<HttpCacheData> | undefined;
+  _dataPromise: Promise<HttpCacheData> | undefined;
   constructor(url: string) {
     super(url);
   }
 
-  refresh(): Promise<HttpCacheData> {
-    this.refreshPromise = new Promise<HttpCacheData>((resolve, reject) => {
+  getData(refresh = false): Promise<HttpCacheData> {
+    return this._getData(refresh) as Promise<HttpCacheData>;
+  }
+
+  fetchData(): Promise<HttpCacheData> {
+    this._refreshing = true;
+    return new Promise<HttpCacheData>((resolve, reject) => {
       fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
-            this.data = {
+            const data: HttpCacheData = {
               body: await response.text(),
               headers: new Map(response.headers),
               timestamp: new Date().toISOString(),
             };
-            resolve(this.data);
+            this._refreshing = false;
+            resolve(data);
           } else {
+            this._refreshing = false;
             reject("response status not ok");
           }
         })
@@ -47,36 +70,37 @@ class HttpCache extends ResponseCache {
           reject(reason);
         });
     });
-    return this.refreshPromise as Promise<HttpCacheData>;
   }
 }
 
 interface CitoidCacheData extends CacheData {
-  citation: MediaWikiBaseFieldCitation;
+  citation: SimpleCitoidCitation;
 }
 
 class CitoidCache extends ResponseCache {
-  data: CitoidCacheData | undefined;
-  refreshPromise: Promise<CitoidCacheData> | undefined;
+  _dataPromise: Promise<CitoidCacheData> | undefined;
   constructor(url: string) {
     super(url);
   }
 
-  refresh(): Promise<CitoidCacheData> {
-    this.refreshPromise = new Promise<CitoidCacheData>((resolve, reject) => {
-      translateUrl(this.url)
+  getData(refresh = false): Promise<CitoidCacheData> {
+    return this._getData(refresh) as Promise<CitoidCacheData>;
+  }
+
+  fetchData(): Promise<CitoidCacheData> {
+    return new Promise<CitoidCacheData>((resolve, reject) => {
+      fetchSimpleCitation(this.url)
         .then((citation) => {
-          this.data = {
+          const data: CitoidCacheData = {
             citation: citation,
             timestamp: new Date().toISOString(),
           };
-          resolve(this.data);
+          resolve(data);
         })
         .catch((reason) => {
           reject(reason);
         });
     });
-    return this.refreshPromise as Promise<CitoidCacheData>;
   }
 }
 

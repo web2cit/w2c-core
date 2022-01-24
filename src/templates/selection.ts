@@ -1,5 +1,5 @@
 import { TargetUrl } from "../targetUrl";
-import { CustomCitoidField, isCustomCitoidField } from "../citoid";
+import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 
 // type SelectionFunction = (target: TargetUrl, config: string) => Array<string>;
 // type SuggestFunction = (target: TargetUrl, query: string) => string;
@@ -12,8 +12,8 @@ abstract class Selection {
   type: SelectionType | undefined;
   target: TargetUrl;
 
-  protected _config: CustomCitoidField | undefined;
-  abstract get config(): CustomCitoidField | undefined;
+  protected _config: string | undefined;
+  abstract get config(): string | undefined;
   abstract set config(config: unknown);
 
   abstract select(): Promise<Array<string>>;
@@ -38,22 +38,25 @@ type SelectionType =
   | "fixed";
 
 export class CitoidSelection extends Selection {
-  constructor(target: TargetUrl, field?: CustomCitoidField) {
+  protected _config: SimpleCitoidField | undefined;
+  constructor(target: TargetUrl, field?: SimpleCitoidField) {
     super(target);
     this.type = "citoid";
     if (field) this.config = field;
   }
 
-  get config(): CustomCitoidField | undefined {
+  get config(): SimpleCitoidField | undefined {
     return this._config;
   }
 
   set config(config: unknown) {
-    if (isCustomCitoidField(config)) {
+    if (isSimpleCitoidField(config)) {
       this._config = config;
     } else {
       // todo: consider creating specific error type
-      throw Error(`Configuration value ${config} is not a valid Citoid field`);
+      throw new TypeError(
+        `Configuration value "${config}" is not a valid Citoid field`
+      );
     }
   }
 
@@ -64,24 +67,18 @@ export class CitoidSelection extends Selection {
     }
     const field = this.config;
     return new Promise((resolve, reject) => {
-      if (this.target.cache.citoid.refreshPromise === undefined) {
-        this.target.cache.citoid.refresh();
-      }
-      // if citoid cache is refreshing, wait until done refreshing
-      // todo: clearly assert refreshPromise can't be undefined here
-      return this.target.cache.citoid
-        .refreshPromise!.then((data) => {
-          {
-            let selection = data.citation[field];
-            if (!(selection instanceof Array)) {
-              if (selection === undefined) {
-                selection = "";
-              }
+      this.target.cache.citoid
+        .getData(false)
+        .then((data) => {
+          let selection = data.citation[field];
+          if (!(selection instanceof Array)) {
+            if (selection === undefined) {
+              selection = [];
+            } else {
               selection = [selection];
             }
-            // todo: citation should be CustomCitoidCitation (only string or string array values)
-            resolve(selection);
           }
+          resolve(selection);
         })
         .catch((reason) => {
           reject(reason);

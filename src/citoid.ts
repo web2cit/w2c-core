@@ -1,4 +1,5 @@
 import fetch, { Headers } from "node-fetch";
+import { resolveConfig } from "prettier";
 import { HTTPResponseError } from "./errors";
 
 export const API_ENDPOINT =
@@ -8,7 +9,7 @@ type CitoidRequestFormat = "mediawiki" | "mediawiki-basefields" | "zotero";
 // | 'bibtex'
 // | 'wikibase'
 
-export function translateUrl(
+function translateUrl(
   query: string,
   format: CitoidRequestFormat = "mediawiki-basefields",
   language?: string
@@ -48,6 +49,24 @@ export function translateUrl(
       .catch((reason) => {
         // see https://github.com/node-fetch/node-fetch/blob/main/docs/ERROR-HANDLING.md
         // All operational errors other than aborted requests are rejected with a FetchError.
+        reject(reason);
+      });
+  });
+}
+
+export function fetchSimpleCitation(
+  url: string,
+  language?: string
+): Promise<SimpleCitoidCitation> {
+  return new Promise((resolve, reject) => {
+    translateUrl(url, "mediawiki-basefields", language)
+      .then((citation) => {
+        const simpleCitation = simplifyCitation(
+          citation as MediaWikiBaseFieldCitation
+        );
+        resolve(simpleCitation);
+      })
+      .catch((reason) => {
         reject(reason);
       });
   });
@@ -285,29 +304,80 @@ type CitoidCitation =
   | MediaWikiBaseFieldCitation
   | ZoteroCitation;
 
-// todo: parse output function
-// todo: split mediawikicitation fields into first and last
-// todo: convert array of tag objects into array of strings
-// todo: specify a CustomCitoidField type with all possible fields in output
-export type CustomCitoidCitation = MediaWikiBaseFieldCitation;
-export type CustomCitoidField = keyof Omit<
-  MediaWikiBaseFieldCitation,
-  "tags" | "key" | "version" | "source"
->;
-const CUSTOM_CITOID_FIELDS = Array.prototype.concat(
+const SPLIT_BASE_CREATOR_TYPES = BASE_CREATOR_TYPES.reduce(
+  (splitCreators: Array<string>, creator: BaseCreatorType) => {
+    splitCreators.push(creator + "First", creator + "Last");
+    return splitCreators;
+  },
+  []
+);
+type SplitBaseCreatorType =
+  | `${BaseCreatorType}First`
+  | `${BaseCreatorType}Last`;
+
+const SIMPLE_CITOID_FIELDS = Array.prototype.concat(
   ["itemType", "title", "url"], // required fields without tags, key & version
   ["tags"], // other required fields without key & version
   BASE_FIELDS,
-  BASE_CREATOR_TYPES,
+  SPLIT_BASE_CREATOR_TYPES,
   MEDIA_WIKI_FIELDS.filter((field) => !["source"].includes(field))
 );
+export type SimpleCitoidField =
+  | keyof Omit<RequiredFields, "key" | "version">
+  | BaseField
+  | SplitBaseCreatorType
+  | Exclude<MediaWikiField, "source">;
+
+export type SimpleCitoidCitation = Partial<
+  Record<SimpleCitoidField, string | Array<string>>
+> &
+  Pick<
+    Record<SimpleCitoidField, string | Array<string>>,
+    "itemType" | "tags" | "title" | "url"
+  > & {
+    itemType: ItemType;
+  };
 
 // user-defined type guard
 // see https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards
-export function isCustomCitoidField(
+export function isSimpleCitoidField(
   field: unknown
-): field is CustomCitoidField {
-  return CUSTOM_CITOID_FIELDS.includes(field as CustomCitoidField);
+): field is SimpleCitoidField {
+  return SIMPLE_CITOID_FIELDS.includes(field as SimpleCitoidField);
+}
+
+function simplifyCitation(
+  mwbCitation: MediaWikiBaseFieldCitation
+): SimpleCitoidCitation {
+  const simpleCitation: SimpleCitoidCitation = {
+    itemType: mwbCitation.itemType,
+    tags: mwbCitation.tags.map((tag) => tag.tag),
+    title: mwbCitation.title,
+    url: mwbCitation.url,
+  };
+  // split mediawiki creator arrays into creatorFirst and creatorLast arrays
+  for (const baseCreatorType of BASE_CREATOR_TYPES) {
+    const creators = mwbCitation[baseCreatorType];
+    if (creators) {
+      simpleCitation[`${baseCreatorType}First`] = creators.map(
+        (creator) => creator[0]
+      );
+      simpleCitation[`${baseCreatorType}Last`] = creators.map(
+        (creator) => creator[1]
+      );
+    }
+  }
+  for (const field of SIMPLE_CITOID_FIELDS as Array<
+    Exclude<SimpleCitoidField, "itemType">
+  >) {
+    if (field in mwbCitation && !(field in simpleCitation)) {
+      const value = mwbCitation[field as keyof MediaWikiBaseFieldCitation] as
+        | string
+        | Array<string>;
+      simpleCitation[field] = value;
+    }
+  }
+  return simpleCitation;
 }
 
 const ITEM_TYPES = [
