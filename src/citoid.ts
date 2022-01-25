@@ -1,6 +1,7 @@
 import fetch, { Headers } from "node-fetch";
 import { resolveConfig } from "prettier";
 import { HTTPResponseError } from "./errors";
+import { ItemType } from './translation';
 
 export const API_ENDPOINT =
   "https://en.wikipedia.org/api/rest_v1/data/citation/";
@@ -379,47 +380,6 @@ function simplifyCitation(
   }
   return simpleCitation;
 }
-
-const ITEM_TYPES = [
-  // https://aurimasv.github.io/z2csl/typeMap.xml
-  "artwork",
-  "attachment",
-  "audioRecording",
-  "bill",
-  "blogPost",
-  "book",
-  "bookSection",
-  "case",
-  "computerProgram",
-  "conferencePaper",
-  "dictionaryEntry",
-  "document",
-  "email",
-  "encyclopediaArticle",
-  "film",
-  "forumPost",
-  "hearing",
-  "instantMessage",
-  "interview",
-  "journalArticle",
-  "letter",
-  "magazineArticle",
-  "manuscript",
-  "map",
-  "newspaperArticle",
-  "note",
-  "patent",
-  "podcast",
-  "presentation",
-  "radioBroadcast",
-  "report",
-  "statute",
-  "thesis",
-  "tvBroadcast",
-  "videoRecording",
-  "webpage",
-] as const;
-type ItemType = typeof ITEM_TYPES[number];
 
 interface Tag {
   tag: string;

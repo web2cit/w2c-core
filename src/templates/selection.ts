@@ -10,19 +10,22 @@ import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 
 abstract class Selection {
   type: SelectionType | undefined;
+  // todo: maybe the selection should be target-agnostic
   target: TargetUrl;
 
   protected _config: string | undefined;
   abstract get config(): string | undefined;
   abstract set config(config: unknown);
 
-  abstract select(): Promise<Array<string>>;
+  abstract select(): Promise<SelectionOutput>;
   abstract suggest(query: string): Promise<string>;
 
   constructor(target: TargetUrl) {
     this.target = target;
   }
 }
+
+type SelectionOutput = Array<string>;
 
 type SelectionType =
   // see "Selection step" in "Web2Cit specs"
@@ -60,7 +63,7 @@ export class CitoidSelection extends Selection {
     }
   }
 
-  select(): Promise<Array<string>> {
+  select(): Promise<SelectionOutput> {
     if (this.config === undefined) {
       // todo: this error will be used in other Selection objects
       throw Error("Set selection config value before attempting selection");
@@ -93,3 +96,4 @@ export class CitoidSelection extends Selection {
     });
   }
 }
+
