@@ -153,22 +153,24 @@ function isDateConfig(config: string): config is DateConfig {
 }
 
 export class RangeTransformation extends Transformation {
-  private ranges: Array<{
-    start: number;
-    end: number | undefined;
-  }> = [];
   constructor(itemwise = false, range = "0:") {
     super("range", itemwise);
     this.config = range;
   }
 
   set config(config: string) {
-    const ranges = config.replace(/\s/g, "").split(",");
-    if (ranges.every((range) => /^\d+(:(\d+)?)?|:\d+$/.test(range))) {
+    let ranges = config.replace(/\s/g, "").split(",");
+    // ignore empty ranges, i.e., successive commas
+    ranges = ranges.filter((range) => range);
+    if (ranges.every((range) => /^(\d+(:(\d+)?)?|:\d+)$/.test(range))) {
       this._config = ranges.join(",");
     } else {
       throw new TransformationConfigTypeError(this.type, config);
     }
+  }
+
+  get config() {
+    return this._config;
   }
 
   transform(input: Array<string>): Array<string> {
@@ -178,16 +180,40 @@ export class RangeTransformation extends Transformation {
     } else {
       arrayedInput = [input];
     }
-    return arrayedInput.reduce((item: Array<string>, output: Array<string>) => {
+    return arrayedInput.reduce((output: Array<string>, item: Array<string>) => {
       this.ranges.forEach((range) => {
-        output = output.concat(
-          item.slice(range.start, range.end ? range.end + 1 : undefined)
-        );
+        const start = range.start;
+        const end = range.end === undefined ? item.length - 1 : range.end;
+        output = output.concat(item.slice(start, end + 1));
       });
       return output;
     }, []);
   }
+
+  private get ranges(): Array<Range> {
+    if (!this.config) return [];
+    const ranges: Array<Range> = this.config
+      .split(",")
+      .reduce((ranges: Array<Range>, rangeString: string) => {
+        const [start, end] = rangeString.split(":");
+        const range: Range = {
+          start: start === "" ? 0 : parseInt(start),
+        };
+        if (end === undefined) {
+          range.end = range.start;
+        } else if (end !== "") {
+          range.end = parseInt(end);
+        }
+        ranges.push(range);
+        return ranges;
+      }, []);
+    return ranges;
+  }
 }
+type Range = {
+  start: number;
+  end?: number;
+};
 
 /** Regular expression transformation step class. */
 // class MatchTransformation extends Transformation {}
