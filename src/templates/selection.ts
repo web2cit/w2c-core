@@ -1,3 +1,4 @@
+import { TranslationStep, StepOutput } from "./step";
 import { TargetUrl } from "../targetUrl";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 
@@ -8,24 +9,19 @@ import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 //     return
 // }
 
-abstract class Selection {
-  type: SelectionType | undefined;
-  // todo: maybe the selection should be target-agnostic
-  target: TargetUrl;
+export abstract class Selection extends TranslationStep {
+  abstract readonly type: SelectionType;
 
-  protected _config: string | undefined;
-  abstract get config(): string | undefined;
+  protected abstract _config: string;
+  abstract get config(): string;
   abstract set config(config: unknown);
 
-  abstract select(): Promise<SelectionOutput>;
+  apply = this.select;
+  abstract select(target: TargetUrl): Promise<SelectionOutput>;
   abstract suggest(query: string): Promise<string>;
-
-  constructor(target: TargetUrl) {
-    this.target = target;
-  }
 }
 
-type SelectionOutput = Array<string>;
+export type SelectionOutput = Array<string>;
 
 type SelectionType =
   // see "Selection step" in "Web2Cit specs"
@@ -41,14 +37,15 @@ type SelectionType =
   | "fixed";
 
 export class CitoidSelection extends Selection {
-  protected _config: SimpleCitoidField | undefined;
-  constructor(target: TargetUrl, field?: SimpleCitoidField) {
-    super(target);
+  readonly type: SelectionType = "citoid";
+  protected _config: SimpleCitoidField | "" = "";
+  constructor(field?: SimpleCitoidField) {
+    super();
     this.type = "citoid";
     if (field) this.config = field;
   }
 
-  get config(): SimpleCitoidField | undefined {
+  get config(): SimpleCitoidField | "" {
     return this._config;
   }
 
@@ -63,14 +60,14 @@ export class CitoidSelection extends Selection {
     }
   }
 
-  select(): Promise<SelectionOutput> {
-    if (this.config === undefined) {
+  select(target: TargetUrl): Promise<SelectionOutput> {
+    if (this.config === "") {
       // todo: this error will be used in other Selection objects
       throw Error("Set selection config value before attempting selection");
     }
     const field = this.config;
     return new Promise((resolve, reject) => {
-      this.target.cache.citoid
+      target.cache.citoid
         .getData(false)
         .then((data) => {
           let selection = data.citation[field];
@@ -96,4 +93,3 @@ export class CitoidSelection extends Selection {
     });
   }
 }
-

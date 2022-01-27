@@ -1,16 +1,19 @@
 // todo: use smaller sugar-date (seems to have trouble with typescript)
+import { TranslationStep, StepOutput } from "./step";
 import { Date } from "sugar";
 import "sugar/locales";
 
-abstract class Transformation {
+export abstract class Transformation extends TranslationStep {
   readonly type: TransformationType;
   itemwise: boolean;
   protected _config = "";
-  abstract transform(input: Array<string>): Array<string>;
+  apply = this.transform;
+  abstract transform(input: StepOutput): Promise<StepOutput>;
   constructor(
     type: Transformation["type"],
     itemwise: Transformation["itemwise"]
   ) {
+    super();
     this.type = type;
     this.itemwise = itemwise;
   }
@@ -41,8 +44,8 @@ export class JoinTransformation extends Transformation {
     this.config = separator;
   }
 
-  transform(input: Array<string>): Array<string> {
-    let output: Array<string>;
+  transform(input: StepOutput): Promise<StepOutput> {
+    let output: StepOutput;
     if (this.itemwise) {
       output = input.map((item) => {
         return item.split("").join(this.config);
@@ -50,7 +53,7 @@ export class JoinTransformation extends Transformation {
     } else {
       output = [input.join(this.config)];
     }
-    return output;
+    return Promise.resolve(output);
   }
 }
 
@@ -60,14 +63,15 @@ export class SplitTransformation extends Transformation {
     this.config = separator;
   }
 
-  transform(input: Array<string>): Array<string> {
+  transform(input: StepOutput): Promise<StepOutput> {
     if (!this.itemwise) {
       input = [input.join()];
     }
-    return input.reduce((output: Array<string>, item) => {
-      output = output.concat(item.split(this.config));
-      return output;
+    const output = input.reduce((accumulator: StepOutput, item) => {
+      accumulator = output.concat(item.split(this.config));
+      return accumulator;
     }, []);
+    return Promise.resolve(output);
   }
 }
 
@@ -103,11 +107,11 @@ export class DateTransformation extends Transformation {
    * @param { string } input - A free-form string
    * @returns { string } A yyyy/mm/dd date string
    */
-  transform(input: Array<string>): Array<string> {
+  transform(input: StepOutput): Promise<StepOutput> {
     if (!this.itemwise) {
       input = [input.join()];
     }
-    return input.map((item) => {
+    const output = input.map((item) => {
       // todo: add custom transformations resembling those in Citoid API
       // partialISO and journalFormat
       // consider having a class property with the Date object
@@ -123,6 +127,7 @@ export class DateTransformation extends Transformation {
         return date.toISOString().substring(0, 10);
       }
     });
+    return Promise.resolve(output);
   }
 }
 const DATE_CONFIGS = [
@@ -173,21 +178,25 @@ export class RangeTransformation extends Transformation {
     return this._config;
   }
 
-  transform(input: Array<string>): Array<string> {
+  transform(input: StepOutput): Promise<StepOutput> {
     let arrayedInput: Array<typeof input>;
     if (this.itemwise) {
       arrayedInput = input.map((item) => [item]);
     } else {
       arrayedInput = [input];
     }
-    return arrayedInput.reduce((output: Array<string>, item: Array<string>) => {
-      this.ranges.forEach((range) => {
-        const start = range.start;
-        const end = range.end === undefined ? item.length - 1 : range.end;
-        output = output.concat(item.slice(start, end + 1));
-      });
-      return output;
-    }, []);
+    const output = arrayedInput.reduce(
+      (accumulator: StepOutput, item: Array<string>) => {
+        this.ranges.forEach((range) => {
+          const start = range.start;
+          const end = range.end === undefined ? item.length - 1 : range.end;
+          accumulator = accumulator.concat(item.slice(start, end + 1));
+        });
+        return accumulator;
+      },
+      []
+    );
+    return Promise.resolve(output);
   }
 
   private get ranges(): Array<Range> {
