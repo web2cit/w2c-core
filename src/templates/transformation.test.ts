@@ -54,9 +54,11 @@ describe("Date transformation", () => {
       "not a date",
     ]);
   });
-  it("parses dates without a day", () => {
+  it("parses dates without a day", async () => {
     const transformation = new DateTransformation();
-    expect(transformation.transform(["January 2022"])).toEqual(["2022-01"]);
+    expect(await transformation.transform(["January 2022"])).toEqual([
+      "2022-01",
+    ]);
   });
 });
 
