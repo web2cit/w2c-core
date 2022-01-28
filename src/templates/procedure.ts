@@ -1,58 +1,66 @@
-import {
-    Selection,
-    CitoidSelection
-} from './selection';
-import { fields, TranslationField } from './fields';
-import {
-    Transformation
-} from './transformation';
+import { Selection } from "./selection";
+import { Transformation } from "./transformation";
+import { TargetUrl } from "../targetUrl";
+import { StepOutput } from "./step";
 
-export class Procedure {
-    field: TranslationField;
-    selection: Array<Selection>;
-    transformation: Array<Transformation>;
-    finalJoin:; // mandatory final join transformation;
-    finalMatch:; // mandatory final item-wise match transformation
-    validation: boolean;
+export class TranslationProcedure {
+  selections: Array<Selection>;
+  transformations: Array<Transformation>;
 
-    constructor(
-        field: TranslationField,
-        selection: Array<Selection> = [],
-        transformation: Array<Transformation> = []
-    ) {
-        this.field = field;
-        this.selection = selection;
-        this.transformation = field.defaultTransformations;
-        this.validation = field.validation
+  constructor(
+    selections: Array<Selection> = [],
+    transformations: Array<Transformation> = []
+  ) {
+    this.selections = selections;
+    this.transformations = transformations;
+  }
+
+  async translate(targetUrl: TargetUrl): Promise<ProcedureOutput> {
+    const selections = await this.select(targetUrl);
+    const selectionOutput = Array.prototype.concat(...selections);
+    const transformations = await this.transform(selectionOutput);
+    const transformationOutput = transformations.at(-1) ?? [];
+    const output: ProcedureOutput = {
+      targetUrl: targetUrl,
+      procedure: this,
+      output: {
+        selection: selections,
+        transformation: transformations,
+        procedure: transformationOutput,
+      },
+    };
+    return output;
+  }
+
+  select(targetUrl: TargetUrl): Promise<Array<StepOutput>> {
+    // selection order should not matter
+    return Promise.all(
+      this.selections.map((selection) => {
+        // todo: make sure I don't have trouble because of simultaneously refreshing the caches
+        return selection.select(targetUrl);
+      })
+    );
+  }
+
+  async transform(input: StepOutput): Promise<Array<StepOutput>> {
+    // transformation order does matter
+    let currentInput: StepOutput = input;
+    const outputs: Array<StepOutput> = [];
+    for (const transformation of this.transformations) {
+      const output = await transformation.transform(currentInput);
+      outputs.push(output);
+      currentInput = output;
     }
-
-    translate(targetUrl): ProcedureOutput => {  // similar to wider TranslationOutput
-        const translation: FieldTranslation = {
-            selection: [],
-            transformation: [],
-            valid: 
-        }
-        // apply selection
-        // should selection objects know their output?
-
-        // apply transformation
-        // idem above
-
-        // decide if output is valid
-
-        // 
-    }
+    return outputs;
+  }
 }
 
 interface ProcedureOutput {
-    targetUrl;
-    procedure; // a copy of the translation procedure?
-    field;
-    output: {
-        selectionOutput; // an array of selection outputs
-        transformationOutput; // an array of transformation outputs
-        procedureOutput;
-    };
-    valid;
+  targetUrl: TargetUrl;
+  procedure: TranslationProcedure;
+  output: {
+    selection: Array<StepOutput>;
+    transformation: Array<StepOutput>;
+    procedure: StepOutput;
+  };
 }
-
