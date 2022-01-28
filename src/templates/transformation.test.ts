@@ -131,7 +131,7 @@ describe("Range transformation", () => {
     transformation.config = "2:1";
     expect(await transformation.transform(input)).toEqual([]);
   });
-  it("ignores empty ranges", async () => {
+  it("ignores empty range configurations", async () => {
     const transformation = new RangeTransformation();
     transformation.config = ",1:2,,1";
     expect(await transformation.transform(input)).toEqual([
@@ -140,6 +140,11 @@ describe("Range transformation", () => {
       "one",
     ]);
     transformation.config = "";
+    expect(await transformation.transform(input)).toEqual([]);
+  });
+  it("ignores empty ranges", async () => {
+    const transformation = new RangeTransformation();
+    transformation.config = "1000";
     expect(await transformation.transform(input)).toEqual([]);
   });
   it("rejects invalid range config", async () => {
