@@ -36,7 +36,7 @@ export class CitoidSelection extends Selection {
     if (field) this.config = field;
   }
 
-  get config(): SimpleCitoidField | "" {
+  get config(): CitoidSelection["_config"] {
     return this._config;
   }
 
