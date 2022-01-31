@@ -2,13 +2,6 @@ import { TranslationStep, StepOutput } from "./step";
 import { TargetUrl } from "../targetUrl";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 
-// type SelectionFunction = (target: TargetUrl, config: string) => Array<string>;
-// type SuggestFunction = (target: TargetUrl, query: string) => string;
-
-// const citoidSelection: SelectionFunction = function() => {
-//     return
-// }
-
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
 
@@ -17,11 +10,9 @@ export abstract class Selection extends TranslationStep {
   abstract set config(config: unknown);
 
   apply = this.select;
-  abstract select(target: TargetUrl): Promise<SelectionOutput>;
   abstract suggest(query: string): Promise<string>;
+  abstract select(target: TargetUrl): Promise<StepOutput>;
 }
-
-export type SelectionOutput = Array<string>;
 
 type SelectionType =
   // see "Selection step" in "Web2Cit specs"
@@ -60,7 +51,7 @@ export class CitoidSelection extends Selection {
     }
   }
 
-  select(target: TargetUrl): Promise<SelectionOutput> {
+  select(target: TargetUrl): Promise<StepOutput> {
     if (this.config === "") {
       // todo: this error will be used in other Selection objects
       throw Error("Set selection config value before attempting selection");
