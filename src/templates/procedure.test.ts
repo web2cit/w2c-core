@@ -33,7 +33,7 @@ it("", () => {
     new CitoidSelection("authorFirst"),
   ];
   procedure.transformations = [
-    new RangeTransformation(undefined, "2,3,1"),
+    new RangeTransformation(undefined, "1,2,0"),
     new JoinTransformation(),
   ];
   return procedure.translate(target).then((output) => {

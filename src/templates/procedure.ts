@@ -17,9 +17,11 @@ export class TranslationProcedure {
 
   async translate(targetUrl: TargetUrl): Promise<ProcedureOutput> {
     const selections = await this.select(targetUrl);
-    const selectionOutput = Array.prototype.concat(...selections);
-    const transformations = await this.transform(selectionOutput);
+
+    const transformationInput = Array.prototype.concat(...selections);
+    const transformations = await this.transform(transformationInput);
     const transformationOutput = transformations.at(-1) ?? [];
+
     const output: ProcedureOutput = {
       targetUrl: targetUrl,
       procedure: this,
