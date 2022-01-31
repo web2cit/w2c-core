@@ -49,7 +49,7 @@ describe("HTTP Cache", () => {
 describe("Citoid Cache", () => {
   const sampleUrl = "https://example.com/article1";
   const sampleCitation: SimpleCitoidCitation = {
-    itemType: "website",
+    itemType: "webpage",
     title: "Sample article",
     tags: ["first tag", "second tag"],
     url: sampleUrl,
