@@ -7,7 +7,7 @@ export abstract class Selection extends TranslationStep {
 
   protected abstract _config: string;
   abstract get config(): string;
-  abstract set config(config: unknown);
+  abstract set config(config: string);
 
   apply = this.select;
   abstract select(target: TargetUrl): Promise<StepOutput>;
