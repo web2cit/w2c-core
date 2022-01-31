@@ -10,8 +10,8 @@ export abstract class Selection extends TranslationStep {
   abstract set config(config: unknown);
 
   apply = this.select;
-  abstract suggest(query: string): Promise<string>;
   abstract select(target: TargetUrl): Promise<StepOutput>;
+  abstract suggest(target: TargetUrl, query: string): Promise<string>;
 }
 
 type SelectionType =
@@ -77,7 +77,7 @@ export class CitoidSelection extends Selection {
     });
   }
 
-  suggest(query: string): Promise<string> {
+  suggest(target: TargetUrl, query: string): Promise<string> {
     // todo: pending implementation
     return new Promise((resolve, reject) => {
       resolve("");
