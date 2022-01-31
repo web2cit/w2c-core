@@ -30,7 +30,7 @@ type SelectionType =
 export class CitoidSelection extends Selection {
   readonly type: SelectionType = "citoid";
   protected _config: SimpleCitoidField | "" = "";
-  constructor(field?: SimpleCitoidField) {
+  constructor(field?: CitoidSelection["_config"]) {
     super();
     this.type = "citoid";
     if (field) this.config = field;
@@ -40,7 +40,7 @@ export class CitoidSelection extends Selection {
     return this._config;
   }
 
-  set config(config: unknown) {
+  set config(config: string) {
     if (isSimpleCitoidField(config)) {
       this._config = config;
     } else {
