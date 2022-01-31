@@ -1,27 +1,17 @@
+import { TranslationStep, StepOutput } from "./step";
 import { TargetUrl } from "../targetUrl";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 
-// type SelectionFunction = (target: TargetUrl, config: string) => Array<string>;
-// type SuggestFunction = (target: TargetUrl, query: string) => string;
+export abstract class Selection extends TranslationStep {
+  abstract readonly type: SelectionType;
 
-// const citoidSelection: SelectionFunction = function() => {
-//     return
-// }
+  protected abstract _config: string;
+  abstract get config(): string;
+  abstract set config(config: string);
 
-abstract class Selection {
-  type: SelectionType | undefined;
-  target: TargetUrl;
-
-  protected _config: string | undefined;
-  abstract get config(): string | undefined;
-  abstract set config(config: unknown);
-
-  abstract select(): Promise<Array<string>>;
-  abstract suggest(query: string): Promise<string>;
-
-  constructor(target: TargetUrl) {
-    this.target = target;
-  }
+  apply = this.select;
+  abstract select(target: TargetUrl): Promise<StepOutput>;
+  abstract suggest(target: TargetUrl, query: string): Promise<string>;
 }
 
 type SelectionType =
@@ -38,18 +28,19 @@ type SelectionType =
   | "fixed";
 
 export class CitoidSelection extends Selection {
-  protected _config: SimpleCitoidField | undefined;
-  constructor(target: TargetUrl, field?: SimpleCitoidField) {
-    super(target);
+  readonly type: SelectionType = "citoid";
+  protected _config: SimpleCitoidField | "" = "";
+  constructor(field?: CitoidSelection["_config"]) {
+    super();
     this.type = "citoid";
     if (field) this.config = field;
   }
 
-  get config(): SimpleCitoidField | undefined {
+  get config(): CitoidSelection["_config"] {
     return this._config;
   }
 
-  set config(config: unknown) {
+  set config(config: string) {
     if (isSimpleCitoidField(config)) {
       this._config = config;
     } else {
@@ -60,14 +51,14 @@ export class CitoidSelection extends Selection {
     }
   }
 
-  select(): Promise<Array<string>> {
-    if (this.config === undefined) {
+  select(target: TargetUrl): Promise<StepOutput> {
+    if (this.config === "") {
       // todo: this error will be used in other Selection objects
       throw Error("Set selection config value before attempting selection");
     }
     const field = this.config;
     return new Promise((resolve, reject) => {
-      this.target.cache.citoid
+      target.cache.citoid
         .getData(false)
         .then((data) => {
           let selection = data.citation[field];
@@ -86,7 +77,7 @@ export class CitoidSelection extends Selection {
     });
   }
 
-  suggest(query: string): Promise<string> {
+  suggest(target: TargetUrl, query: string): Promise<string> {
     // todo: pending implementation
     return new Promise((resolve, reject) => {
       resolve("");

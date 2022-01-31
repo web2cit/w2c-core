@@ -25,21 +25,21 @@ describe("Citoid selection", () => {
   };
   mockFetchSimpleCitation.mockResolvedValue(sampleCitation);
   const target = new TargetUrl(sampleUrl);
-  const selection = new CitoidSelection(target);
+  const selection = new CitoidSelection();
 
   test("select existing fields", async () => {
     selection.config = "itemType";
-    const itemType = await selection.select();
+    const itemType = await selection.select(target);
     expect(itemType).toEqual(["journalArticle"]);
 
     selection.config = "tags";
-    const tags = await selection.select();
+    const tags = await selection.select(target);
     expect(tags).toEqual(["tag 1", "tag 2"]);
   });
 
   test("select undefined fields", async () => {
     selection.config = "DOI";
-    const doi = await selection.select();
+    const doi = await selection.select(target);
     expect(doi).toEqual([]);
   });
 
