@@ -1,0 +1,58 @@
+diff --git a/node_modules/xpath/xpath.d.ts b/node_modules/xpath/xpath.d.ts
+index 8967885..f81bb26 100644
+--- a/node_modules/xpath/xpath.d.ts
++++ b/node_modules/xpath/xpath.d.ts
+@@ -5,7 +5,52 @@ interface XPathSelect {
+     (expression: string, node?: Node): Array<SelectedValue>;
+     (expression: string, node: Node, single: true): SelectedValue | undefined;
+ }
++interface XPathEvaluator {
++    evaluate(options: Options): XPathResult;
++    evaluateNumber(options: Options): number;
++    evaluateString(options: Options): string;
++    evaluateBoolean(options: Options): boolean;
++    evaluateNodeSet(options: Options): XNodeSet;
++    select(options: Options): Array<SelectedValue>;
++    select1(options: Options): SelectedValue | undefined;
++}
++type XNodeSet = Object;  // further define
++interface Options {
++    namespaces?: NamespaceResolver;
++    variables?: VariableResolver;
++    functions?: FunctionResolver;
++    node: Node;
++}
++
++type NamespaceResolverType1 = {
++    [prefix: string]: string
++};
++type NamespaceResolverType2 = (prefix: string) => string;
++type NamespaceResolverType3 = {
++    getNamespace: NamespaceResolverType2
++};
++type NamespaceResolver = NamespaceResolverType1 | NamespaceResolverType2 | NamespaceResolverType3;
++
++type VariableResolverType1 = {
++    [name: string]: VariableValue
++};
++type VariableResolverType2 = (name: string, namespace?: string) => VariableValue;
++type VariableResolverType3 = {
++    getVariable: VariableResolverType2
++};
++type VariableValue = string | number | boolean | Node | Array<Node> | XNodeSet;
++
++type FunctionResolverType1 = {
++    [name: string]: CustomFunction
++};
++type FunctionResolverType2 = (name: string, namespace?: string) => CustomFunction;
++type FunctionResolverType3 = {
++    getFunction: FunctionResolverType2
++};
++type CustomFunction = Function;  // further define
++
+ export var select: XPathSelect;
+ export function select1(expression: string, node?: Node): SelectedValue | undefined;
+ export function evaluate(expression: string, contextNode: Node, resolver: XPathNSResolver | null, type: number, result: XPathResult | null): XPathResult;
+ export function useNamespaces(namespaceMap: { [name: string]: string }): XPathSelect;
++export function parse(expression: string): XPathEvaluator
+\ No newline at end of file

@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import { fetchSimpleCitation, SimpleCitoidCitation } from "./citoid";
+import { DOMParser } from "@xmldom/xmldom";
 
 abstract class ResponseCache {
   url: string;
@@ -35,6 +36,7 @@ interface CacheData {
 
 interface HttpCacheData extends CacheData {
   body: string;
+  doc: Document;
   headers: Map<string, string>;
 }
 
@@ -51,11 +53,15 @@ class HttpCache extends ResponseCache {
   fetchData(): Promise<HttpCacheData> {
     this._refreshing = true;
     return new Promise<HttpCacheData>((resolve, reject) => {
+      // if better dom support required, consider using JSDOM.fromURL() instead
       fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
+            const body = await response.text();
             const data: HttpCacheData = {
-              body: await response.text(),
+              body,
+              // xpath library recommends xmldom (vs e. g. htmlparser2)
+              doc: new DOMParser().parseFromString(body),
               headers: new Map(response.headers),
               timestamp: new Date().toISOString(),
             };
