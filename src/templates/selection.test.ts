@@ -46,6 +46,6 @@ describe("Citoid selection", () => {
   test("select invalid fields", async () => {
     expect(() => {
       selection.config = "invalidField";
-    }).toThrow(TypeError);
+    }).toThrow(SelectionConfigTypeError);
   });
 });
