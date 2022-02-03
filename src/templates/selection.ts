@@ -32,7 +32,6 @@ export class CitoidSelection extends Selection {
   protected _config: SimpleCitoidField | "" = "";
   constructor(field?: CitoidSelection["_config"]) {
     super();
-    this.type = "citoid";
     if (field) this.config = field;
   }
 
@@ -44,17 +43,13 @@ export class CitoidSelection extends Selection {
     if (isSimpleCitoidField(config)) {
       this._config = config;
     } else {
-      // todo: consider creating specific error type
-      throw new TypeError(
-        `Configuration value "${config}" is not a valid Citoid field`
-      );
+      throw new SelectionConfigTypeError(this.type, config);
     }
   }
 
   select(target: TargetUrl): Promise<StepOutput> {
     if (this.config === "") {
-      // todo: this error will be used in other Selection objects
-      throw Error("Set selection config value before attempting selection");
+      throw new UndefinedSelectionConfigError();
     }
     const field = this.config;
     return new Promise((resolve, reject) => {
@@ -82,5 +77,19 @@ export class CitoidSelection extends Selection {
     return new Promise((resolve, reject) => {
       resolve("");
     });
+  }
+}
+
+export class SelectionConfigTypeError extends TypeError {
+  constructor(selectionType: SelectionType, config: string) {
+    super(
+      `"${config}" is not a valid configuration value for selection type "${selectionType}"`
+    );
+  }
+}
+
+export class UndefinedSelectionConfigError extends Error {
+  constructor() {
+    super("Set selection config value before attempting selection");
   }
 }
