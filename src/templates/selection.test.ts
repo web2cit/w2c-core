@@ -39,7 +39,10 @@ describe("XPath selection", () => {
   </body>\
 </html>\
   ";
-  MOCK_RESPONSE_MAP.set(sampleUrl, new Response(sampleHtml));
+  MOCK_RESPONSE_MAP.set(
+    sampleUrl,
+    new Response(sampleHtml, { url: sampleUrl })
+  );
 
   beforeEach(async () => {
     const { __setMockResponseMap } = (await import(
@@ -100,7 +103,7 @@ describe("XPath selection", () => {
 
   test("handles a boolean result", async () => {
     const selection = new XPathV1Selection();
-    selection.config = "//title[1]//text() = 'Orlando'";
+    selection.config = "//book[1]//text() = 'Orlando'";
     expect(await selection.select(target)).toEqual(["true"]);
   });
 

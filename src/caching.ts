@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import { fetchSimpleCitation, SimpleCitoidCitation } from "./citoid";
-import { DOMParser } from "@xmldom/xmldom";
+import { JSDOM } from "jsdom";
 
 abstract class ResponseCache {
   url: string;
@@ -53,17 +53,15 @@ class HttpCache extends ResponseCache {
   fetchData(): Promise<HttpCacheData> {
     this._refreshing = true;
     return new Promise<HttpCacheData>((resolve, reject) => {
+      // alternatively use JSDOM.fromURL();
       fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
             const body = await response.text();
+            const { document } = new JSDOM(body, { url: response.url }).window;
             const data: HttpCacheData = {
               body,
-              // xpath library recommends xmldom (vs e. g. htmlparser2)
-              // but xmldom may not be permissive and fail on real web pages
-              // consider using JSDOM instead (may use JSDOM.fromURL())
-              // todo: catch parsing errors
-              doc: new DOMParser().parseFromString(body, "text/html"),
+              doc: document,
               headers: new Map(response.headers),
               timestamp: new Date().toISOString(),
             };

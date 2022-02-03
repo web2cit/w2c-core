@@ -21,6 +21,7 @@ describe("HTTP Cache", () => {
     "https://diegodlh.conversodromo.com.ar/",
     new Response("test body", {
       headers: [["test-header", "test-value"]],
+      url: "https://diegodlh.conversodromo.com.ar/",
     })
   );
 

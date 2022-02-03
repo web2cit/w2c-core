@@ -1,7 +1,7 @@
 import { TranslationStep, StepOutput } from "./step";
 import { TargetUrl } from "../targetUrl";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
-import * as xpath from "xpath-ts";
+import { JSDOM } from "jsdom";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -82,14 +82,10 @@ export class CitoidSelection extends Selection {
 }
 
 export class XPathV1Selection extends Selection {
-  // xpath library implements XPath 1.0
-  // xpath recommends xmldom, but
-  // xmldom would be very strict and does not work well with real HTML pages
-  // see https://stackoverflow.com/questions/16010551/getting-element-using-xpath-and-cheerio
-  // alternatively, consider using XPath built-in support (?) in (larger) JSDOM
   readonly type: SelectionType = "xpath";
   protected _config = "";
-  private _parsedXPath: ReturnType<typeof xpath.parse> | undefined;
+  private _parsedXPath: XPathExpression | undefined;
+  private readonly window = new JSDOM().window;
   constructor(expression?: XPathV1Selection["_config"]) {
     super();
     if (expression) this.config = expression;
@@ -101,8 +97,10 @@ export class XPathV1Selection extends Selection {
 
   set config(expression: string) {
     try {
-      this._parsedXPath = xpath.parse(expression);
+      const window = new JSDOM().window;
+      this._parsedXPath = window.document.createExpression(expression);
       this._config = expression;
+      window.close();
     } catch {
       throw new SelectionConfigTypeError(this.type, expression);
     }
@@ -117,70 +115,44 @@ export class XPathV1Selection extends Selection {
       target.cache.http
         .getData(false)
         .then((data) => {
-          const result = parsedXPath.evaluate({ node: data.doc, isHtml: true });
-          let selection: StepOutput;
+          const selection: StepOutput = [];
           try {
-            selection = result.nodeset.toArray().map((node) => {
-              if (isHTMLElement(node)) {
-                // todo: we are not getting html nodes!
-                // https://github.com/goto100/xpath/issues/93#issuecomment-1028938098
-                // console.log(`HTMLElement: ${node}`)
-                return node.innerText;
-              } else if (isAttr(node)) {
-                return node.value;
+            const result = parsedXPath.evaluate(
+              data.doc,
+              this.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE
+            );
+            let thisNode = result.iterateNext();
+            while (thisNode) {
+              // thisNode can't be instance of this.window.HTMLElement, etc
+              // because thisNode comes from a different window (data.doc's)
+              if (isHTMLElement(thisNode)) {
+                // JSDOM does not support innerText anyways
+                // https://github.com/jsdom/jsdom/issues/1245
+                selection.push(thisNode.innerText);
+              } else if (isAttr(thisNode)) {
+                selection.push(thisNode.value);
               } else {
-                // todo: xlmdom preserves text nodes between elements
-                // see https://github.com/xmldom/xmldom/issues/44#issuecomment-904114631
-                // console.log(`Node: ${node}`)
-                return node.textContent ?? "";
+                selection.push(thisNode.textContent ?? "");
               }
-            });
-          } catch {
-            selection = [result.toString()];
-          }
-          resolve(selection);
-        })
-        .catch((reason) => {
-          reject(reason);
-        });
-    });
-  }
-
-  // alternative select function using xpath's select
-  // (instead of parse > evaluate)
-  _select(target: TargetUrl): Promise<StepOutput> {
-    if (this.config === "") {
-      throw new UndefinedSelectionConfigError();
-    }
-    const expression = this.config;
-    return new Promise((resolve, reject) => {
-      target.cache.http
-        .getData(false)
-        .then((data) => {
-          const selectFn = xpath.select;
-          // html dom nodes have namespaces
-          // see https://github.com/goto100/xpath/issues/27
-          // ignoring namespaces seems to be available with parse > evaluate only
-          // const selectFn = xpath.useNamespaces({html: 'http://www.w3.org/1999/xhtml'});
-          const xpathSelection = selectFn(expression, data.doc);
-          const xpathSelectionArray = Array.isArray(xpathSelection)
-            ? xpathSelection
-            : [xpathSelection];
-          const selection = xpathSelectionArray.map((value) => {
-            if (value instanceof Object) {
-              if (isHTMLElement(value)) {
-                console.log(`HTMLElement: ${value}`);
-                return value.innerText;
-              } else if (isAttr(value)) {
-                return value.value;
-              } else {
-                console.log(`Node: ${value}`);
-                return value.textContent ?? "";
-              }
-            } else {
-              return value.toString();
+              thisNode = result.iterateNext();
             }
-          });
+          } catch {
+            const result = parsedXPath.evaluate(
+              data.doc,
+              this.window.XPathResult.ANY_TYPE
+            );
+            switch (result.resultType) {
+              case this.window.XPathResult.NUMBER_TYPE:
+                selection.push(result.numberValue.toString());
+                break;
+              case this.window.XPathResult.STRING_TYPE:
+                selection.push(result.stringValue);
+                break;
+              case this.window.XPathResult.BOOLEAN_TYPE:
+                selection.push(result.booleanValue.toString());
+                break;
+            }
+          }
           resolve(selection);
         })
         .catch((reason) => {
