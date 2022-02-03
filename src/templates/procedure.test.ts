@@ -26,7 +26,7 @@ const citation: SimpleCitoidCitation = {
 };
 mockFetchSimpleCitation.mockResolvedValue(citation);
 
-it("", () => {
+it("applies a translation procedure", () => {
   const procedure = new TranslationProcedure();
   procedure.selections = [
     new CitoidSelection("title"),
@@ -48,5 +48,12 @@ it("", () => {
       ["John,Jane,Sample article"],
     ]);
     expect(output.output.procedure).toEqual(["John,Jane,Sample article"]);
+  });
+});
+
+it("returns empty output for empty procedure", () => {
+  const procedure = new TranslationProcedure();
+  return procedure.translate(target).then((output) => {
+    expect(output.output.procedure).toEqual([]);
   });
 });
