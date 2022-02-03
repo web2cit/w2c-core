@@ -31,11 +31,11 @@ describe("XPath selection", () => {
   <head></head>\
   <body>\
     <book author='Virginia Woolf'>\
-    <title>Orlando</title>\
-  </book>\
-  <book author='James Gleick'>\
-    <title>The Information</title>\
-  </book>\
+      <title>Orlando</title>\
+    </book>\
+    <book author='James Gleick'>\
+      <title>The Information</title>\
+    </book>\
   </body>\
 </html>\
   ";
