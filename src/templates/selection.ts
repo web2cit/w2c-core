@@ -81,17 +81,17 @@ export class CitoidSelection extends Selection {
   }
 }
 
-export class XPathV1Selection extends Selection {
+export class XPathSelection extends Selection {
   readonly type: SelectionType = "xpath";
   protected _config = "";
   private _parsedXPath: XPathExpression | undefined;
   private readonly window = new JSDOM().window;
-  constructor(expression?: XPathV1Selection["_config"]) {
+  constructor(expression?: XPathSelection["_config"]) {
     super();
     if (expression) this.config = expression;
   }
 
-  get config(): XPathV1Selection["_config"] {
+  get config(): XPathSelection["_config"] {
     return this._config;
   }
 
@@ -164,7 +164,7 @@ export class XPathV1Selection extends Selection {
   suggest(
     target: TargetUrl,
     query: string
-  ): Promise<XPathV1Selection["_config"]> {
+  ): Promise<XPathSelection["_config"]> {
     return Promise.resolve("");
   }
 }
