@@ -1,6 +1,7 @@
 import { TranslationStep, StepOutput } from "./step";
 import { TargetUrl } from "../targetUrl";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
+import { JSDOM } from "jsdom";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -32,7 +33,6 @@ export class CitoidSelection extends Selection {
   protected _config: SimpleCitoidField | "" = "";
   constructor(field?: CitoidSelection["_config"]) {
     super();
-    this.type = "citoid";
     if (field) this.config = field;
   }
 
@@ -44,17 +44,13 @@ export class CitoidSelection extends Selection {
     if (isSimpleCitoidField(config)) {
       this._config = config;
     } else {
-      // todo: consider creating specific error type
-      throw new TypeError(
-        `Configuration value "${config}" is not a valid Citoid field`
-      );
+      throw new SelectionConfigTypeError(this.type, config);
     }
   }
 
   select(target: TargetUrl): Promise<StepOutput> {
     if (this.config === "") {
-      // todo: this error will be used in other Selection objects
-      throw Error("Set selection config value before attempting selection");
+      throw new UndefinedSelectionConfigError();
     }
     const field = this.config;
     return new Promise((resolve, reject) => {
@@ -82,5 +78,115 @@ export class CitoidSelection extends Selection {
     return new Promise((resolve, reject) => {
       resolve("");
     });
+  }
+}
+
+export class XPathSelection extends Selection {
+  readonly type: SelectionType = "xpath";
+  protected _config = "";
+  private _parsedXPath: XPathExpression | undefined;
+  private readonly window = new JSDOM().window;
+  constructor(expression?: XPathSelection["_config"]) {
+    super();
+    if (expression) this.config = expression;
+  }
+
+  get config(): XPathSelection["_config"] {
+    return this._config;
+  }
+
+  set config(expression: string) {
+    try {
+      const window = new JSDOM().window;
+      this._parsedXPath = window.document.createExpression(expression);
+      this._config = expression;
+      window.close();
+    } catch {
+      throw new SelectionConfigTypeError(this.type, expression);
+    }
+  }
+
+  select(target: TargetUrl): Promise<StepOutput> {
+    if (this._parsedXPath === undefined) {
+      throw new UndefinedSelectionConfigError();
+    }
+    const parsedXPath = this._parsedXPath;
+    return new Promise((resolve, reject) => {
+      target.cache.http
+        .getData(false)
+        .then((data) => {
+          const selection: StepOutput = [];
+          try {
+            const result = parsedXPath.evaluate(
+              data.doc,
+              this.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE
+            );
+            let thisNode = result.iterateNext();
+            while (thisNode) {
+              // thisNode can't be instance of this.window.HTMLElement, etc
+              // because thisNode comes from a different window (data.doc's)
+              if (isHTMLElement(thisNode)) {
+                // JSDOM does not support innerText anyways
+                // https://github.com/jsdom/jsdom/issues/1245
+                selection.push(thisNode.innerText);
+              } else if (isAttr(thisNode)) {
+                selection.push(thisNode.value);
+              } else {
+                selection.push(thisNode.textContent ?? "");
+              }
+              thisNode = result.iterateNext();
+            }
+          } catch {
+            const result = parsedXPath.evaluate(
+              data.doc,
+              this.window.XPathResult.ANY_TYPE
+            );
+            switch (result.resultType) {
+              case this.window.XPathResult.NUMBER_TYPE:
+                selection.push(result.numberValue.toString());
+                break;
+              case this.window.XPathResult.STRING_TYPE:
+                selection.push(result.stringValue);
+                break;
+              case this.window.XPathResult.BOOLEAN_TYPE:
+                selection.push(result.booleanValue.toString());
+                break;
+            }
+          }
+          resolve(selection);
+        })
+        .catch((reason) => {
+          reject(reason);
+        });
+    });
+  }
+
+  suggest(
+    target: TargetUrl,
+    query: string
+  ): Promise<XPathSelection["_config"]> {
+    return Promise.resolve("");
+  }
+}
+
+// HTMLElement and Attr may not be available
+function isHTMLElement(node: Node): node is HTMLElement {
+  return (node as HTMLElement).innerText !== undefined;
+}
+function isAttr(node: Node): node is Attr {
+  return (node as Attr).value !== undefined;
+}
+
+export class SelectionConfigTypeError extends TypeError {
+  constructor(selectionType: SelectionType, config: string) {
+    super(
+      `"${config}" is not a valid configuration value for selection type "${selectionType}"`
+    );
+  }
+}
+
+export class UndefinedSelectionConfigError extends Error {
+  constructor() {
+    super("Set selection config value before attempting selection");
   }
 }

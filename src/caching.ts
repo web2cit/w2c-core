@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import { fetchSimpleCitation, SimpleCitoidCitation } from "./citoid";
+import { JSDOM } from "jsdom";
 
 abstract class ResponseCache {
   url: string;
@@ -35,6 +36,7 @@ interface CacheData {
 
 interface HttpCacheData extends CacheData {
   body: string;
+  doc: Document;
   headers: Map<string, string>;
 }
 
@@ -51,11 +53,15 @@ class HttpCache extends ResponseCache {
   fetchData(): Promise<HttpCacheData> {
     this._refreshing = true;
     return new Promise<HttpCacheData>((resolve, reject) => {
+      // alternatively use JSDOM.fromURL();
       fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
+            const body = await response.text();
+            const { document } = new JSDOM(body, { url: response.url }).window;
             const data: HttpCacheData = {
-              body: await response.text(),
+              body,
+              doc: document,
               headers: new Map(response.headers),
               timestamp: new Date().toISOString(),
             };
