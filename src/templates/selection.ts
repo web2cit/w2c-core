@@ -86,7 +86,7 @@ export class XPathSelection extends Selection {
   // xpath recommends xmldom, but
   // xmldom would be very strict and does not work well with real HTML pages
   // see https://stackoverflow.com/questions/16010551/getting-element-using-xpath-and-cheerio
-  // alternatively, consider using XPath built-in support (?) in (larger) JSDOM
+  // alternatively, use XPath built-in support (?) in (larger) JSDOM (xpath-jsdom branch)
   readonly type: SelectionType = "xpath";
   protected _config = "";
   private _parsedXPath: ReturnType<typeof xpath.parse> | undefined;
@@ -117,19 +117,21 @@ export class XPathSelection extends Selection {
       target.cache.http
         .getData(false)
         .then((data) => {
+          // todo: return ordered set of nodes
           const result = parsedXPath.evaluate({ node: data.doc, isHtml: true });
           let selection: StepOutput;
           try {
             selection = result.nodeset.toArray().map((node) => {
               if (isHTMLElement(node)) {
-                // todo: we are not getting html nodes!
+                // nodes do not seem to implement innerText
+                // same thing goes with JSDOM (instead of xmldom)
                 // https://github.com/goto100/xpath/issues/93#issuecomment-1028938098
                 // console.log(`HTMLElement: ${node}`)
                 return node.innerText;
               } else if (isAttr(node)) {
                 return node.value;
               } else {
-                // todo: xlmdom preserves text nodes between elements
+                // xmldom preserves text nodes between elements
                 // see https://github.com/xmldom/xmldom/issues/44#issuecomment-904114631
                 // console.log(`Node: ${node}`)
                 return node.textContent ?? "";
