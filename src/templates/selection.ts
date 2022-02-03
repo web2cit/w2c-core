@@ -190,3 +190,8 @@ export class UndefinedSelectionConfigError extends Error {
     super("Set selection config value before attempting selection");
   }
 }
+
+export interface SelectionDefinition {
+  type: SelectionType;
+  value: string
+}

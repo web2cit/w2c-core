@@ -1,5 +1,5 @@
-import { Selection } from "./selection";
-import { Transformation } from "./transformation";
+import { Selection, SelectionDefinition, makeSelection } from "./selection";
+import { Transformation, TransformationDefinition, makeTransformation } from "./transformation";
 import { TargetUrl } from "../targetUrl";
 import { StepOutput } from "./step";
 
@@ -8,11 +8,14 @@ export class TranslationProcedure {
   transformations: Array<Transformation>;
 
   constructor(
-    selections: Array<Selection> = [],
-    transformations: Array<Transformation> = []
+    procedure: TranslationProcedureDefinition
   ) {
-    this.selections = selections;
-    this.transformations = transformations;
+    this.selections = procedure.selections.map(
+      (selection) => makeSelection(selection)
+    );
+    this.transformations = procedure.transformations.map(
+      (transformation) => makeTransformation(transformation)
+    );
   }
 
   async translate(targetUrl: TargetUrl): Promise<ProcedureOutput> {
@@ -65,4 +68,9 @@ interface ProcedureOutput {
     transformation: Array<StepOutput>;
     procedure: StepOutput;
   };
+}
+
+export interface TranslationProcedureDefinition {
+  selections: Array<SelectionDefinition>,
+  transformations: Array<TransformationDefinition>
 }

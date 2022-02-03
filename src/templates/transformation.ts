@@ -245,3 +245,9 @@ export class TransformationConfigTypeError extends TypeError {
     );
   }
 }
+
+export interface TransformationDefinition {
+  type: TransformationType;
+  value: string;
+  itemwise: boolean;
+}
