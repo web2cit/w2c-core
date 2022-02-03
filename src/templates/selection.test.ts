@@ -62,9 +62,7 @@ describe("XPath selection", () => {
   });
 
   test("selects an HTML element node", () => {
-    const selection = new XPathV1Selection(
-      "//html:book[@author='Virginia Woolf']"
-    );
+    const selection = new XPathV1Selection("//book[@author='Virginia Woolf']");
     return expect(selection.select(target)).resolves.toEqual(["Orlando"]);
   });
 
