@@ -53,7 +53,6 @@ class HttpCache extends ResponseCache {
   fetchData(): Promise<HttpCacheData> {
     this._refreshing = true;
     return new Promise<HttpCacheData>((resolve, reject) => {
-      // if better dom support required, consider using JSDOM.fromURL() instead
       fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
@@ -61,7 +60,10 @@ class HttpCache extends ResponseCache {
             const data: HttpCacheData = {
               body,
               // xpath library recommends xmldom (vs e. g. htmlparser2)
-              doc: new DOMParser().parseFromString(body),
+              // but xmldom may not be permissive and fail on real web pages
+              // consider using JSDOM instead (may use JSDOM.fromURL())
+              // todo: catch parsing errors
+              doc: new DOMParser().parseFromString(body, "text/html"),
               headers: new Map(response.headers),
               timestamp: new Date().toISOString(),
             };
