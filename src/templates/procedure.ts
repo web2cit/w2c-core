@@ -62,7 +62,7 @@ export class TranslationProcedure {
   }
 }
 
-interface ProcedureOutput {
+export interface ProcedureOutput {
   targetUrl: TargetUrl;
   procedure: TranslationProcedure;
   output: {

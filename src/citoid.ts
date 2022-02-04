@@ -1,7 +1,7 @@
 import fetch, { Headers } from "node-fetch";
 import { resolveConfig } from "prettier";
 import { HTTPResponseError } from "./errors";
-import { ItemType } from './translation';
+import { ItemType } from "./translationField";
 
 export const API_ENDPOINT =
   "https://en.wikipedia.org/api/rest_v1/data/citation/";
