@@ -25,6 +25,30 @@ export abstract class Transformation extends TranslationStep {
   set config(config: Transformation["_config"]) {
     this._config = config;
   }
+
+  static create(transformation: TransformationDefinition) {
+    const itemwise = transformation.itemwise;
+    const value = transformation.value;
+    switch (transformation.type) {
+      case "join":
+        return new JoinTransformation(itemwise, value);
+        break;
+      case "split":
+        return new SplitTransformation(itemwise, value);
+        break;
+      case "date":
+        // asume value is DateConfig and let DateTransformation fail otherwise
+        return new DateTransformation(itemwise, value as DateConfig);
+        break;
+      case "range":
+        return new RangeTransformation(itemwise, value);
+        break;
+      default:
+        throw new Error(
+          `Unknown transformation of type ${transformation.type}`
+        );
+    }
+  }
 }
 
 const TRANSFORMATION_TYPES = [

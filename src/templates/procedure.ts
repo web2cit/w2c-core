@@ -1,5 +1,5 @@
-import { Selection, SelectionDefinition, makeSelection } from "./selection";
-import { Transformation, TransformationDefinition, makeTransformation } from "./transformation";
+import { Selection, SelectionDefinition } from "./selection";
+import { Transformation, TransformationDefinition } from "./transformation";
 import { TargetUrl } from "../targetUrl";
 import { StepOutput } from "./step";
 
@@ -7,14 +7,12 @@ export class TranslationProcedure {
   selections: Array<Selection>;
   transformations: Array<Transformation>;
 
-  constructor(
-    procedure: TranslationProcedureDefinition
-  ) {
-    this.selections = procedure.selections.map(
-      (selection) => makeSelection(selection)
+  constructor(procedure: TranslationProcedureDefinition) {
+    this.selections = procedure.selections.map((selection) =>
+      Selection.create(selection)
     );
-    this.transformations = procedure.transformations.map(
-      (transformation) => makeTransformation(transformation)
+    this.transformations = procedure.transformations.map((transformation) =>
+      Transformation.create(transformation)
     );
   }
 
@@ -71,6 +69,6 @@ interface ProcedureOutput {
 }
 
 export interface TranslationProcedureDefinition {
-  selections: Array<SelectionDefinition>,
-  transformations: Array<TransformationDefinition>
+  selections: Array<SelectionDefinition>;
+  transformations: Array<TransformationDefinition>;
 }

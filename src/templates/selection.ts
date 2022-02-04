@@ -13,6 +13,21 @@ export abstract class Selection extends TranslationStep {
   apply = this.select;
   abstract select(target: TargetUrl): Promise<StepOutput>;
   abstract suggest(target: TargetUrl, query: string): Promise<string>;
+
+  static create(selection: SelectionDefinition) {
+    const value = selection.value;
+    switch (selection.type) {
+      case "citoid":
+        // assume value is SimpleCitoidField and let constructor fail otherwise
+        return new CitoidSelection(value as SimpleCitoidField);
+        break;
+      case "xpath":
+        return new XPathSelection(value);
+        break;
+      default:
+        throw new Error(`Unknown selection of type ${selection.type}`);
+    }
+  }
 }
 
 type SelectionType =
@@ -193,5 +208,5 @@ export class UndefinedSelectionConfigError extends Error {
 
 export interface SelectionDefinition {
   type: SelectionType;
-  value: string
+  value: string;
 }
