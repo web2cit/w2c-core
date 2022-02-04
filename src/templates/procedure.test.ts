@@ -57,3 +57,11 @@ it("returns empty output for empty procedure", () => {
     expect(output.output.procedure).toEqual([]);
   });
 });
+
+it("returns selection output if no transformations", () => {
+  const procedure = new TranslationProcedure();
+  procedure.selections = [new CitoidSelection("itemType")];
+  return procedure.translate(target).then((output) => {
+    expect(output.output.procedure).toEqual(["webpage"]);
+  });
+});
