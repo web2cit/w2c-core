@@ -1,5 +1,5 @@
 // todo: use smaller sugar-date (seems to have trouble with typescript)
-import { TranslationStep, StepOutput } from "./step";
+import { TranslationStep, StepOutput, StepDefinition } from "./step";
 import { Date } from "sugar";
 import "sugar/locales";
 
@@ -48,6 +48,13 @@ export abstract class Transformation extends TranslationStep {
           `Unknown transformation of type ${transformation.type}`
         );
     }
+  }
+
+  toJSON(): TransformationDefinition {
+    return {
+      ...super.toJSON(),
+      itemwise: this.itemwise,
+    };
   }
 }
 
@@ -270,8 +277,6 @@ export class TransformationConfigTypeError extends TypeError {
   }
 }
 
-export interface TransformationDefinition {
-  type: TransformationType;
-  value: string;
+export interface TransformationDefinition extends StepDefinition {
   itemwise: boolean;
 }

@@ -1,4 +1,4 @@
-import { TranslationStep, StepOutput } from "./step";
+import { TranslationStep, StepOutput, StepDefinition } from "./step";
 import { TargetUrl } from "../targetUrl";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 import { JSDOM } from "jsdom";
@@ -206,7 +206,4 @@ export class UndefinedSelectionConfigError extends Error {
   }
 }
 
-export interface SelectionDefinition {
-  type: SelectionType;
-  value: string;
-}
+export type SelectionDefinition = StepDefinition;

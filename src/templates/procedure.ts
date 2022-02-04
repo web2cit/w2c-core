@@ -65,6 +65,15 @@ export class TranslationProcedure {
     }
     return outputs;
   }
+
+  toJSON(): TranslationProcedureDefinition {
+    return {
+      selections: this.selections.map((selection) => selection.toJSON()),
+      transformations: this.transformations.map((transformation) =>
+        transformation.toJSON()
+      ),
+    };
+  }
 }
 
 export interface ProcedureOutput {

@@ -58,6 +58,14 @@ export class TemplateField extends TranslationField {
     });
   }
 
+  toJSON(): TemplateFieldDefinition {
+    return {
+      fieldname: this.name,
+      required: this.required,
+      procedure: this.procedure.toJSON(),
+    };
+  }
+
   private validate(
     output: ProcedureOutput["output"]["procedure"]
   ): Array<string | null> {

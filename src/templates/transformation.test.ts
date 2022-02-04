@@ -22,6 +22,16 @@ describe("Join tranformation", () => {
     const output = transformation.transform(input);
     expect(await output).toEqual(["an|array|of|strings"]);
   });
+  it("json-stringifies to transformation definition", () => {
+    const transformation = new JoinTransformation(true, " - ");
+    expect(JSON.stringify(transformation)).toEqual(
+      JSON.stringify({
+        type: "join",
+        value: " - ",
+        itemwise: true,
+      })
+    );
+  });
 });
 
 describe("Date transformation", () => {
