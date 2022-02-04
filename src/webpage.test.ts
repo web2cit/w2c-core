@@ -1,8 +1,8 @@
-import { TargetUrl } from "./targetUrl";
+import { Webpage } from "./webpage";
 
 describe("Good URL", () => {
   const urlString = "https://www.abc.example.com/path/to/route?abc=123&def=234";
-  const url = new TargetUrl(urlString);
+  const url = new Webpage(urlString);
 
   it("isolates the domain", () => {
     expect(url.domain).toBe("www.abc.example.com");

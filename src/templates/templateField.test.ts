@@ -1,5 +1,5 @@
 import { fetchSimpleCitation, SimpleCitoidCitation } from "../citoid";
-import { TargetUrl } from "../targetUrl";
+import { Webpage } from "../webpage";
 import { TemplateField } from "./templateField";
 
 jest.mock("../citoid", () => {
@@ -14,7 +14,7 @@ const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
 >;
 
 const sampleUrl = "https://example.com/article1";
-const target = new TargetUrl(sampleUrl);
+const target = new Webpage(sampleUrl);
 const citation: SimpleCitoidCitation = {
   itemType: "webpage",
   title: "Sample article",

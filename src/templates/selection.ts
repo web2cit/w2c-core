@@ -1,5 +1,5 @@
 import { TranslationStep, StepOutput, StepDefinition } from "./step";
-import { TargetUrl } from "../targetUrl";
+import { Webpage } from "../webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 import { JSDOM } from "jsdom";
 
@@ -11,8 +11,8 @@ export abstract class Selection extends TranslationStep {
   abstract set config(config: string);
 
   apply = this.select;
-  abstract select(target: TargetUrl): Promise<StepOutput>;
-  abstract suggest(target: TargetUrl, query: string): Promise<string>;
+  abstract select(target: Webpage): Promise<StepOutput>;
+  abstract suggest(target: Webpage, query: string): Promise<string>;
 
   static create(selection: SelectionDefinition) {
     const value = selection.value;
@@ -63,7 +63,7 @@ export class CitoidSelection extends Selection {
     }
   }
 
-  select(target: TargetUrl): Promise<StepOutput> {
+  select(target: Webpage): Promise<StepOutput> {
     if (this.config === "") {
       throw new UndefinedSelectionConfigError();
     }
@@ -88,7 +88,7 @@ export class CitoidSelection extends Selection {
     });
   }
 
-  suggest(target: TargetUrl, query: string): Promise<string> {
+  suggest(target: Webpage, query: string): Promise<string> {
     // todo: pending implementation
     return new Promise((resolve, reject) => {
       resolve("");
@@ -121,7 +121,7 @@ export class XPathSelection extends Selection {
     }
   }
 
-  select(target: TargetUrl): Promise<StepOutput> {
+  select(target: Webpage): Promise<StepOutput> {
     if (this._parsedXPath === undefined) {
       throw new UndefinedSelectionConfigError();
     }
@@ -176,10 +176,7 @@ export class XPathSelection extends Selection {
     });
   }
 
-  suggest(
-    target: TargetUrl,
-    query: string
-  ): Promise<XPathSelection["_config"]> {
+  suggest(target: Webpage, query: string): Promise<XPathSelection["_config"]> {
     return Promise.resolve("");
   }
 }

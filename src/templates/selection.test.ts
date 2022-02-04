@@ -7,7 +7,7 @@ import {
   UndefinedSelectionConfigError,
 } from "./selection";
 import { SimpleCitoidCitation, fetchSimpleCitation } from "../citoid";
-import { TargetUrl } from "../targetUrl";
+import { Webpage } from "../webpage";
 import { Response } from "node-fetch";
 
 jest.mock("../citoid", () => {
@@ -55,7 +55,7 @@ describe("XPath selection", () => {
     __setMockResponseMap(MOCK_RESPONSE_MAP);
   });
 
-  const target = new TargetUrl(sampleUrl);
+  const target = new Webpage(sampleUrl);
 
   test("fails selection if configuration unset", () => {
     const selection = new XPathSelection();
@@ -126,7 +126,7 @@ describe("Citoid selection", () => {
     authorLast: ["Surname 1", "Surname 2"],
   };
   mockFetchSimpleCitation.mockResolvedValue(sampleCitation);
-  const target = new TargetUrl(sampleUrl);
+  const target = new Webpage(sampleUrl);
   const selection = new CitoidSelection();
 
   test("select existing fields", async () => {

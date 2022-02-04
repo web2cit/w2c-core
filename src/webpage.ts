@@ -1,7 +1,6 @@
-import fetch from "node-fetch";
 import { HttpCache, CitoidCache } from "./caching";
 
-class TargetUrl {
+class Webpage {
   domain: string;
   path: string;
   cache: {
@@ -20,4 +19,4 @@ class TargetUrl {
   }
 }
 
-export { TargetUrl };
+export { Webpage };

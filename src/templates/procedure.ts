@@ -1,6 +1,6 @@
 import { Selection, SelectionDefinition } from "./selection";
 import { Transformation, TransformationDefinition } from "./transformation";
-import { TargetUrl } from "../targetUrl";
+import { Webpage } from "../webpage";
 import { StepOutput } from "./step";
 
 export class TranslationProcedure {
@@ -21,8 +21,8 @@ export class TranslationProcedure {
     );
   }
 
-  async translate(targetUrl: TargetUrl): Promise<ProcedureOutput> {
-    const selections = await this.select(targetUrl);
+  async translate(target: Webpage): Promise<ProcedureOutput> {
+    const selections = await this.select(target);
     const selectionOutput = Array.prototype.concat(...selections);
 
     const transformations = await this.transform(selectionOutput);
@@ -33,7 +33,7 @@ export class TranslationProcedure {
       : selectionOutput;
 
     const output: ProcedureOutput = {
-      targetUrl: targetUrl,
+      target,
       procedure: this,
       output: {
         selection: selections,
@@ -44,12 +44,12 @@ export class TranslationProcedure {
     return output;
   }
 
-  select(targetUrl: TargetUrl): Promise<Array<StepOutput>> {
+  select(target: Webpage): Promise<Array<StepOutput>> {
     // selection order should not matter
     return Promise.all(
       this.selections.map((selection) => {
         // todo: make sure I don't have trouble because of simultaneously refreshing the caches
-        return selection.select(targetUrl);
+        return selection.select(target);
       })
     );
   }
@@ -77,7 +77,7 @@ export class TranslationProcedure {
 }
 
 export interface ProcedureOutput {
-  targetUrl: TargetUrl;
+  target: Webpage;
   procedure: TranslationProcedure;
   output: {
     selection: Array<StepOutput>;

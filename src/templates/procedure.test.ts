@@ -1,4 +1,4 @@
-import { TargetUrl } from "../targetUrl";
+import { Webpage } from "../webpage";
 import { TranslationProcedure } from "./procedure";
 import { CitoidSelection } from "./selection";
 import { JoinTransformation, RangeTransformation } from "./transformation";
@@ -16,7 +16,7 @@ const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
 >;
 
 const sampleUrl = "https://example.com/article1";
-const target = new TargetUrl(sampleUrl);
+const target = new Webpage(sampleUrl);
 const citation: SimpleCitoidCitation = {
   itemType: "webpage",
   title: "Sample article",
@@ -37,7 +37,7 @@ it("applies a translation procedure", () => {
     new JoinTransformation(),
   ];
   return procedure.translate(target).then((output) => {
-    expect(output.targetUrl).toBe(target);
+    expect(output.target).toBe(target);
     expect(output.procedure).toBe(procedure);
     expect(output.output.selection).toEqual([
       ["Sample article"],

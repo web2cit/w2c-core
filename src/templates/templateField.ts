@@ -1,4 +1,4 @@
-import { TargetUrl } from "../targetUrl";
+import { Webpage } from "../webpage";
 import {
   ProcedureOutput,
   TranslationProcedure,
@@ -42,7 +42,7 @@ export class TemplateField extends TranslationField {
     }
   }
 
-  translate(target: TargetUrl): Promise<TemplateFieldOutput> {
+  translate(target: Webpage): Promise<TemplateFieldOutput> {
     return this.procedure.translate(target).then((procedureOutput) => {
       const output = this.validate(procedureOutput.output.procedure);
       const valid = output.every((value) => value !== null);
