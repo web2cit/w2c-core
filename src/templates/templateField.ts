@@ -12,6 +12,7 @@ export class TemplateField extends TranslationField {
   // parameter shortcuts
   readonly forceRequired: boolean;
   readonly isUnique: boolean;
+  readonly isControl: boolean;
   constructor(field: FieldName | TemplateFieldDefinition) {
     let fieldname;
     let procedure;
@@ -26,6 +27,7 @@ export class TemplateField extends TranslationField {
     // if force-required field, ignore field definition's required setting
     this._required = this.forceRequired || required || false;
     this.isUnique = this.params.unique;
+    this.isControl = this.params.control;
     this.procedure = new TranslationProcedure(
       procedure || this.params.defaultProcedure
     );
@@ -53,6 +55,7 @@ export class TemplateField extends TranslationField {
         output,
         valid,
         applicable: valid || !this.required,
+        control: this.isControl,
       };
       return fieldOutput;
     });
@@ -83,13 +86,14 @@ export class TemplateField extends TranslationField {
   }
 }
 
-interface TemplateFieldOutput {
+export interface TemplateFieldOutput {
   fieldname: FieldName;
   procedureOutput: ProcedureOutput;
   output: Array<string | null>;
   valid: boolean; // whether all
   required: boolean;
   applicable: boolean; // valid || !required
+  control: boolean;
 }
 
 export interface TemplateFieldDefinition {

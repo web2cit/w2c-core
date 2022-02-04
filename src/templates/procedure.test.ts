@@ -65,3 +65,7 @@ it("returns selection output if no transformations", () => {
     expect(output.output.procedure).toEqual(["webpage"]);
   });
 });
+
+// empty selection output should give empty transformation output
+
+// empty procedure output should be invalid

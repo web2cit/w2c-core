@@ -1,49 +1,64 @@
-import { TargetUrl } from '../targetUrl';
-import { TranslationField, TranslationFieldDefinition } from './field';
-import { TranslationProcedure } from './procedure';
+import { Webpage } from "../webpage";
+import {
+  TemplateField,
+  TemplateFieldDefinition,
+  TemplateFieldOutput,
+} from "./templateField";
 
-class TranslationTemplate {
-    domain: string;  // this may be needed to download template url caches
-    templateUrl: TargetUrl;  // name conflict
-    label: string;
-    fieldProcedures: Array<TranslationField>;
-    constructor(
-        domain: string,
-        template: TemplateDefinition
-    ) {
-        this.domain = domain;
-        this.templateUrl = new TargetUrl(domain + template.path);
-        this.label = template.label;
-        this.fieldProcedures = template.procedures.map(
-            (fieldProcedure) => {
-                return new TranslationField(fieldProcedure)
-            }
-        );
-    }
+export class TranslationTemplate {
+  domain: string;
+  path: string;
+  template: Webpage;
+  label: string;
+  private _fields: Array<TemplateField> = [];
+  constructor(
+    domain: string,
+    template: Pick<TemplateDefinition, "path"> & Partial<TemplateDefinition>
+  ) {
+    this.domain = domain;
+    this.path = template.path;
+    this.template = new Webpage(this.domain + this.path);
+    this.label = template.label ?? "";
+    if (template.fields)
+      this.fields = template.fields.map((field) => {
+        return new TemplateField(field);
+      });
+  }
 
-    async translate(target: TargetUrl): Promise<TranslationOutput> {
-        const fieldOutputs = await Promise.all(
-            this.fieldProcedures.map((field) => field.translate(target))
-        );        
-        return {
-            fieldOutputs,
-            timestamp: Date.now()
-        }            
-    }
+  get fields(): TranslationTemplate["_fields"] {
+    return this._fields;
+  }
+
+  set fields(fields: TranslationTemplate["_fields"]) {
+    // todo: make sure no more than two unique fields with equal name
+    this._fields = fields;
+  }
+
+  async translate(target: Webpage): Promise<TranslationOutput> {
+    // todo: refuse translation of target for different domain
+    const outputs = await Promise.all(
+      this.fields.map((field) => field.translate(target))
+    );
+    return {
+      target,
+      outputs,
+      applicable: outputs.every((output) => output.applicable),
+      timestamp: new Date(),
+      template: this,
+    };
+  }
 }
 
 interface TranslationOutput {
-    // target URL
-
-    // a series of FieldOutputs
-
-    // a timestamp
-
-    // an id (name?) of the template used?
+  target: Webpage;
+  outputs: Array<TemplateFieldOutput>;
+  applicable: boolean;
+  timestamp: Date;
+  template: TranslationTemplate;
 }
 
 interface TemplateDefinition {
-    path: string;
-    label: string;
-    procedures: Array<TranslationFieldDefinition>
+  path: string;
+  label: string;
+  fields: Array<TemplateFieldDefinition>;
 }

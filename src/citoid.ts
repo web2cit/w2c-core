@@ -1,10 +1,9 @@
 import fetch, { Headers } from "node-fetch";
-import { resolveConfig } from "prettier";
 import { HTTPResponseError } from "./errors";
 import { ItemType } from "./translationField";
 
 export const API_ENDPOINT =
-  "https://en.wikipedia.org/api/rest_v1/data/citation/";
+  "https://en.wikipedia.org/api/rest_v1/data/citation";
 
 type CitoidRequestFormat = "mediawiki" | "mediawiki-basefields" | "zotero";
 // | 'bibtex'
