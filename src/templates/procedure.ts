@@ -7,7 +7,12 @@ export class TranslationProcedure {
   selections: Array<Selection>;
   transformations: Array<Transformation>;
 
-  constructor(procedure: TranslationProcedureDefinition) {
+  constructor(
+    procedure: TranslationProcedureDefinition = {
+      selections: [],
+      transformations: [],
+    }
+  ) {
     this.selections = procedure.selections.map((selection) =>
       Selection.create(selection)
     );
