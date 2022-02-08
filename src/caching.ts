@@ -58,7 +58,9 @@ class HttpCache extends ResponseCache {
         .then(async (response) => {
           if (response.ok) {
             const body = await response.text();
-            const { document } = new JSDOM(body, { url: response.url }).window;
+            const { window } = new JSDOM(body, { url: response.url });
+            // const document = cleanDom(window);
+            const document = window.document;
             const data: HttpCacheData = {
               body,
               doc: document,
@@ -77,6 +79,34 @@ class HttpCache extends ResponseCache {
         });
     });
   }
+}
+
+function cleanDom(window: JSDOM["window"]): Document {
+  const document = window.document;
+  const treeWalker = document.createTreeWalker(
+    document,
+    window.NodeFilter.SHOW_TEXT
+  );
+  let currentNode: Text | null = treeWalker.currentNode as Text;
+  while (currentNode) {
+    // fixme: for some reason the tree walker includes the document node
+    const textContent = currentNode.textContent ?? "";
+    // removing all whitespace text nodes would not work
+    // some whitespace text nodes should be kept
+    // e.g., between inline elements: <p><em>...</em> <a>...</a><p>
+    // if (!(/[^\t\n\r ]/.test(textContent))) {
+    //   currentNode.remove();
+    //   return;
+    // }
+
+    // for the same reason, some text nodes should not be trimmed
+    // just replacing tabs and new lines with spaces
+    // and ignoring multiple adjacent spaces
+    currentNode.textContent = textContent.replace(/[\t\n\r ]+/g, " ");
+
+    currentNode = treeWalker.nextNode() as Text;
+  }
+  return document;
 }
 
 interface CitoidCacheData extends CacheData {

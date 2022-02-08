@@ -147,7 +147,12 @@ export class XPathSelection extends Selection {
               } else if (isAttr(thisNode)) {
                 selection.push(thisNode.value);
               } else {
-                selection.push(thisNode.textContent ?? "");
+                const textContent = (thisNode.textContent ?? "")
+                  // workaround JSDOM does not support innerText
+                  .replace(/[\t\n\r ]+/g, " ")
+                  .trim();
+                // ignore empty-text nodes
+                if (textContent) selection.push(textContent);
               }
               thisNode = result.iterateNext();
             }
@@ -164,7 +169,7 @@ export class XPathSelection extends Selection {
                 selection.push(result.stringValue);
                 break;
               case this.window.XPathResult.BOOLEAN_TYPE:
-                selection.push(result.booleanValue.toString());
+                selection.push(result.booleanValue.toString().trim());
                 break;
             }
           }
