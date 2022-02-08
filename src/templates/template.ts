@@ -1,3 +1,4 @@
+import { FieldName } from "../translationField";
 import { Webpage } from "../webpage";
 import {
   TemplateField,
@@ -15,9 +16,18 @@ export class TranslationTemplate {
     domain: string,
     template: Pick<TemplateDefinition, "path"> & Partial<TemplateDefinition>
   ) {
-    this.domain = domain;
-    this.path = template.path;
-    this.template = new Webpage(this.domain + this.path);
+    const url = domain + template.path;
+    try {
+      this.template = new Webpage(url);
+    } catch {
+      throw new Error(
+        "Could not create a Webpage object for the URL " +
+          "formed by the domain and path provided: " +
+          url
+      );
+    }
+    this.domain = this.template.domain;
+    this.path = this.template.path;
     this.label = template.label ?? "";
     if (template.fields)
       this.fields = template.fields.map((field) => {
@@ -30,12 +40,27 @@ export class TranslationTemplate {
   }
 
   set fields(fields: TranslationTemplate["_fields"]) {
-    // todo: make sure no more than two unique fields with equal name
-    this._fields = fields;
+    const uniqueFields: Array<FieldName> = [];
+    this._fields = fields.reduce((dedupFields: Array<TemplateField>, field) => {
+      if (field.isUnique && uniqueFields.includes(field.name)) {
+        // todo: use a debugging library
+        console.log(`Skipping duplicate unique field "${field.name}"`);
+      } else {
+        if (field.isUnique) {
+          uniqueFields.push(field.name);
+        }
+        dedupFields.push(field);
+      }
+      return dedupFields;
+    }, []);
   }
 
   async translate(target: Webpage): Promise<TranslationOutput> {
-    // todo: refuse translation of target for different domain
+    if (target.domain !== this.domain) {
+      throw new Error(
+        `Template for ${this.domain} cannot translate target at ${target.domain}`
+      );
+    }
     const outputs = await Promise.all(
       this.fields.map((field) => field.translate(target))
     );

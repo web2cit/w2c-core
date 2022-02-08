@@ -9,7 +9,16 @@ class Webpage {
   };
 
   constructor(urlString: string) {
-    const url = new URL(urlString);
+    let url: URL;
+    try {
+      url = new URL(urlString);
+    } catch (e) {
+      if (e instanceof TypeError && e.message === "Invalid URL") {
+        throw new Error(`"${urlString}" is not a valid URL!`);
+      } else {
+        throw e;
+      }
+    }
     this.domain = url.hostname;
     this.path = url.pathname + url.search;
     this.cache = {
