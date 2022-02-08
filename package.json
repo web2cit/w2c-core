@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "jsdom": "^19.0.0",
+    "loglevel": "^1.8.0",
     "node-fetch": "^2.6.6",
     "sugar": "^2.0.6"
   }

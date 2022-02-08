@@ -5,6 +5,7 @@ import {
   TemplateFieldDefinition,
   TemplateFieldOutput,
 } from "./templateField";
+import log from "loglevel";
 
 export class TranslationTemplate {
   domain: string;
@@ -43,8 +44,8 @@ export class TranslationTemplate {
     const uniqueFields: Array<FieldName> = [];
     this._fields = fields.reduce((dedupFields: Array<TemplateField>, field) => {
       if (field.isUnique && uniqueFields.includes(field.name)) {
-        // todo: use a debugging library
-        console.log(`Skipping duplicate unique field "${field.name}"`);
+        // consider alternatives, such as winston, debug, and console.info
+        log.info(`Skipping duplicate unique field "${field.name}"`);
       } else {
         if (field.isUnique) {
           uniqueFields.push(field.name);
