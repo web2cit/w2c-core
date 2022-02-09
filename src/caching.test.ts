@@ -1,5 +1,3 @@
-jest.mock("node-fetch");
-
 import { HttpCache, CitoidCache } from "./caching";
 import { fetchSimpleCitation, SimpleCitoidCitation } from "./citoid";
 import { Response } from "node-fetch";
@@ -26,13 +24,11 @@ describe("HTTP Cache", () => {
   );
 
   beforeEach(async () => {
+    // TypeScript does not know that node-fetch has been mocked
+    // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module
     const { __setMockResponseMap } = (await import(
       "node-fetch"
-    )) as typeof import("node-fetch") & {
-      // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module // TypeScript does not know that node-fetch has been mocked
-      __setMockResponseMap: (responseMap: Map<string, Response>) => void;
-    };
-
+    )) as typeof import("../__mocks__/node-fetch");
     __setMockResponseMap(MOCK_RESPONSE_MAP);
   });
 

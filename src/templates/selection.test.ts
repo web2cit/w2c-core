@@ -1,5 +1,3 @@
-jest.mock("node-fetch");
-
 import {
   CitoidSelection,
   XPathSelection,

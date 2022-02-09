@@ -1,24 +1,27 @@
-// export * from 'node-fetch';
-const nodeFetch = jest.requireActual('node-fetch');
+// cannot import RequestInfo type dynamically with import()
+// https://stackoverflow.com/questions/68983419/dynamically-import-type-in-typesript
+import { Response, RequestInfo } from 'node-fetch';
+
+const { default: fetch } = jest.requireActual('node-fetch') as typeof import('node-fetch');
+const mockFetch: typeof fetch = function(url: RequestInfo): Promise<Response> {
+    if (typeof url !== "string") {
+        throw new Error('Mock fetch unable to handle non-string URLs.')
+    }
+    const response = mockResponseMap.get(url);
+    if (response) {
+        return Promise.resolve(response);
+    } else {
+        return Promise.reject(Response.error());
+    }
+}
+mockFetch.isRedirect = fetch.isRedirect;
 
 let mockResponseMap: Map<string, Response> = new Map();
-nodeFetch.__setMockResponseMap = function(
+export function __setMockResponseMap(
     responseMap: Map<string, Response>
-) {
+): void {
     mockResponseMap = responseMap;
 }
 
-nodeFetch.default = function(url: string): Promise<Response> {
-    return new Promise((resolve, reject) => {
-        const response = mockResponseMap.get(url);
-        if (response) {
-            resolve(response)
-        } else {
-            reject(Response.error())
-        }
-    })
-}
-
-module.exports = nodeFetch;
-// export default nodeFetch.default;
-// export const { __setMockResponseMap } = nodeFetch;
+export default mockFetch;
+export * from 'node-fetch';

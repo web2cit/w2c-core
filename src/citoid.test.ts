@@ -1,4 +1,3 @@
-jest.mock("node-fetch");
 import { Response } from "node-fetch";
 import {
   API_ENDPOINT,
