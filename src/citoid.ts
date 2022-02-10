@@ -23,7 +23,9 @@ function translateUrl(
     fetch(url, { headers })
       .then(async (response) => {
         if (response.ok) {
-          const citations: Array<CitoidCitation> = await response.json();
+          // fixme: validate response
+          const citations: Array<CitoidCitation> =
+            (await response.json()) as Array<CitoidCitation>;
           // url queries should return only one citation
           // https://www.mediawiki.org/wiki/Citoid/API#Successful_response_in_mediawiki_format
           resolve(citations[0]);
@@ -299,7 +301,7 @@ export type MediaWikiCitation = RequiredFields &
 export type MediaWikiBaseFieldCitation = RequiredFields &
   Partial<BaseFields & BaseMWCreatorFields & MediaWikiFields>;
 
-type CitoidCitation =
+export type CitoidCitation =
   | MediaWikiCitation
   | MediaWikiBaseFieldCitation
   | ZoteroCitation;

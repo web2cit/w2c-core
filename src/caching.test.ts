@@ -1,63 +1,58 @@
 import { HttpCache, CitoidCache } from "./caching";
-import { fetchSimpleCitation, SimpleCitoidCitation } from "./citoid";
-import { Response } from "node-fetch";
+import { sampleCitation } from "./samples";
+import * as nodeFetch from "node-fetch";
 
-jest.mock("./citoid", () => {
-  const originalModule = jest.requireActual("./citoid");
-  return {
-    ...originalModule,
-    fetchSimpleCitation: jest.fn(),
-  };
+// TypeScript does not know that node-fetch has been mocked
+// see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module
+const mockNodeFetch = nodeFetch as typeof import("../__mocks__/node-fetch");
+
+afterEach(() => {
+  mockNodeFetch.__clearMockResponses();
 });
-const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
-  typeof fetchSimpleCitation
->;
+
+// jest.mock("./citoid", () => {
+//   const originalModule = jest.requireActual("./citoid");
+//   return {
+//     ...originalModule,
+//     fetchSimpleCitation: jest.fn(),
+//   };
+// });
+// const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
+//   typeof fetchSimpleCitation
+// >;
 
 describe("HTTP Cache", () => {
-  const MOCK_RESPONSE_MAP: Map<string, Response> = new Map();
-  MOCK_RESPONSE_MAP.set(
-    "https://diegodlh.conversodromo.com.ar/",
-    new Response("test body", {
-      headers: [["test-header", "test-value"]],
-      url: "https://diegodlh.conversodromo.com.ar/",
-    })
-  );
-
-  beforeEach(async () => {
-    // TypeScript does not know that node-fetch has been mocked
-    // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module
-    const { __setMockResponseMap } = (await import(
-      "node-fetch"
-    )) as typeof import("../__mocks__/node-fetch");
-    __setMockResponseMap(MOCK_RESPONSE_MAP);
+  test("create cache object", () => {
+    const reqUrl = "https://diegodlh.conversodromo.com.ar/";
+    const resBody = "test body";
+    const resHeaders = [["test-header", "test-value"]];
+    mockNodeFetch.__setMockResponse(reqUrl, resBody, {
+      headers: resHeaders,
+      url: reqUrl,
+    });
+    const cache = new HttpCache(reqUrl);
+    expect(cache.url).toBe(reqUrl);
+    return cache.getData().then((data) => {
+      expect(data.body).toMatch(resBody);
+      expect(data.headers.get(resHeaders[0][0])).toBe(resHeaders[0][1]);
+    });
   });
 
-  test("create cache object", () => {
-    const urlString = "https://diegodlh.conversodromo.com.ar/";
-    const cache = new HttpCache(urlString);
-    expect(cache.url).toBe(urlString);
-    return cache.getData().then((data) => {
-      expect(data.body).toMatch("test body");
-      expect(data.headers.get("test-header")).toBe("test-value");
-    });
+  it("handles not-found error", async () => {
+    const cache = new HttpCache("http://example.com");
+    return expect(cache.getData()).rejects.toMatch("response status not ok");
   });
 });
 
 describe("Citoid Cache", () => {
-  const sampleUrl = "https://example.com/article1";
-  const sampleCitation: SimpleCitoidCitation = {
-    itemType: "webpage",
-    title: "Sample article",
-    tags: ["first tag", "second tag"],
-    url: sampleUrl,
-    authorFirst: ["John", "Jane"],
-    authorLast: ["Doe", "Smith"],
-  };
   test("citoid cache refresh", () => {
-    const cache = new CitoidCache(sampleUrl);
-    expect(cache.url).toBe(sampleUrl);
-
-    mockFetchSimpleCitation.mockResolvedValue(sampleCitation);
+    mockNodeFetch.__setMockResponse(
+      // fixme: citoid url is not target url
+      sampleCitation.url,
+      JSON.stringify(sampleCitation)
+    );
+    const cache = new CitoidCache(sampleCitation.url);
+    expect(cache.url).toBe(sampleCitation.url);
 
     return cache.fetchData().then((data) => {
       expect(data.citation).toStrictEqual(sampleCitation);

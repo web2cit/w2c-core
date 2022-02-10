@@ -54,3 +54,8 @@ describe("Simple Citoid citation", () => {
     });
   });
 });
+
+// todo: implement
+it("handles ok response with unexpected data format", () => {
+  expect(false).toBe(true);
+});
