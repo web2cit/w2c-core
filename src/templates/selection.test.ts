@@ -4,23 +4,19 @@ import {
   SelectionConfigTypeError,
   UndefinedSelectionConfigError,
 } from "./selection";
-import { SimpleCitoidCitation, fetchSimpleCitation } from "../citoid";
 import { Webpage } from "../webpage";
-import { Response } from "node-fetch";
+import fetch from "node-fetch";
+import { __getImplementation } from "../../__mocks__/node-fetch";
+import { sampleCitations } from "../samples";
 
-jest.mock("../citoid", () => {
-  const originalModule = jest.requireActual("../citoid");
-  return {
-    ...originalModule,
-    fetchSimpleCitation: jest.fn(),
-  };
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+
+beforeEach(() => {
+  // emulate network error if no implementation given
+  mockFetch.mockImplementation(() => Promise.reject(new Error()));
 });
-const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
-  typeof fetchSimpleCitation
->;
 
 describe("XPath selection", () => {
-  const MOCK_RESPONSE_MAP: Map<string, Response> = new Map();
   const sampleUrl = "https://example.com/article1";
   const sampleHtml =
     "\
@@ -37,20 +33,9 @@ describe("XPath selection", () => {
   </body>\
 </html>\
   ";
-  MOCK_RESPONSE_MAP.set(
-    sampleUrl,
-    new Response(sampleHtml, { url: sampleUrl })
-  );
 
   beforeEach(async () => {
-    const { __setMockResponseMap } = (await import(
-      "node-fetch"
-    )) as typeof import("node-fetch") & {
-      // see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module // TypeScript does not know that node-fetch has been mocked
-      __setMockResponseMap: (responseMap: Map<string, Response>) => void;
-    };
-
-    __setMockResponseMap(MOCK_RESPONSE_MAP);
+    mockFetch.mockImplementation(__getImplementation(sampleHtml));
   });
 
   const target = new Webpage(sampleUrl);
@@ -115,26 +100,24 @@ describe("XPath selection", () => {
 
 describe("Citoid selection", () => {
   const sampleUrl = "https://example.com/article1";
-  const sampleCitation: SimpleCitoidCitation = {
-    itemType: "journalArticle",
-    title: "Sample article",
-    tags: ["tag 1", "tag 2"],
-    url: sampleUrl,
-    authorFirst: ["Name 1", "Name 2"],
-    authorLast: ["Surname 1", "Surname 2"],
-  };
-  mockFetchSimpleCitation.mockResolvedValue(sampleCitation);
+  const { citoid: citoidCitation, simple: simpleCitation } = sampleCitations[0];
   const target = new Webpage(sampleUrl);
   const selection = new CitoidSelection();
+
+  beforeEach(() => {
+    mockFetch.mockImplementation(
+      __getImplementation(JSON.stringify([citoidCitation]))
+    );
+  });
 
   test("select existing fields", async () => {
     selection.config = "itemType";
     const itemType = await selection.select(target);
-    expect(itemType).toEqual(["journalArticle"]);
+    expect(itemType).toEqual([simpleCitation.itemType]);
 
     selection.config = "tags";
     const tags = await selection.select(target);
-    expect(tags).toEqual(["tag 1", "tag 2"]);
+    expect(tags).toEqual(simpleCitation.tags);
   });
 
   test("select undefined fields", async () => {

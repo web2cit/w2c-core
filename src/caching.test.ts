@@ -1,37 +1,27 @@
 import { HttpCache, CitoidCache } from "./caching";
-import { sampleCitation } from "./samples";
-import * as nodeFetch from "node-fetch";
+import { sampleCitations } from "./samples";
+import fetch from "node-fetch";
+import { __getImplementation } from "../__mocks__/node-fetch";
 
-// TypeScript does not know that node-fetch has been mocked
-// see https://stackoverflow.com/questions/53184529/typescript-doesnt-recognize-my-jest-mock-module
-const mockNodeFetch = nodeFetch as typeof import("../__mocks__/node-fetch");
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
-afterEach(() => {
-  mockNodeFetch.__clearMockResponses();
+beforeEach(() => {
+  // emulate network error if no implementation given
+  mockFetch.mockImplementation(() => Promise.reject(new Error()));
 });
 
-// jest.mock("./citoid", () => {
-//   const originalModule = jest.requireActual("./citoid");
-//   return {
-//     ...originalModule,
-//     fetchSimpleCitation: jest.fn(),
-//   };
-// });
-// const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
-//   typeof fetchSimpleCitation
-// >;
-
 describe("HTTP Cache", () => {
+  const url = "https://example.com/article1";
   test("create cache object", () => {
-    const reqUrl = "https://diegodlh.conversodromo.com.ar/";
     const resBody = "test body";
     const resHeaders = [["test-header", "test-value"]];
-    mockNodeFetch.__setMockResponse(reqUrl, resBody, {
-      headers: resHeaders,
-      url: reqUrl,
-    });
-    const cache = new HttpCache(reqUrl);
-    expect(cache.url).toBe(reqUrl);
+    mockFetch.mockImplementation(
+      __getImplementation(resBody, {
+        headers: resHeaders,
+      })
+    );
+    const cache = new HttpCache(url);
+    expect(cache.url).toBe(url);
     return cache.getData().then((data) => {
       expect(data.body).toMatch(resBody);
       expect(data.headers.get(resHeaders[0][0])).toBe(resHeaders[0][1]);
@@ -39,23 +29,31 @@ describe("HTTP Cache", () => {
   });
 
   it("handles not-found error", async () => {
-    const cache = new HttpCache("http://example.com");
+    mockFetch.mockImplementation(
+      __getImplementation(undefined, { status: 404 })
+    );
+    const cache = new HttpCache(url);
     return expect(cache.getData()).rejects.toMatch("response status not ok");
+  });
+
+  it("handles network error", () => {
+    const cache = new HttpCache(url);
+    return expect(cache.getData()).rejects.toThrow(Error);
   });
 });
 
 describe("Citoid Cache", () => {
+  const { citoid: citoidCitation, simple: simpleCitation } = sampleCitations[0];
+  const url = citoidCitation.url;
   test("citoid cache refresh", () => {
-    mockNodeFetch.__setMockResponse(
-      // fixme: citoid url is not target url
-      sampleCitation.url,
-      JSON.stringify(sampleCitation)
+    mockFetch.mockImplementation(
+      __getImplementation(JSON.stringify([citoidCitation]))
     );
-    const cache = new CitoidCache(sampleCitation.url);
-    expect(cache.url).toBe(sampleCitation.url);
+    const cache = new CitoidCache(url);
+    expect(cache.url).toBe(url);
 
     return cache.fetchData().then((data) => {
-      expect(data.citation).toStrictEqual(sampleCitation);
+      expect(data.citation).toStrictEqual(simpleCitation);
     });
   });
 });

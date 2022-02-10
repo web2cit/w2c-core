@@ -1,8 +1,4 @@
-import {
-  // TemplateField,
-  TemplateFieldDefinition,
-} from "./templateField";
-// import { Webpage } from '../webpage';
+import { TemplateFieldDefinition } from "./templateField";
 import { TranslationTemplate } from "./template";
 import { Webpage } from "../webpage";
 import { fetchSimpleCitation } from "../citoid";
@@ -57,18 +53,6 @@ const fieldDef2: TemplateFieldDefinition = {
   },
   required: true,
 };
-
-// it('calls the template field constructor', () => {
-//     new TranslationTemplate(templateDomain, {
-//         path: templatePath,
-//         fields: [fieldDef1, fieldDef2]
-//     });
-//     expect(mockWebpage.mock.instances.length).toBe(1);
-//     expect(mockWebpage.mock.calls[0]).toEqual([templateDomain + templatePath]);
-//     expect(mockTemplateField.mock.instances.length).toBe(2);
-//     expect(mockTemplateField.mock.calls[0]).toEqual([fieldDef1]);
-//     expect(mockTemplateField.mock.calls[1]).toEqual([fieldDef2]);
-// })
 
 it("translates a target", () => {
   const template = new TranslationTemplate(templateDomain, {
