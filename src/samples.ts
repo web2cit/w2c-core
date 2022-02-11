@@ -1,7 +1,7 @@
-import { CitoidCitation, SimpleCitoidCitation } from "./citoid";
+import { MediaWikiCitation, SimpleCitoidCitation } from "./citoid";
 
 export const sampleCitations: Array<{
-  citoid: CitoidCitation;
+  citoid: MediaWikiCitation;
   simple: SimpleCitoidCitation;
 }> = [
   {
@@ -13,17 +13,9 @@ export const sampleCitations: Array<{
         { tag: "second tag", type: 0 },
       ],
       url: "https://example.com/article1",
-      creators: [
-        {
-          creatorType: "author",
-          firstName: "John",
-          lastName: "Doe",
-        },
-        {
-          creatorType: "author",
-          firstName: "Jane",
-          lastName: "Smith",
-        },
+      author: [
+        ["John", "Doe"],
+        ["Jane", "Smith"],
       ],
       key: "",
       version: 0,
