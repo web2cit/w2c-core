@@ -2,18 +2,18 @@ import { Webpage } from "../webpage";
 import { TranslationProcedure } from "./procedure";
 import { CitoidSelection } from "./selection";
 import { JoinTransformation, RangeTransformation } from "./transformation";
-import fetch from "node-fetch";
-import { __getImplementation } from "../../__mocks__/node-fetch";
+import * as nodeFetch from "node-fetch";
 import { pages } from "../samplePages";
 
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
 const sampleUrl = "https://example.com/article1";
 const target = new Webpage(sampleUrl);
 
 beforeEach(() => {
-  mockFetch.mockImplementation(
-    __getImplementation(JSON.stringify(pages[sampleUrl].citoid))
+  mockNodeFetch.__addCitoidResponse(
+    sampleUrl,
+    JSON.stringify(pages[sampleUrl].citoid)
   );
 });
 

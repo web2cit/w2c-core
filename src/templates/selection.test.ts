@@ -5,22 +5,21 @@ import {
   UndefinedSelectionConfigError,
 } from "./selection";
 import { Webpage } from "../webpage";
-import fetch from "node-fetch";
-import { __getImplementation } from "../../__mocks__/node-fetch";
+import * as nodeFetch from "node-fetch";
 import { pages } from "../samplePages";
 
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
 beforeEach(() => {
   // emulate network error if no implementation given
-  mockFetch.mockImplementation(() => Promise.reject(new Error()));
+  mockNodeFetch.__reset();
 });
 
 describe("XPath selection", () => {
   const sampleUrl = "https://example.com/article1";
 
-  beforeEach(async () => {
-    mockFetch.mockImplementation(__getImplementation(pages[sampleUrl].html));
+  beforeEach(() => {
+    mockNodeFetch.__addResponse(sampleUrl, pages[sampleUrl].html);
   });
 
   const target = new Webpage(sampleUrl);
@@ -89,8 +88,9 @@ describe("Citoid selection", () => {
   const selection = new CitoidSelection();
 
   beforeEach(() => {
-    mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify(pages[sampleUrl].citoid))
+    mockNodeFetch.__addCitoidResponse(
+      sampleUrl,
+      JSON.stringify(pages[sampleUrl].citoid)
     );
   });
 

@@ -1,42 +1,35 @@
 import { HttpCache, CitoidCache } from "./caching";
 import { pages } from "./samplePages";
-import fetch from "node-fetch";
-import { __getImplementation } from "../__mocks__/node-fetch";
+import fetch, * as nodeFetch from "node-fetch";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+const mockNodeFetch = nodeFetch as typeof import("../__mocks__/node-fetch");
 
 beforeEach(() => {
-  // emulate network error if no implementation given
-  mockFetch.mockImplementation(() => Promise.reject(new Error()));
+  mockNodeFetch.__reset();
 });
 
 describe("HTTP Cache", () => {
   const url = "https://example.com/article1";
   test("create cache object", () => {
-    const resBody = "test body";
-    const resHeaders = [["test-header", "test-value"]];
-    mockFetch.mockImplementation(
-      __getImplementation(resBody, {
-        headers: resHeaders,
-      })
-    );
+    mockNodeFetch.__addResponse(url, "test body", {
+      headers: [["test-header", "test-value"]],
+    });
     const cache = new HttpCache(url);
     expect(cache.url).toBe(url);
     return cache.getData().then((data) => {
-      expect(data.body).toMatch(resBody);
-      expect(data.headers.get(resHeaders[0][0])).toBe(resHeaders[0][1]);
+      expect(data.body).toMatch("test body");
+      expect(data.headers.get("test-header")).toBe("test-value");
     });
   });
 
   it("handles not-found error", async () => {
-    mockFetch.mockImplementation(
-      __getImplementation(undefined, { status: 404 })
-    );
     const cache = new HttpCache(url);
     return expect(cache.getData()).rejects.toMatch("response status not ok");
   });
 
   it("handles network error", () => {
+    mockNodeFetch.__disconnect();
     const cache = new HttpCache(url);
     return expect(cache.getData()).rejects.toThrow(Error);
   });
@@ -45,9 +38,7 @@ describe("HTTP Cache", () => {
 describe("Citoid Cache", () => {
   const url = "https://example.com/article1";
   test("citoid cache refresh", () => {
-    mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify(pages[url].citoid))
-    );
+    mockNodeFetch.__addCitoidResponse(url, JSON.stringify(pages[url].citoid));
     const cache = new CitoidCache(url);
     expect(cache.url).toBe(url);
 

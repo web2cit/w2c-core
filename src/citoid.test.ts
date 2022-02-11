@@ -1,21 +1,20 @@
 import { fetchSimpleCitation } from "./citoid";
-import fetch from "node-fetch";
-import { __getImplementation } from "../__mocks__/node-fetch";
+import * as nodeFetch from "node-fetch";
 import { pages } from "./samplePages";
 
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+const mockNodeFetch = nodeFetch as typeof import("../__mocks__/node-fetch");
 
 beforeEach(() => {
-  // emulate network error if no implementation given
-  mockFetch.mockImplementation(() => Promise.reject(new Error()));
+  mockNodeFetch.__reset();
 });
 
 describe("Simple Citoid citation", () => {
   const sampleUrl = "https://example.com/article1";
 
   test("fetch and convert", () => {
-    mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify(pages[sampleUrl].citoid))
+    mockNodeFetch.__addCitoidResponse(
+      sampleUrl,
+      JSON.stringify(pages[sampleUrl].citoid)
     );
     return fetchSimpleCitation(sampleUrl).then((citation) => {
       expect(citation).toStrictEqual({
@@ -34,9 +33,7 @@ describe("Error responses", () => {
   const url = "https://example.com/";
 
   it("handles a successful non-JSON response", () => {
-    mockFetch.mockImplementation(
-      __getImplementation("unexpected response format")
-    );
+    mockNodeFetch.__addCitoidResponse(url, "unexpected response format");
     return expect(fetchSimpleCitation(url)).rejects.toThrow(
       "Unknown Citoid response format"
     );
@@ -44,9 +41,7 @@ describe("Error responses", () => {
 
   it("handles a successful unknown JSON response", () => {
     const wrongCitation = { invalidKey: "invalidValue" };
-    mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify([wrongCitation]))
-    );
+    mockNodeFetch.__addCitoidResponse(url, JSON.stringify([wrongCitation]));
     return expect(fetchSimpleCitation(url)).rejects.toThrow(
       "Unknown Citoid response format"
     );
