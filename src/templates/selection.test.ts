@@ -100,24 +100,24 @@ describe("XPath selection", () => {
 
 describe("Citoid selection", () => {
   const sampleUrl = "https://example.com/article1";
-  const { citoid: citoidCitation, simple: simpleCitation } = sampleCitations[0];
+  const citation = sampleCitations[0];
   const target = new Webpage(sampleUrl);
   const selection = new CitoidSelection();
 
   beforeEach(() => {
     mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify([citoidCitation]))
+      __getImplementation(JSON.stringify([citation]))
     );
   });
 
   test("select existing fields", async () => {
     selection.config = "itemType";
     const itemType = await selection.select(target);
-    expect(itemType).toEqual([simpleCitation.itemType]);
+    expect(itemType).toEqual(["webpage"]);
 
     selection.config = "tags";
     const tags = await selection.select(target);
-    expect(tags).toEqual(simpleCitation.tags);
+    expect(tags).toEqual(["first tag", "second tag"]);
   });
 
   test("select undefined fields", async () => {

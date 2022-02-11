@@ -43,17 +43,24 @@ describe("HTTP Cache", () => {
 });
 
 describe("Citoid Cache", () => {
-  const { citoid: citoidCitation, simple: simpleCitation } = sampleCitations[0];
-  const url = citoidCitation.url;
+  const citation = sampleCitations[0];
+  const url = citation.url;
   test("citoid cache refresh", () => {
     mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify([citoidCitation]))
+      __getImplementation(JSON.stringify([citation]))
     );
     const cache = new CitoidCache(url);
     expect(cache.url).toBe(url);
 
     return cache.fetchData().then((data) => {
-      expect(data.citation).toStrictEqual(simpleCitation);
+      expect(data.citation).toStrictEqual({
+        itemType: "webpage",
+        title: "Sample article",
+        tags: ["first tag", "second tag"],
+        url: "https://example.com/article1",
+        authorFirst: ["John", "Jane"],
+        authorLast: ["Doe", "Smith"],
+      });
     });
   });
 });

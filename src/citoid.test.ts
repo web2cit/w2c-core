@@ -12,14 +12,21 @@ beforeEach(() => {
 
 describe("Simple Citoid citation", () => {
   const sampleUrl = "https://example.com/article1";
-  const { citoid: citoidCitation, simple: simpleCitation } = sampleCitations[0];
+  const citation = sampleCitations[0];
 
   test("fetch and convert", () => {
     mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify([citoidCitation]))
+      __getImplementation(JSON.stringify([citation]))
     );
     return fetchSimpleCitation(sampleUrl).then((citation) => {
-      expect(citation).toStrictEqual(simpleCitation);
+      expect(citation).toStrictEqual({
+        itemType: "webpage",
+        title: "Sample article",
+        tags: ["first tag", "second tag"],
+        url: "https://example.com/article1",
+        authorFirst: ["John", "Jane"],
+        authorLast: ["Doe", "Smith"],
+      });
     });
   });
 });
