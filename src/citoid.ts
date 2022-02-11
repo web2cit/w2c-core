@@ -1,20 +1,18 @@
 import fetch, { Headers } from "node-fetch";
 import { HTTPResponseError } from "./errors";
 import { ItemType } from "./translationField";
+import { CITOID_API_ENDPOINT as API_ENDPOINT } from "./config";
 
-export const API_ENDPOINT =
-  "https://en.wikipedia.org/api/rest_v1/data/citation";
-
-type CitoidRequestFormat = "mediawiki" | "mediawiki-basefields" | "zotero";
+// type CitoidRequestFormat = "mediawiki" | "mediawiki-basefields" | "zotero";
 // | 'bibtex'
 // | 'wikibase'
 
 function translateUrl(
   query: string,
-  format: CitoidRequestFormat = "mediawiki-basefields",
+  // format: CitoidRequestFormat = "mediawiki-basefields",
   language?: string
 ): Promise<CitoidCitation> {
-  const url = [API_ENDPOINT, format, encodeURIComponent(query)].join("/");
+  const url = [API_ENDPOINT, encodeURIComponent(query)].join("/");
   const headers = new Headers();
   headers.append("accept", "application/json; charset=utf-8;");
   if (language) headers.append("Accept-Language", language);
@@ -80,7 +78,7 @@ export function fetchSimpleCitation(
   language?: string
 ): Promise<SimpleCitoidCitation> {
   return new Promise((resolve, reject) => {
-    translateUrl(url, "mediawiki-basefields", language)
+    translateUrl(url, language)
       .then((citation) => {
         const simpleCitation = simplifyCitation(
           citation as MediaWikiBaseFieldCitation
