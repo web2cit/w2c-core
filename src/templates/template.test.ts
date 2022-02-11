@@ -1,91 +1,79 @@
 import { TemplateFieldDefinition } from "./templateField";
 import { TranslationTemplate } from "./template";
 import { Webpage } from "../webpage";
-import { fetchSimpleCitation } from "../citoid";
+import * as nodeFetch from "node-fetch";
+import { pages } from "../samplePages";
 
-// jest.mock('./templateField');
-// const mockTemplateField = TemplateField as jest.MockedClass<typeof TemplateField>;
-
-// jest.mock('../webpage');
-// const mockWebpage = Webpage as jest.MockedClass<typeof Webpage>;
-
-jest.mock("../citoid", () => {
-  const originalModule = jest.requireActual("../citoid");
-  return {
-    ...originalModule,
-    fetchSimpleCitation: jest.fn(),
-  };
-});
-const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
-  typeof fetchSimpleCitation
->;
-
-// beforeEach(() => {
-//     mockTemplateField.mockClear();
-//     mockWebpage.mockClear();
-// })
+const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
 const templateDomain = "https://example.com";
 const templatePath = "/";
-const fieldDef1: TemplateFieldDefinition = {
-  fieldname: "itemType",
-  procedure: {
-    selections: [
-      {
-        type: "citoid",
-        value: "itemType",
-      },
-    ],
-    transformations: [],
+const fieldDefinitions: Array<TemplateFieldDefinition> = [
+  {
+    fieldname: "itemType",
+    procedure: {
+      selections: [
+        {
+          type: "citoid",
+          value: "itemType",
+        },
+      ],
+      transformations: [],
+    },
+    required: true,
   },
-  required: true,
-};
-const fieldDef2: TemplateFieldDefinition = {
-  fieldname: "title",
-  procedure: {
-    selections: [
-      {
-        type: "citoid",
-        value: "title",
-      },
-    ],
-    transformations: [],
+  {
+    fieldname: "title",
+    procedure: {
+      selections: [
+        {
+          type: "citoid",
+          value: "title",
+        },
+      ],
+      transformations: [],
+    },
+    required: true,
   },
-  required: true,
-};
+];
 
 it("translates a target", () => {
   const template = new TranslationTemplate(templateDomain, {
     path: templatePath,
-    fields: [fieldDef1, fieldDef2],
+    fields: fieldDefinitions,
   });
-  const target = new Webpage(templateDomain + "/article1");
-  mockFetchSimpleCitation.mockResolvedValue({
-    itemType: "webpage",
-    title: "Sample title",
-    url: "",
-    tags: [],
-  });
+  const targetUrl = templateDomain + "/article1";
+  const target = new Webpage(targetUrl);
+  mockNodeFetch.__addCitoidResponse(
+    targetUrl,
+    JSON.stringify(pages[targetUrl].citoid)
+  );
   return template.translate(target).then((output) => {
     expect(output.outputs.map((output) => output.output)).toEqual([
       ["webpage"],
-      ["Sample title"],
+      ["Sample article"],
     ]);
   });
 });
 
-it("rejects two or more unique fields with the same name", () => {
+it("ignores multiple fields with the same name", () => {
   const template = new TranslationTemplate(templateDomain, {
     path: templatePath,
-    fields: [fieldDef1, Object.assign(fieldDef1)],
+    fields: [
+      fieldDefinitions[0],
+      {
+        ...fieldDefinitions[1],
+        fieldname: fieldDefinitions[0].fieldname,
+      },
+    ],
   });
   expect(template.fields.length).toBe(1);
 });
 
-it("refuse cross-domain translations", () => {
+it("refuses cross-domain translations", () => {
   const template = new TranslationTemplate(templateDomain, {
     path: templatePath,
-    fields: [fieldDef1],
+    fields: fieldDefinitions,
   });
   const target = new Webpage("https://sub.example.com/article1");
   return expect(template.translate(target)).rejects.toThrow("cannot translate");
