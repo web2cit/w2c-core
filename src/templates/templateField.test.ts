@@ -1,32 +1,18 @@
-import { fetchSimpleCitation, SimpleCitoidCitation } from "../citoid";
 import { Webpage } from "../webpage";
 import { TemplateField } from "./templateField";
+import fetch from "node-fetch";
+import { __getImplementation } from "../../__mocks__/node-fetch";
+import { sampleCitations } from "../httpSamples";
 
-jest.mock("../citoid", () => {
-  const originalModule = jest.requireActual("../citoid");
-  return {
-    ...originalModule,
-    fetchSimpleCitation: jest.fn(),
-  };
-});
-const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
-  typeof fetchSimpleCitation
->;
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
-const sampleUrl = "https://example.com/article1";
+const citation = sampleCitations[1];
+const sampleUrl = citation.url;
 const target = new Webpage(sampleUrl);
-const citation: SimpleCitoidCitation = {
-  itemType: "webpage",
-  title: "Sample article",
-  authorFirst: ["John", "Jane", ""],
-  authorLast: ["Smith", "Doe", "University of Somewhere"],
-  date: ["2022-02-04"],
-  publicationTitle: ["Journal title"],
-  publisher: ["Journal publisher"],
-  url: sampleUrl,
-  tags: [],
-};
-mockFetchSimpleCitation.mockResolvedValue(citation);
+
+beforeEach(() => {
+  mockFetch.mockImplementation(__getImplementation(JSON.stringify([citation])));
+});
 
 describe("Use default procedures", () => {
   test("itemType template field", () => {

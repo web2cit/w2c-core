@@ -16,4 +16,20 @@ export const sampleCitations: Array<MediaWikiBaseFieldCitation> = [
     key: "",
     version: 0,
   },
+  {
+    itemType: "webpage",
+    title: "Sample article",
+    author: [
+      ["John", "Smith"],
+      ["Jane", "Doe"],
+      ["", "University of Somewhere"],
+    ],
+    date: "2022-02-04",
+    publicationTitle: "Journal title",
+    publisher: "Journal publisher",
+    url: "https://example.com/article1",
+    tags: [],
+    key: "",
+    version: 0,
+  },
 ];

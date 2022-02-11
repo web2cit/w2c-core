@@ -2,29 +2,20 @@ import { Webpage } from "../webpage";
 import { TranslationProcedure } from "./procedure";
 import { CitoidSelection } from "./selection";
 import { JoinTransformation, RangeTransformation } from "./transformation";
-import { fetchSimpleCitation, SimpleCitoidCitation } from "../citoid";
+import fetch from "node-fetch";
+import { __getImplementation } from "../../__mocks__/node-fetch";
+import { sampleCitations } from "../httpSamples";
 
-jest.mock("../citoid", () => {
-  const originalModule = jest.requireActual("../citoid");
-  return {
-    ...originalModule,
-    fetchSimpleCitation: jest.fn(),
-  };
-});
-const mockFetchSimpleCitation = fetchSimpleCitation as jest.MockedFunction<
-  typeof fetchSimpleCitation
->;
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
 const sampleUrl = "https://example.com/article1";
 const target = new Webpage(sampleUrl);
-const citation: SimpleCitoidCitation = {
-  itemType: "webpage",
-  title: "Sample article",
-  authorFirst: ["John", "Jane"],
-  url: sampleUrl,
-  tags: [],
-};
-mockFetchSimpleCitation.mockResolvedValue(citation);
+
+beforeEach(() => {
+  mockFetch.mockImplementation(
+    __getImplementation(JSON.stringify([sampleCitations[0]]))
+  );
+});
 
 it("applies a translation procedure", () => {
   const procedure = new TranslationProcedure();
