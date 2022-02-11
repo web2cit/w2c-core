@@ -1,5 +1,5 @@
 import { HttpCache, CitoidCache } from "./caching";
-import { sampleCitations } from "./samples";
+import { sampleCitations } from "./httpSamples";
 import fetch from "node-fetch";
 import { __getImplementation } from "../__mocks__/node-fetch";
 

@@ -1,7 +1,7 @@
 import { fetchSimpleCitation } from "./citoid";
 import fetch from "node-fetch";
 import { __getImplementation } from "../__mocks__/node-fetch";
-import { sampleCitations } from "./samples";
+import { sampleCitations } from "./httpSamples";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
