@@ -24,7 +24,25 @@ describe("Simple Citoid citation", () => {
   });
 });
 
-// todo: implement
-it("handles ok response with unexpected data format", () => {
-  expect(false).toBe(true);
+describe("Error responses", () => {
+  const url = "https://example.com/";
+
+  it("handles a successful non-JSON response", () => {
+    mockFetch.mockImplementation(
+      __getImplementation("unexpected response format")
+    );
+    return expect(fetchSimpleCitation(url)).rejects.toThrow(
+      "Unknown Citoid response format"
+    );
+  });
+
+  it("handles a successful unknown JSON response", () => {
+    const wrongCitation = { invalidKey: "invalidValue" };
+    mockFetch.mockImplementation(
+      __getImplementation(JSON.stringify([wrongCitation]))
+    );
+    return expect(fetchSimpleCitation(url)).rejects.toThrow(
+      "Unknown Citoid response format"
+    );
+  });
 });

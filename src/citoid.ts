@@ -23,12 +23,25 @@ function translateUrl(
     fetch(url, { headers })
       .then(async (response) => {
         if (response.ok) {
-          // fixme: validate response
-          const citations: Array<CitoidCitation> =
-            (await response.json()) as Array<CitoidCitation>;
-          // url queries should return only one citation
-          // https://www.mediawiki.org/wiki/Citoid/API#Successful_response_in_mediawiki_format
-          resolve(citations[0]);
+          const responseText = await response.text();
+          let citations;
+          try {
+            citations = JSON.parse(responseText);
+          } catch {
+            citations = null;
+          }
+          if (
+            Array.isArray(citations) &&
+            citations.every((citation) => isCitoidCitation(citation))
+          ) {
+            // url queries should return only one citation
+            // https://www.mediawiki.org/wiki/Citoid/API#Successful_response_in_mediawiki_format
+            resolve(citations[0]);
+          } else {
+            reject(
+              new Error(`Unknown Citoid response format: ${responseText}`)
+            );
+          }
         } else {
           // the response contains client (4xx) or server (5xx) error responses
           // see https://github.com/node-fetch/node-fetch#handling-client-and-server-errors
@@ -56,6 +69,12 @@ function translateUrl(
   });
 }
 
+function isCitoidCitation(citation: unknown): citation is CitoidCitation {
+  return REQUIRED_FIELDS.every(
+    (field) => (citation as CitoidCitation)[field] !== undefined
+  );
+}
+
 export function fetchSimpleCitation(
   url: string,
   language?: string
@@ -74,6 +93,15 @@ export function fetchSimpleCitation(
   });
 }
 
+export const REQUIRED_FIELDS = [
+  "itemType",
+  "title",
+  "url",
+  "tags",
+  "key",
+  "version",
+] as const;
+type RequiredField = typeof REQUIRED_FIELDS[number];
 interface RequiredFields {
   // required - https://www.mediawiki.org/wiki/Citoid/API#Field_names
   itemType: ItemType;
@@ -85,6 +113,18 @@ interface RequiredFields {
   key: string;
   version: 0;
 }
+// confirm that RequiredFields has all and only the keys in REQUIRED_FIELDS
+// from https://stackoverflow.com/questions/55046211/typescript-check-if-type-a-type-b-type-c
+// and https://github.com/microsoft/TypeScript/issues/27024#issuecomment-421529650
+export type Equals<X, Y> = (<T>() => T extends X ? 1 : 2) extends <
+  T
+>() => T extends Y ? 1 : 2
+  ? true
+  : false;
+function assert<T extends boolean>(expect: T) {
+  return expect;
+}
+assert<Equals<RequiredField, keyof RequiredFields>>(true);
 
 export const BASE_FIELDS = [
   "abstractNote",
