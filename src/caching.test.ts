@@ -1,5 +1,5 @@
 import { HttpCache, CitoidCache } from "./caching";
-import { sampleCitations } from "./httpSamples";
+import { pages } from "./samplePages";
 import fetch from "node-fetch";
 import { __getImplementation } from "../__mocks__/node-fetch";
 
@@ -43,11 +43,10 @@ describe("HTTP Cache", () => {
 });
 
 describe("Citoid Cache", () => {
-  const citation = sampleCitations[0];
-  const url = citation.url;
+  const url = "https://example.com/article1";
   test("citoid cache refresh", () => {
     mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify([citation]))
+      __getImplementation(JSON.stringify(pages[url].citoid))
     );
     const cache = new CitoidCache(url);
     expect(cache.url).toBe(url);

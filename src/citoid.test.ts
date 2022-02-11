@@ -1,7 +1,7 @@
 import { fetchSimpleCitation } from "./citoid";
 import fetch from "node-fetch";
 import { __getImplementation } from "../__mocks__/node-fetch";
-import { sampleCitations } from "./httpSamples";
+import { pages } from "./samplePages";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
@@ -12,11 +12,10 @@ beforeEach(() => {
 
 describe("Simple Citoid citation", () => {
   const sampleUrl = "https://example.com/article1";
-  const citation = sampleCitations[0];
 
   test("fetch and convert", () => {
     mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify([citation]))
+      __getImplementation(JSON.stringify(pages[sampleUrl].citoid))
     );
     return fetchSimpleCitation(sampleUrl).then((citation) => {
       expect(citation).toStrictEqual({

@@ -2,16 +2,17 @@ import { Webpage } from "../webpage";
 import { TemplateField } from "./templateField";
 import fetch from "node-fetch";
 import { __getImplementation } from "../../__mocks__/node-fetch";
-import { sampleCitations } from "../httpSamples";
+import { pages } from "../samplePages";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
-const citation = sampleCitations[1];
-const sampleUrl = citation.url;
+const sampleUrl = "https://example.com/article2";
 const target = new Webpage(sampleUrl);
 
 beforeEach(() => {
-  mockFetch.mockImplementation(__getImplementation(JSON.stringify([citation])));
+  mockFetch.mockImplementation(
+    __getImplementation(JSON.stringify(pages[sampleUrl].citoid))
+  );
 });
 
 describe("Use default procedures", () => {

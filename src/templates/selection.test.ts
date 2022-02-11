@@ -7,7 +7,7 @@ import {
 import { Webpage } from "../webpage";
 import fetch from "node-fetch";
 import { __getImplementation } from "../../__mocks__/node-fetch";
-import { sampleCitations } from "../httpSamples";
+import { pages } from "../samplePages";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
@@ -18,24 +18,9 @@ beforeEach(() => {
 
 describe("XPath selection", () => {
   const sampleUrl = "https://example.com/article1";
-  const sampleHtml =
-    "\
-<!DOCTYPE html>\
-<html>\
-  <head></head>\
-  <body>\
-    <book author='Virginia Woolf'>\
-      <title>Orlando</title>\
-    </book>\
-    <book author='James Gleick'>\
-      <title>The Information</title>\
-    </book>\
-  </body>\
-</html>\
-  ";
 
   beforeEach(async () => {
-    mockFetch.mockImplementation(__getImplementation(sampleHtml));
+    mockFetch.mockImplementation(__getImplementation(pages[sampleUrl].html));
   });
 
   const target = new Webpage(sampleUrl);
@@ -100,13 +85,12 @@ describe("XPath selection", () => {
 
 describe("Citoid selection", () => {
   const sampleUrl = "https://example.com/article1";
-  const citation = sampleCitations[0];
   const target = new Webpage(sampleUrl);
   const selection = new CitoidSelection();
 
   beforeEach(() => {
     mockFetch.mockImplementation(
-      __getImplementation(JSON.stringify([citation]))
+      __getImplementation(JSON.stringify(pages[sampleUrl].citoid))
     );
   });
 

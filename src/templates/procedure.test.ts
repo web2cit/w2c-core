@@ -4,7 +4,7 @@ import { CitoidSelection } from "./selection";
 import { JoinTransformation, RangeTransformation } from "./transformation";
 import fetch from "node-fetch";
 import { __getImplementation } from "../../__mocks__/node-fetch";
-import { sampleCitations } from "../httpSamples";
+import { pages } from "../samplePages";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
@@ -13,7 +13,7 @@ const target = new Webpage(sampleUrl);
 
 beforeEach(() => {
   mockFetch.mockImplementation(
-    __getImplementation(JSON.stringify([sampleCitations[0]]))
+    __getImplementation(JSON.stringify(pages[sampleUrl].citoid))
   );
 });
 
