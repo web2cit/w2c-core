@@ -69,7 +69,7 @@ export class TranslationTemplate {
     }
   }
 
-  async translate(target: Webpage): Promise<TranslationOutput> {
+  async translate(target: Webpage): Promise<TemplateOutput> {
     if (target.domain !== this.domain) {
       throw new Error(
         `Template for ${this.domain} cannot translate target at ${target.domain}`
@@ -100,7 +100,7 @@ export class TranslationTemplate {
   }
 }
 
-interface TranslationOutput {
+export interface TemplateOutput {
   target: Webpage;
   outputs: Array<TemplateFieldOutput>;
   applicable: boolean;
