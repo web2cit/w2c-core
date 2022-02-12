@@ -6,7 +6,7 @@ import {
   TemplateFieldOutput,
 } from "./templateField";
 import log from "loglevel";
-import { isDomain } from "../domain";
+import { isDomain, DomainNameError } from "../domain";
 
 export class TranslationTemplate {
   domain: string;
@@ -16,7 +16,7 @@ export class TranslationTemplate {
   private _fields: Array<TemplateField> = [];
   constructor(domain: string, template: Partial<TemplateDefinition> = {}) {
     if (!isDomain(domain)) {
-      throw new Error(`"${domain}" is not a valid domain name`);
+      throw new DomainNameError(domain);
     }
     this.domain = domain;
     this.path = template.path;
