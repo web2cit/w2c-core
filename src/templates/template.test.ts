@@ -1,12 +1,12 @@
-import { TemplateFieldDefinition } from "./templateField";
-import { TranslationTemplate } from "./template";
+import { TemplateField, TemplateFieldDefinition } from "./templateField";
+import { TemplateDefinition, TranslationTemplate } from "./template";
 import { Webpage } from "../webpage";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../samplePages";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
-const templateDomain = "https://example.com";
+const templateDomain = "example.com";
 const templatePath = "/";
 const fieldDefinitions: Array<TemplateFieldDefinition> = [
   {
@@ -42,7 +42,7 @@ it("translates a target", () => {
     path: templatePath,
     fields: fieldDefinitions,
   });
-  const targetUrl = templateDomain + "/article1";
+  const targetUrl = "https://example.com/article1";
   const target = new Webpage(targetUrl);
   mockNodeFetch.__addCitoidResponse(
     targetUrl,
@@ -77,4 +77,30 @@ it("refuses cross-domain translations", () => {
   });
   const target = new Webpage("https://sub.example.com/article1");
   return expect(template.translate(target)).rejects.toThrow("cannot translate");
+});
+
+it("outputs a JSON template definition", () => {
+  const template = new TranslationTemplate("example.com");
+  template.path = "/article1";
+  template.label = "sample label";
+  template.fields = [new TemplateField("itemType")];
+  expect(template.toJSON()).toEqual<TemplateDefinition>({
+    path: "/article1",
+    label: "sample label",
+    fields: [
+      {
+        fieldname: "itemType",
+        procedure: {
+          selections: [
+            {
+              type: "citoid",
+              value: "itemType",
+            },
+          ],
+          transformations: [],
+        },
+        required: true,
+      },
+    ],
+  });
 });

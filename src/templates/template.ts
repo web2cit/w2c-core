@@ -6,34 +6,26 @@ import {
   TemplateFieldOutput,
 } from "./templateField";
 import log from "loglevel";
+import { isDomain } from "../domain";
 
 export class TranslationTemplate {
   domain: string;
-  path: string;
-  template: Webpage;
+  // a fallback template does not have a path
+  template?: Webpage;
   label: string;
   private _fields: Array<TemplateField> = [];
-  constructor(
-    domain: string,
-    template: Pick<TemplateDefinition, "path"> & Partial<TemplateDefinition>
-  ) {
-    const url = domain + template.path;
-    try {
-      this.template = new Webpage(url);
-    } catch {
-      throw new Error(
-        "Could not create a Webpage object for the URL " +
-          "formed by the domain and path provided: " +
-          url
-      );
+  constructor(domain: string, template: Partial<TemplateDefinition> = {}) {
+    if (!isDomain(domain)) {
+      throw new Error(`"${domain}" is not a valid domain name`);
     }
-    this.domain = this.template.domain;
-    this.path = this.template.path;
+    this.domain = domain;
+    this.path = template.path;
     this.label = template.label ?? "";
-    if (template.fields)
+    if (template.fields) {
       this.fields = template.fields.map((field) => {
         return new TemplateField(field);
       });
+    }
   }
 
   get fields(): TranslationTemplate["_fields"] {
@@ -56,6 +48,27 @@ export class TranslationTemplate {
     }, []);
   }
 
+  get path() {
+    return this.template && this.template.path;
+  }
+
+  set path(path: string | undefined) {
+    if (path) {
+      const url = "http://" + this.domain + path;
+      try {
+        this.template = new Webpage(url);
+      } catch {
+        throw new Error(
+          "Could not create a Webpage object for the URL " +
+            "formed by the domain and path provided: " +
+            url
+        );
+      }
+    } else {
+      this.template = undefined;
+    }
+  }
+
   async translate(target: Webpage): Promise<TranslationOutput> {
     if (target.domain !== this.domain) {
       throw new Error(
@@ -73,6 +86,18 @@ export class TranslationTemplate {
       template: this,
     };
   }
+
+  toJSON(): TemplateDefinition | undefined {
+    if (this.template === undefined) {
+      // fallback templates without a template path should not be printed
+      return;
+    }
+    return {
+      path: this.template.path,
+      fields: this.fields.map((field) => field.toJSON()),
+      label: this.label,
+    };
+  }
 }
 
 interface TranslationOutput {
@@ -83,7 +108,9 @@ interface TranslationOutput {
   template: TranslationTemplate;
 }
 
-interface TemplateDefinition {
+export interface TemplateDefinition {
+  // path is mandatory for template definition
+  // fallback templates (without a path) should not have a definition
   path: string;
   label: string;
   fields: Array<TemplateFieldDefinition>;
