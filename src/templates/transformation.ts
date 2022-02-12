@@ -99,7 +99,7 @@ export class SplitTransformation extends Transformation {
       input = [input.join()];
     }
     const output = input.reduce((accumulator: StepOutput, item) => {
-      accumulator = output.concat(item.split(this.config));
+      accumulator = accumulator.concat(item.split(this.config));
       return accumulator;
     }, []);
     return Promise.resolve(output);
