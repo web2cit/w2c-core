@@ -2,6 +2,7 @@ import {
   DateTransformation,
   JoinTransformation,
   RangeTransformation,
+  SplitTransformation,
   TransformationConfigTypeError,
 } from "./transformation";
 
@@ -31,6 +32,54 @@ describe("Join tranformation", () => {
         itemwise: true,
       })
     );
+  });
+});
+
+describe("Split transformation", () => {
+  it("splits a single-string input", () => {
+    const transformation = new SplitTransformation(false, "");
+    return expect(transformation.transform(["string"])).resolves.toEqual([
+      "s",
+      "t",
+      "r",
+      "i",
+      "n",
+      "g",
+    ]);
+  });
+  it("splits a single-string input, itemwise", () => {
+    const transformation = new SplitTransformation(true, "");
+    return expect(transformation.transform(["string"])).resolves.toEqual([
+      "s",
+      "t",
+      "r",
+      "i",
+      "n",
+      "g",
+    ]);
+  });
+  it("splits a multiple-string input", () => {
+    const transformation = new SplitTransformation(false, "");
+    return expect(transformation.transform(["one", "two"])).resolves.toEqual([
+      "o",
+      "n",
+      "e",
+      ",",
+      "t",
+      "w",
+      "o",
+    ]);
+  });
+  it("splits a multiple-string input, itemwise", () => {
+    const transformation = new SplitTransformation(true, "");
+    return expect(transformation.transform(["one", "two"])).resolves.toEqual([
+      "o",
+      "n",
+      "e",
+      "t",
+      "w",
+      "o",
+    ]);
   });
 });
 
