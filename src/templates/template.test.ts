@@ -83,7 +83,7 @@ it("outputs a JSON template definition", () => {
   const template = new TranslationTemplate("example.com");
   template.path = "/article1";
   template.label = "sample label";
-  template.fields = [new TemplateField("itemType")];
+  template.fields = [new TemplateField("itemType", true)];
   expect(template.toJSON()).toEqual<TemplateDefinition>({
     path: "/article1",
     label: "sample label",

@@ -17,7 +17,7 @@ beforeEach(() => {
 
 describe("Use default procedures", () => {
   test("itemType template field", () => {
-    const field = new TemplateField("itemType");
+    const field = new TemplateField("itemType", true);
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["webpage"]);
       expect(output.valid).toBe(true);
@@ -25,7 +25,7 @@ describe("Use default procedures", () => {
     });
   });
   test("title template field", () => {
-    const field = new TemplateField("title");
+    const field = new TemplateField("title", true);
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["Sample article"]);
       expect(output.valid).toBe(true);
@@ -33,7 +33,7 @@ describe("Use default procedures", () => {
     });
   });
   test("authorFirst template field", () => {
-    const field = new TemplateField("authorFirst");
+    const field = new TemplateField("authorFirst", true);
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["John", "Jane", ""]);
       expect(output.valid).toBe(true);
@@ -41,7 +41,7 @@ describe("Use default procedures", () => {
     });
   });
   test("authorLast template field", () => {
-    const field = new TemplateField("authorLast");
+    const field = new TemplateField("authorLast", true);
     return field.translate(target).then((output) => {
       expect(output.output).toEqual([
         "Smith",
@@ -53,7 +53,7 @@ describe("Use default procedures", () => {
     });
   });
   test("date template field", () => {
-    const field = new TemplateField("date");
+    const field = new TemplateField("date", true);
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["2022-02-04"]);
       expect(output.valid).toBe(true);
@@ -61,7 +61,7 @@ describe("Use default procedures", () => {
     });
   });
   test("source template field", () => {
-    const field = new TemplateField("source");
+    const field = new TemplateField("source", true);
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(
         ["Journal title"] // default transformation keeps first item
@@ -71,7 +71,7 @@ describe("Use default procedures", () => {
     });
   });
   test("language template field", () => {
-    const field = new TemplateField("language");
+    const field = new TemplateField("language", true);
     return field.translate(target).then((output) => {
       expect(output.output).toEqual([null]);
       expect(output.valid).toBe(false);
