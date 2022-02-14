@@ -13,7 +13,7 @@ export class TemplateSet {
   constructor(
     domain: string,
     templates: Array<TemplateDefinition> = [],
-    fallbackTemplate?: TemplateDefinition
+    fallbackTemplate?: Partial<TemplateDefinition>
   ) {
     if (!isDomain(domain)) {
       throw new DomainNameError(domain);

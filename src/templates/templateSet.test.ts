@@ -110,4 +110,56 @@ describe("Use an applicable template", () => {
   });
 });
 
+describe("Use the fallback template", () => {
+  const templates = [nonApplicableTemplate];
+  const fallbackDef: Partial<TemplateDefinition> = {
+    fields: [
+      {
+        fieldname: "authorFirst",
+        procedure: {
+          selections: [
+            {
+              type: "citoid",
+              value: "authorFirst",
+            },
+          ],
+          transformations: [],
+        },
+        required: true,
+      },
+    ],
+  };
+  const templateSet = new TemplateSet(domain, templates, fallbackDef);
+  const target = new Webpage(targetUrl);
+
+  beforeAll(() => {
+    mockNodeFetch.__addCitoidResponse(
+      targetUrl,
+      JSON.stringify(pages[targetUrl].citoid)
+    );
+  });
+
+  it("refuses to use fallback template with path", () => {
+    const fallbackDefWithPath = {
+      ...fallbackDef,
+      path: "/some-path",
+    };
+    expect(() => {
+      new TemplateSet(domain, templates, fallbackDefWithPath);
+    }).toThrow("should not have template path");
+  });
+
+  it("returns an applicable output", async () => {
+    const output = (await templateSet.translate(target)) as TemplateOutput;
+    expect(output.applicable).toBe(true);
+  });
+
+  it("outputs the expected results", async () => {
+    const output = (await templateSet.translate(target)) as TemplateOutput;
+    expect(
+      output.outputs.map((field) => [field.fieldname, field.output])
+    ).toEqual([["authorFirst", ["John", "Jane"]]]);
+  });
+});
+
 // describe("No applicable templates", () => {});
