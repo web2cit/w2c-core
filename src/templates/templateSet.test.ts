@@ -19,7 +19,7 @@ const nonApplicableTemplate: TemplateDefinition = {
   fields: [
     {
       fieldname: "itemType",
-      required: true, // confirm what happens if I say false for a forceRequired field?
+      required: true,
       procedure: {
         selections: [
           {
@@ -88,7 +88,26 @@ describe("Use an applicable template", () => {
       output.outputs.map((field) => [field.fieldname, field.output])
     ).toEqual([["title", ["Sample article"]]]);
   });
+
+  it("fetches the target only once", async () => {
+    // create new target and spy on its citoid cache's getData and fetchData methods
+    const target = new Webpage(targetUrl);
+    const getDataSpy = jest.spyOn(target.cache.citoid, "getData");
+    const fetchDataSpy = jest.spyOn(target.cache.citoid, "fetchData");
+
+    const fetchSpy = jest.spyOn(mockNodeFetch, "default");
+
+    await templateSet.translate(target);
+
+    // the citoid cache's getData method should have been called twice
+    // once for the citoid selection step in the first template, and
+    // once for the citoid selection step in the second template
+    expect(getDataSpy).toHaveBeenCalledTimes(2);
+    // wheras the citoid cache's fetchData method and node-fetch
+    // should have been called only once
+    expect(fetchDataSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
 });
 
-// describe("Use the fallback template", () => {});
 // describe("No applicable templates", () => {});
