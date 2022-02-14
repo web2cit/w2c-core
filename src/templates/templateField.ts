@@ -51,7 +51,8 @@ export class TemplateField extends TranslationField {
   translate(target: Webpage): Promise<TemplateFieldOutput> {
     return this.procedure.translate(target).then((procedureOutput) => {
       const output = this.validate(procedureOutput.output.procedure);
-      const valid = output.every((value) => value !== null);
+      const valid =
+        output.length > 0 && output.every((value) => value !== null);
       const fieldOutput: TemplateFieldOutput = {
         fieldname: this.name,
         required: this.required,
@@ -76,7 +77,7 @@ export class TemplateField extends TranslationField {
   private validate(
     output: ProcedureOutput["output"]["procedure"]
   ): Array<string | null> {
-    if (!this.isArray) {
+    if (!this.isArray && output.length) {
       // alternatively, consider:
       // a. keep first element only
       // b. return [null] (invalid)

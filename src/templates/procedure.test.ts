@@ -66,4 +66,4 @@ it("does not return selection output if transformation output is an empty array"
   });
 });
 
-// empty procedure output should be invalid
+// empty selection output should give empty transformation output
