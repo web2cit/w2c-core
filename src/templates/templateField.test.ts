@@ -73,9 +73,34 @@ describe("Use default procedures", () => {
   test("language template field", () => {
     const field = new TemplateField("language", true);
     return field.translate(target).then((output) => {
-      expect(output.output).toEqual([null]);
+      expect(output.output).toEqual([]);
       expect(output.valid).toBe(false);
       expect(output.applicable).toBe(true);
     });
   });
+});
+
+it("marks empty outputs as invalid", async () => {
+  const templateField = new TemplateField({
+    fieldname: "itemType",
+    required: true,
+    procedure: {
+      selections: [
+        {
+          type: "citoid",
+          value: "itemType",
+        },
+      ],
+      transformations: [
+        {
+          type: "range",
+          value: "10", // should return an empty step output
+          itemwise: false,
+        },
+      ],
+    },
+  });
+  const fieldOutput = await templateField.translate(target);
+  expect(fieldOutput.output).toEqual([]);
+  expect(fieldOutput.valid).toBe(false);
 });
