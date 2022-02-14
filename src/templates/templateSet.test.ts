@@ -176,3 +176,13 @@ describe("No applicable templates", () => {
     return expect(templateSet.translate(target)).resolves.toBe(false);
   });
 });
+
+it("rejects multiple templates for the same path", () => {
+  const duplicatePathTemplate: TemplateDefinition = {
+    ...applicableTemplate,
+  };
+  const templates = [applicableTemplate, duplicatePathTemplate];
+  expect(() => {
+    new TemplateSet(domain, templates);
+  }).toThrow("Multiple templates provided");
+});
