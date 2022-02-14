@@ -59,6 +59,25 @@ const applicableTemplate: TemplateDefinition = {
     },
   ],
 };
+const targetTemplate: TemplateDefinition = {
+  path: targetPath,
+  label: "target template",
+  fields: [
+    {
+      fieldname: "authorLast",
+      required: true,
+      procedure: {
+        selections: [
+          {
+            type: "citoid",
+            value: "authorLast",
+          },
+        ],
+        transformations: [],
+      },
+    },
+  ],
+};
 
 describe("Use an applicable template", () => {
   const templates = [nonApplicableTemplate, applicableTemplate];
@@ -107,6 +126,17 @@ describe("Use an applicable template", () => {
     // should have been called only once
     expect(fetchDataSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("prefers a template for the same path as the target", async () => {
+    const templateSetWithTargetTemplate = new TemplateSet(domain, [
+      ...templates,
+      targetTemplate,
+    ]);
+    const output = (await templateSetWithTargetTemplate.translate(
+      target
+    )) as TemplateOutput;
+    expect(output.template.label).toBe("target template");
   });
 });
 

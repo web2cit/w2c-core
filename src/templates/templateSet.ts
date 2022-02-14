@@ -39,7 +39,17 @@ export class TemplateSet {
   async translate(target: Webpage): Promise<TemplateOutput | false> {
     const templates = [...this.templates];
     if (this.fallback) templates.push(this.fallback);
-    // fixme: prefer template with same path as target path
+
+    // prefer a template for the same path as the target
+    const targetPathTemplateIndex = templates.findIndex(
+      (template) => template.path === target.path
+    );
+    if (targetPathTemplateIndex !== -1) {
+      const targetPathTemplate = templates[targetPathTemplateIndex];
+      templates.splice(targetPathTemplateIndex, 1);
+      templates.unshift(targetPathTemplate);
+    }
+
     for (let i = 0; i < templates.length; i++) {
       const template = templates[i];
       // todo: catch errors?
