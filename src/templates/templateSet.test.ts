@@ -162,4 +162,17 @@ describe("Use the fallback template", () => {
   });
 });
 
-// describe("No applicable templates", () => {});
+describe("No applicable templates", () => {
+  const templateSet = new TemplateSet(domain, [nonApplicableTemplate]);
+  const target = new Webpage(targetUrl);
+  beforeAll(() => {
+    mockNodeFetch.__addCitoidResponse(
+      targetUrl,
+      JSON.stringify(pages[targetUrl].citoid)
+    );
+  });
+
+  it("translation returns false", () => {
+    return expect(templateSet.translate(target)).resolves.toBe(false);
+  });
+});

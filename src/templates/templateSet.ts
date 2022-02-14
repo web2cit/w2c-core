@@ -25,7 +25,9 @@ export class TemplateSet {
     this.templates = templates.map(
       (template) => new TranslationTemplate(this.domain, template)
     );
-    this.fallback = new TranslationTemplate(this.domain, fallbackTemplate);
+    if (fallbackTemplate) {
+      this.fallback = new TranslationTemplate(this.domain, fallbackTemplate);
+    }
   }
 
   async translate(target: Webpage): Promise<TemplateOutput | false> {
