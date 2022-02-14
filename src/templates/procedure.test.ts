@@ -57,6 +57,13 @@ it("returns selection output if no transformations", () => {
   });
 });
 
-// empty selection output should give empty transformation output
+it("does not return selection output if transformation output is an empty array", () => {
+  const procedure = new TranslationProcedure();
+  procedure.selections = [new CitoidSelection("itemType")];
+  procedure.transformations = [new RangeTransformation(false, "10")];
+  return procedure.translate(target).then((output) => {
+    expect(output.output.procedure).toEqual([]);
+  });
+});
 
 // empty procedure output should be invalid

@@ -28,7 +28,7 @@ export class TranslationProcedure {
     const transformations = await this.transform(selectionOutput);
     const transformationOutput = transformations.at(-1) ?? [];
 
-    const procedureOutput = transformationOutput.length
+    const procedureOutput = transformations.length
       ? transformationOutput
       : selectionOutput;
 
