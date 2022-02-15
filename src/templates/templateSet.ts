@@ -44,14 +44,13 @@ export class TemplateSet {
     const targetPathTemplateIndex = templates.findIndex(
       (template) => template.path === target.path
     );
-    if (targetPathTemplateIndex !== -1) {
-      const targetPathTemplate = templates[targetPathTemplateIndex];
+    const targetPathTemplate = templates[targetPathTemplateIndex];
+    if (targetPathTemplate !== undefined) {
       templates.splice(targetPathTemplateIndex, 1);
       templates.unshift(targetPathTemplate);
     }
 
-    for (let i = 0; i < templates.length; i++) {
-      const template = templates[i];
+    for (const template of templates) {
       // todo: catch errors?
       const output = await template.translate(target);
       if (output.applicable) return output;

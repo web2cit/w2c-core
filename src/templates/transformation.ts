@@ -237,7 +237,8 @@ export class RangeTransformation extends Transformation {
       .reduce((ranges: Array<Range>, rangeString: string) => {
         const [start, end] = rangeString.split(":");
         const range: Range = {
-          start: start === "" ? 0 : parseInt(start),
+          // see https://github.com/microsoft/TypeScript/issues/41638
+          start: start === "" ? 0 : parseInt(start as string),
         };
         if (end === undefined) {
           range.end = range.start;
