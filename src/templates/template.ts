@@ -6,7 +6,7 @@ import {
   TemplateFieldOutput,
 } from "./templateField";
 import log from "loglevel";
-import { isDomain, DomainNameError } from "../domain";
+import { isDomainName, DomainNameError } from "../domain";
 
 export class TranslationTemplate {
   readonly domain: string;
@@ -20,7 +20,7 @@ export class TranslationTemplate {
     template: TemplateDefinition | FallbackTemplateDefinition,
     forceRequiredFields: Array<FieldName> = []
   ) {
-    if (!isDomain(domain)) {
+    if (!isDomainName(domain)) {
       throw new DomainNameError(domain);
     }
     this.domain = domain;

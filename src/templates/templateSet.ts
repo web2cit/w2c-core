@@ -1,4 +1,4 @@
-import { DomainNameError, isDomain } from "../domain";
+import { DomainNameError, isDomainName } from "../domain";
 import { Webpage } from "../webpage";
 import {
   FallbackTemplateDefinition,
@@ -16,7 +16,7 @@ export class TemplateSet {
     templates: Array<TemplateDefinition> = [],
     fallbackTemplate?: FallbackTemplateDefinition
   ) {
-    if (!isDomain(domain)) {
+    if (!isDomainName(domain)) {
       throw new DomainNameError(domain);
     }
     if (fallbackTemplate && "path" in fallbackTemplate) {
