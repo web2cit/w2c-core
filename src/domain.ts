@@ -6,13 +6,15 @@ import {
 import { PathPattern, PatternDefinition } from "./pattern";
 import log from "loglevel";
 import * as config from "./config";
+import { Webpage } from ".";
 
 class Domain {
   domain: string;
   private _templates: Array<TranslationTemplate> = [];
   private _patterns: Array<PathPattern> = [];
   // private _tests: Array<Object> = [];
-
+  private _fallbackTemplate: TranslationTemplate | undefined;
+  private _fallbackPattern = new PathPattern(config.FALLBACK_PATTERN);
   constructor(
     domain: string,
     definition?: {
@@ -21,14 +23,18 @@ class Domain {
       // tests?: Array<Object>,
     },
     fallbacks?: {
-      template?: FallbackTemplateDefinition;
-      pattern?: PatternDefinition;
+      template: FallbackTemplateDefinition;
+      pattern: PatternDefinition;
     }
   ) {
     if (isDomainName(domain)) {
       this.domain = domain;
     } else {
       throw new DomainNameError(domain);
+    }
+    if (fallbacks) {
+      if (fallbacks.template) this.fallbackTemplate = fallbacks.template;
+      if (fallbacks.pattern) this.fallbackPattern = fallbacks.pattern;
     }
     if (definition && definition.templates) {
       definition.templates.forEach((templateDef) => {
@@ -56,7 +62,25 @@ class Domain {
   }
 
   get patterns() {
-    return Object.freeze([...this._patterns]);
+    const patterns = [...this._patterns];
+    // include the fallback pattern in the returned value
+    if (this._fallbacks.pattern) patterns.push(this._fallbacks.pattern);
+    return Object.freeze(patterns);
+  }
+
+  set fallbackTemplate(definition: FallbackTemplateDefinition) {
+    if ("path" in definition) {
+      throw new Error();
+    } else {
+      this._fallbacks.template = new TranslationTemplate(
+        this.domain,
+        definition
+      );
+    }
+  }
+
+  set fallbackPattern(definition: PathPattern) {
+    // confirm it doesn't exist already in the pattern list
   }
 
   addTemplate(
@@ -113,6 +137,7 @@ class Domain {
     const newPattern = new PathPattern(definition.pattern, definition.label);
     // silently ignore patterns already in the list
     if (
+      // fixme: include fallback pattern in the check
       this._patterns.some((pattern) => pattern.pattern === newPattern.pattern)
     ) {
       log.info(`Pattern ${definition.pattern} already in the pattern list`);
@@ -191,6 +216,92 @@ class Domain {
     } else {
       return output;
     }
+  }
+
+  // todo: get rid of the template set?
+  // translate(
+  //   target: Webpage,
+  //   fieldoutputs: boolean; // returns the fieldoutput array or not, rename array?
+  //   allTemplates = false  // pass this to template set: don't do sequential, don't stop when first applicable found
+  //   onlyApplicable = true  // only return results for applicable templates; if allTemplates false, only tried templates will be returned
+  //   forceTemplates = [paths]
+  //   forcePattern = pattern  // make as if target matched this pattern; ignored if forceTemplates
+  // ): {
+
+  //   target: {
+  //     path: '',
+  //     cachetime: {
+  //       https: number,
+  //       citoid: number
+  //     }
+  //   }
+  //   domain: {
+  //     name: '',
+  //     templates_revid: ,
+  //     patterns_revid:
+  //   }
+  //   translation: {
+  //     pattern: pattern used (pattern), or "*", or undefined if ignored (forced templates)
+  //     // maybe this should be how template set returns (except citation)
+  //     output: [  // whether one or all is controlled by the allapplicable
+  //       {
+  //         templatepath: '',
+  //         citation: citoid-compatible,  //
+  //         applicable: true
+  //         // BELOW ONLY IF REQUIRED
+  //         fieldoutputs: [ // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
+  //           {
+  //             fieldname
+  //             required
+  //             valid
+  //             applicable
+  //             selection: [
+  //               {
+  //                 type: '',
+  //                 value: '',
+  //                 output: []
+  //               },
+  //             ],
+  //             transformation: [{
+  //               {
+  //                 type: '',
+  //                 value: '',
+  //                 itemwise: '',
+  //                 output: []
+  //               }
+  //             ]
+  //             procedure: []
+  //             output (validated procedure output): [] // redundant with valid
+  //           }
+  //         ]
+  //         // update each module's output!!
+
+  //         ]
+  //       }
+  //     ]
+  //   }
+  // }
+
+  async fetchTemplates(): Promise<void> {
+    return;
+  }
+  async fetchPatterns(): Promise<void> {
+    return;
+  }
+  async fetchTests(): Promise<void> {
+    return;
+  }
+
+  toJSON(): {
+    templates: TemplateDefinition[];
+    patterns: PatternDefinition[];
+    tests: [];
+  } {
+    return {
+      templates: [],
+      patterns: [], // do not include the fallback pattern
+      tests: [],
+    };
   }
 }
 
