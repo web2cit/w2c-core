@@ -35,3 +35,8 @@ export class PathPattern {
     return this.regexp.test(path);
   }
 }
+
+export type PatternDefinition = {
+  pattern: string;
+  label?: string;
+};
