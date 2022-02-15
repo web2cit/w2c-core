@@ -1,6 +1,7 @@
 import { DomainNameError, isDomain } from "../domain";
 import { Webpage } from "../webpage";
 import {
+  FallbackTemplateDefinition,
   TemplateDefinition,
   TemplateOutput,
   TranslationTemplate,
@@ -13,12 +14,12 @@ export class TemplateSet {
   constructor(
     domain: string,
     templates: Array<TemplateDefinition> = [],
-    fallbackTemplate?: Partial<TemplateDefinition>
+    fallbackTemplate?: FallbackTemplateDefinition
   ) {
     if (!isDomain(domain)) {
       throw new DomainNameError(domain);
     }
-    if (fallbackTemplate && fallbackTemplate.path) {
+    if (fallbackTemplate && "path" in fallbackTemplate) {
       throw new Error("Fallback template should not have template path");
     }
     const duplicatePaths = TemplateSet.getDuplicatePaths(templates);

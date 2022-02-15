@@ -9,52 +9,25 @@ import log from "loglevel";
 import { isDomain, DomainNameError } from "../domain";
 
 export class TranslationTemplate {
-  domain: string;
+  readonly domain: string;
   // a fallback template does not have a path
-  template?: Webpage;
+  readonly template?: Webpage;
   label: string;
+  private forceRequiredFields: Array<FieldName>;
   private _fields: Array<TemplateField> = [];
-  constructor(domain: string, template: Partial<TemplateDefinition> = {}) {
+  constructor(
+    domain: string,
+    template: TemplateDefinition | FallbackTemplateDefinition,
+    forceRequiredFields: Array<FieldName> = []
+  ) {
     if (!isDomain(domain)) {
       throw new DomainNameError(domain);
     }
     this.domain = domain;
-    this.path = template.path;
-    this.label = template.label ?? "";
-    if (template.fields) {
-      this.fields = template.fields.map((field) => {
-        return new TemplateField(field);
-      });
-    }
-  }
+    this.forceRequiredFields = forceRequiredFields;
 
-  get fields(): TranslationTemplate["_fields"] {
-    return this._fields;
-  }
-
-  set fields(fields: TranslationTemplate["_fields"]) {
-    const uniqueFields: Array<FieldName> = [];
-    this._fields = fields.reduce((dedupFields: Array<TemplateField>, field) => {
-      if (field.isUnique && uniqueFields.includes(field.name)) {
-        // consider alternatives, such as winston, debug, and console.info
-        log.info(`Skipping duplicate unique field "${field.name}"`);
-      } else {
-        if (field.isUnique) {
-          uniqueFields.push(field.name);
-        }
-        dedupFields.push(field);
-      }
-      return dedupFields;
-    }, []);
-  }
-
-  get path() {
-    return this.template && this.template.path;
-  }
-
-  set path(path: string | undefined) {
-    if (path) {
-      const url = "http://" + this.domain + path;
+    if ("path" in template) {
+      const url = "http://" + this.domain + template.path;
       try {
         this.template = new Webpage(url);
       } catch {
@@ -64,9 +37,55 @@ export class TranslationTemplate {
             url
         );
       }
-    } else {
-      this.template = undefined;
     }
+
+    this.label = template.label ?? "";
+
+    if (template.fields) {
+      template.fields.forEach((definition) => {
+        const field = new TemplateField(definition);
+        try {
+          this.addField(field);
+        } catch (e) {
+          if (e instanceof DuplicateUniqueFieldError) {
+            log.info(`Skipping duplicate unique field "${field.name}"`);
+          } else {
+            throw e;
+          }
+        }
+      });
+    }
+  }
+
+  get fields(): ReadonlyArray<TemplateField> {
+    return Object.freeze([...this._fields]);
+  }
+
+  addField(newField: TemplateField) {
+    if (
+      newField.isUnique &&
+      this._fields.some((field) => field.name === newField.name)
+    ) {
+      throw new DuplicateUniqueFieldError(newField.name);
+    } else {
+      this._fields.push(newField);
+    }
+  }
+
+  removeField(name: FieldName, order?: number) {
+    if (this.forceRequiredFields.includes(name)) {
+      throw new Error(`Cannot remove forced-required field ${name}`);
+    }
+    const indices = this._fields.reduce((indices: number[], field, index) => {
+      if (field.name === name) indices.push(index);
+      return indices;
+    }, []);
+    const index = indices.at(order ?? -1);
+    if (index !== undefined) this._fields.splice(index, 1);
+  }
+
+  get path() {
+    return this.template && this.template.path;
   }
 
   async translate(target: Webpage): Promise<TemplateOutput> {
@@ -112,6 +131,15 @@ export interface TemplateDefinition {
   // path is mandatory for template definition
   // fallback templates (without a path) should not have a definition
   path: string;
-  label: string;
-  fields: Array<TemplateFieldDefinition>;
+  fields?: Array<TemplateFieldDefinition>;
+  label?: string;
+}
+
+export type FallbackTemplateDefinition = Omit<TemplateDefinition, "path">;
+
+class DuplicateUniqueFieldError extends Error {
+  constructor(fieldname: string) {
+    super(`Unique template ${fieldname} already exists in template`);
+    this.name = "Duplicate unique field error";
+  }
 }
