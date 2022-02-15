@@ -12,9 +12,27 @@ it("returns false for no match", () => {
 
 it("ignores target query strings", () => {
   const pattern = new PathPattern("/**/dir/*.html"); // should it be **/dir?
-  expect(pattern.match("/dir/page.html?query=id")).toBe(true);
+  expect(pattern.match("/path/to/dir/page.html?query=id")).toBe(true);
 });
 
-// it rejects wrong glob
+it("matches globstars against nested directories", () => {
+  const pattern = new PathPattern("/path/**/*.html");
+  expect(pattern.match("/path/to/page.html")).toBe(true);
+  expect(pattern.match("/path/to/web/page.html")).toBe(true);
+});
 
-// it normalizes target path prior to matching
+it("matches globstars against zero", () => {
+  const pattern = new PathPattern("/path/**/*.html");
+  // see https://github.com/isaacs/minimatch/issues/157
+  expect(pattern.match("/path/page.html")).toBe(true);
+});
+
+// can't think of any wrong glob
+// it("rejects wrong glob", () => {
+//   expect(() => { new PathPattern("") }).toThrow();
+// })
+
+it("normalizes target path before matching", () => {
+  const pattern = new PathPattern("/path/to/dir/*.html");
+  expect(pattern.match("/path//to/../to/./dir/page.html")).toBe(true);
+});
