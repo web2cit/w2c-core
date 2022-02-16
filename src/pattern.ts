@@ -23,6 +23,8 @@ export class PathPattern {
     }
   }
 
+  static catchall = Object.freeze(new PathPattern("**/*"));
+
   match(path: string): boolean {
     // ignore query string
     // use control template field to handle these

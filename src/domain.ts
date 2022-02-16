@@ -2,40 +2,49 @@ import {
   TranslationTemplate,
   TemplateDefinition,
   FallbackTemplateDefinition,
+  FallbackTemplate,
+  BaseTranslationTemplate,
+  translateWithTemplates,
 } from "./templates/template";
 import { PathPattern, PatternDefinition } from "./pattern";
 import log from "loglevel";
 import * as config from "./config";
+import { MediaWikiBaseFieldCitation } from "./citoid";
+import { SelectionDefinition } from "./templates/selection";
+import { StepOutput } from "./templates/step";
+import { TransformationDefinition } from "./templates/transformation";
+import { FieldName } from "./translationField";
 import { Webpage } from ".";
 
 class Domain {
-  domain: string;
+  readonly domain: string;
+  readonly catchallPattern: Readonly<PathPattern> | undefined;
   private _templates: Array<TranslationTemplate> = [];
   private _patterns: Array<PathPattern> = [];
   // private _tests: Array<Object> = [];
-  private _fallbackTemplate: TranslationTemplate | undefined;
-  private _fallbackPattern = new PathPattern(config.FALLBACK_PATTERN);
+  private _fallbackTemplate: FallbackTemplate | undefined;
+  private revIDs: {
+    templates: number | undefined;
+    patterns: number | undefined;
+    tests: number | undefined;
+  };
   constructor(
     domain: string,
-    definition?: {
+    definition: {
       templates?: Array<TemplateDefinition>;
       patterns?: Array<PatternDefinition>;
       // tests?: Array<Object>,
-    },
-    fallbacks?: {
-      template: FallbackTemplateDefinition;
-      pattern: PatternDefinition;
-    }
+    } = {},
+    fallbackTemplate: FallbackTemplateDefinition | undefined,
+    catchallPattern = true
   ) {
     if (isDomainName(domain)) {
       this.domain = domain;
     } else {
       throw new DomainNameError(domain);
     }
-    if (fallbacks) {
-      if (fallbacks.template) this.fallbackTemplate = fallbacks.template;
-      if (fallbacks.pattern) this.fallbackPattern = fallbacks.pattern;
-    }
+    if (fallbackTemplate) this.fallbackTemplate = fallbackTemplate;
+    if (catchallPattern) this.catchallPattern = PathPattern.catchall;
     if (definition && definition.templates) {
       definition.templates.forEach((templateDef) => {
         try {
@@ -61,27 +70,47 @@ class Domain {
     return Object.freeze([...this._templates]);
   }
 
+  set templates(templates) {
+    throw new Error(
+      `Cannot set templates. Use add/move/removeTemplate methods instead`
+    );
+  }
+
   get patterns() {
     const patterns = [...this._patterns];
-    // include the fallback pattern in the returned value
-    if (this._fallbacks.pattern) patterns.push(this._fallbacks.pattern);
     return Object.freeze(patterns);
   }
 
-  set fallbackTemplate(definition: FallbackTemplateDefinition) {
-    if ("path" in definition) {
-      throw new Error();
+  set patterns(patterns) {
+    throw new Error(
+      `Cannot set patterns. Use add/move/removePattern methods instead`
+    );
+  }
+
+  get fallbackTemplate() {
+    if (this._fallbackTemplate !== undefined) {
+      return this._fallbackTemplate.toJSON();
+    }
+  }
+
+  set fallbackTemplate(definition: FallbackTemplateDefinition | undefined) {
+    if (definition === undefined) {
+      this._fallbackTemplate = undefined;
     } else {
-      this._fallbacks.template = new TranslationTemplate(
+      if ("path" in definition) {
+        throw new Error("Fallback template should not have template path");
+      }
+      this._fallbackTemplate = new FallbackTemplate(
         this.domain,
-        definition
+        definition,
+        config.forceRequiredFields
       );
     }
   }
 
-  set fallbackPattern(definition: PathPattern) {
-    // confirm it doesn't exist already in the pattern list
-  }
+  // fixme:
+  // running any of these should change the corresponding revid?
+  // beware: also mutating one of the templates, patterns, etc!!
 
   addTemplate(
     definition: TemplateDefinition,
@@ -130,17 +159,29 @@ class Domain {
     const index = this._templates.findIndex(
       (template) => template.path === path
     );
-    if (index > -1) this._templates.splice(index, 1);
+    if (index > -1) {
+      this._templates.splice(index, 1);
+      log.info(
+        `Template for path ${path} at index ${index} successfully removed`
+      );
+    } else {
+      log.info(`Could not remove template for path ${path}. No template found`);
+    }
   }
 
   addPattern(definition: PatternDefinition, index?: number): PathPattern {
     const newPattern = new PathPattern(definition.pattern, definition.label);
-    // silently ignore patterns already in the list
     if (
-      // fixme: include fallback pattern in the check
       this._patterns.some((pattern) => pattern.pattern === newPattern.pattern)
     ) {
+      // silently ignore patterns already in the list
       log.info(`Pattern ${definition.pattern} already in the pattern list`);
+    } else if (
+      this.catchallPattern &&
+      this.catchallPattern.pattern === newPattern.pattern
+    ) {
+      // silently ignore pattern matching the catchall pattern
+      log.info(`Pattern ${definition.pattern} matches the catchall pattern`);
     } else {
       if (index !== undefined) {
         this._patterns.splice(index, 0, newPattern);
@@ -187,6 +228,7 @@ class Domain {
     const output: Map<PatternString, Array<PathString>> = new Map();
     if (
       targetPattern !== undefined &&
+      // fixme: inject catchall pattern
       this._patterns.every((pattern) => pattern.pattern !== targetPattern)
     ) {
       // immediately return an empty array if the target pattern is not in the pattern list
@@ -218,77 +260,109 @@ class Domain {
     }
   }
 
-  // todo: get rid of the template set?
-  // translate(
-  //   target: Webpage,
-  //   fieldoutputs: boolean; // returns the fieldoutput array or not, rename array?
-  //   allTemplates = false  // pass this to template set: don't do sequential, don't stop when first applicable found
-  //   onlyApplicable = true  // only return results for applicable templates; if allTemplates false, only tried templates will be returned
-  //   forceTemplates = [paths]
-  //   forcePattern = pattern  // make as if target matched this pattern; ignored if forceTemplates
-  // ): {
+  // fixme: add an option to not add fallback at the end
+  getTemplatesForPattern(pattern: string): Array<BaseTranslationTemplate> {
+    const paths = this.sortPaths(
+      this.templates.map((template) => template.path),
+      pattern
+    );
+    const templates: BaseTranslationTemplate[] = paths.map(
+      // path came from sortPaths(), so getTemplate(path) should be defined
+      (path) => this.getTemplate(path) as TranslationTemplate
+    );
+    if (this._fallbackTemplate) templates.push(this._fallbackTemplate);
+    return templates;
+  }
 
-  //   target: {
-  //     path: '',
-  //     cachetime: {
-  //       https: number,
-  //       citoid: number
-  //     }
-  //   }
-  //   domain: {
-  //     name: '',
-  //     templates_revid: ,
-  //     patterns_revid:
-  //   }
-  //   translation: {
-  //     pattern: pattern used (pattern), or "*", or undefined if ignored (forced templates)
-  //     // maybe this should be how template set returns (except citation)
-  //     output: [  // whether one or all is controlled by the allapplicable
-  //       {
-  //         templatepath: '',
-  //         citation: citoid-compatible,  //
-  //         applicable: true
-  //         // BELOW ONLY IF REQUIRED
-  //         fieldoutputs: [ // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
-  //           {
-  //             fieldname
-  //             required
-  //             valid
-  //             applicable
-  //             selection: [
-  //               {
-  //                 type: '',
-  //                 value: '',
-  //                 output: []
-  //               },
-  //             ],
-  //             transformation: [{
-  //               {
-  //                 type: '',
-  //                 value: '',
-  //                 itemwise: '',
-  //                 output: []
-  //               }
-  //             ]
-  //             procedure: []
-  //             output (validated procedure output): [] // redundant with valid
-  //           }
-  //         ]
-  //         // update each module's output!!
+  async translate(
+    target: Webpage,
+    options: {
+      templateFieldInfo: boolean; // returns the fieldoutput array or not, rename array?
+      allTemplates: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
+      onlyApplicable: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
+      fillWithCitoid: boolean; // replace all invalid fields with citoid response
+      forceTemplatePaths?: string[];
+      forcePattern?: string; // make as if target matched this pattern; ignored if forceTemplates
+    } = {
+      templateFieldInfo: false, // returns the fieldoutput array or not, rename array?
+      allTemplates: false, // pass this to template set: don't do sequential, don't stop when first applicable found
+      onlyApplicable: true, // only return results for applicable templates; if allTemplates false, only tried templates will be returned
+      fillWithCitoid: false,
+    }
+  ): Promise<TranslationOutput> {
+    let pattern: string | undefined; // remains undefined if forceTemplatePaths
+    // determine what pattern the target belongs to
+    // use forcePattern option, skip step if forceTemplatePaths
+    // handle an empty response (stop here)
 
-  //         ]
-  //       }
-  //     ]
-  //   }
-  // }
+    // get all templates for that pattern
+    // use forceTemplatePaths
+    // get the actual templates plus fallback (even with forceTemplates?)
+
+    // translate target with templates returned above
+    // use allTemplates option
+    let templateOutputs = await translateWithTemplates(target, [], {
+      tryAllTemplates: options.allTemplates,
+    });
+
+    // parse output with onlyApplicable option
+    if (options.onlyApplicable) {
+      templateOutputs = templateOutputs.filter(
+        (templateOutput) => templateOutput.applicable
+      );
+    }
+
+    // create citoid citations from output
+    // use fillWithCitiod
+    // template output to citoid function
+    // should we have this in the template file?
+    // in the citoid file?
+
+    // compose the final outputs
+    const outputs = [];
+
+    return {
+      domain: {
+        name: this.domain,
+        definitions: {
+          patterns: {
+            revid: this.revIDs.patterns,
+          },
+          templates: {
+            revid: this.revIDs.templates,
+          },
+        },
+      },
+      target: {
+        path: target.path,
+        caches: {
+          http: {
+            // fixme: do not call getdata if not needed!
+            timestamp: (await target.cache.http.getData()).timestamp,
+          },
+          citoid: {
+            // fixme: idem
+            timestamp: (await target.cache.http.getData()).timestamp,
+          },
+        },
+      },
+      translation: {
+        pattern: pattern,
+        outputs: outputs,
+      },
+    };
+  }
 
   async fetchTemplates(): Promise<void> {
+    // update templatesRevID
     return;
   }
   async fetchPatterns(): Promise<void> {
+    // update patternsRevID
     return;
   }
   async fetchTests(): Promise<void> {
+    // update testsRevID
     return;
   }
 
@@ -335,6 +409,62 @@ export function isDomainName(hostname: string): boolean {
 
   return true;
 }
+
+// todo: consider extending into the more-specific output types
+export type TranslationOutput = {
+  domain: {
+    name: string;
+    definitions: {
+      patterns: {
+        revid?: number; // can they be 0?
+      };
+      templates: {
+        revid?: number;
+      };
+    };
+  };
+  // webpage tojson?
+  target: {
+    path: string;
+    caches: {
+      http?: {
+        timestamp: number;
+      };
+      citoid?: {
+        timestamp: number;
+      };
+    };
+  };
+  translation: {
+    outputs: {
+      // todo: move out; it's a template output with extra "citation"
+      template: {
+        applicable?: boolean; // for some specific types it should always be true; // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
+        path: string | null; // undefined for fallback template
+        fields?: {
+          // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
+          // todo: move out; a merge between field definition and field output
+          // field definition
+          name: FieldName;
+          required: boolean;
+          // field output
+          procedure: {
+            selections: Array<SelectionDefinition & { output: StepOutput }>;
+            transformations: Array<
+              TransformationDefinition & { output: StepOutput }
+            >;
+            output: StepOutput;
+          };
+          output: Array<string | null>; // this is a validated output; no need to have separate valid property
+          applicable: boolean;
+        }[];
+      };
+      citation: MediaWikiBaseFieldCitation;
+      timestamp: number;
+    }[];
+    pattern?: string; // undefined if forced templates
+  };
+};
 
 export class DomainNameError extends Error {
   constructor(domain: string) {

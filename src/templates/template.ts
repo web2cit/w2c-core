@@ -8,14 +8,13 @@ import {
 import log from "loglevel";
 import { isDomainName, DomainNameError } from "../domain";
 
-export class TranslationTemplate {
+export abstract class BaseTranslationTemplate {
   readonly domain: string;
-  // a fallback template does not have a path
-  readonly template?: Webpage;
+  abstract template?: Webpage;
   label: string;
   private forceRequiredFields: Array<FieldName>;
   private _fields: Array<TemplateField> = [];
-  constructor(
+  protected constructor(
     domain: string,
     template: TemplateDefinition | FallbackTemplateDefinition,
     forceRequiredFields: Array<FieldName> = []
@@ -25,22 +24,7 @@ export class TranslationTemplate {
     }
     this.domain = domain;
     this.forceRequiredFields = forceRequiredFields;
-
-    if ("path" in template) {
-      const url = "http://" + this.domain + template.path;
-      try {
-        this.template = new Webpage(url);
-      } catch {
-        throw new Error(
-          "Could not create a Webpage object for the URL " +
-            "formed by the domain and path provided: " +
-            url
-        );
-      }
-    }
-
     this.label = template.label ?? "";
-
     if (template.fields) {
       template.fields.forEach((definition) => {
         const field = new TemplateField(definition);
@@ -84,9 +68,7 @@ export class TranslationTemplate {
     if (index !== undefined) this._fields.splice(index, 1);
   }
 
-  get path() {
-    return this.template && this.template.path;
-  }
+  abstract get path(): string | undefined;
 
   async translate(target: Webpage): Promise<TemplateOutput> {
     if (target.domain !== this.domain) {
@@ -106,17 +88,116 @@ export class TranslationTemplate {
     };
   }
 
-  toJSON(): TemplateDefinition | undefined {
-    if (this.template === undefined) {
-      // fallback templates without a template path should not be printed
-      return;
-    }
+  toJSON(): TemplateDefinition | FallbackTemplateDefinition {
     return {
-      path: this.template.path,
       fields: this.fields.map((field) => field.toJSON()),
       label: this.label,
     };
   }
+}
+
+export class TranslationTemplate extends BaseTranslationTemplate {
+  readonly template: Webpage;
+  constructor(
+    domain: string,
+    template: TemplateDefinition,
+    forceRequiredFields: Array<FieldName> = []
+  ) {
+    super(domain, template, forceRequiredFields);
+    const url = "http://" + this.domain + template.path;
+    try {
+      this.template = new Webpage(url);
+    } catch {
+      throw new Error(
+        "Could not create a Webpage object for the URL " +
+          "formed by the domain and path provided: " +
+          url
+      );
+    }
+  }
+
+  get path() {
+    return this.template.path;
+  }
+
+  toJSON(): TemplateDefinition {
+    return {
+      ...super.toJSON(),
+      path: this.path,
+    };
+  }
+}
+
+export class FallbackTemplate extends BaseTranslationTemplate {
+  template: undefined;
+  constructor(
+    domain: string,
+    template: FallbackTemplateDefinition,
+    forceRequiredFields: Array<FieldName> = []
+  ) {
+    super(domain, template, forceRequiredFields);
+  }
+  get path() {
+    return undefined;
+  }
+}
+
+export async function translateWithTemplates(
+  target: Webpage,
+  templates: BaseTranslationTemplate[],
+  options: {
+    preferSamePath?: boolean;
+    tryAllTemplates?: boolean;
+  } = {
+    preferSamePath: true,
+    tryAllTemplates: false,
+  }
+): Promise<TemplateOutput[]> {
+  // no duplicate templates for the same path
+  const paths = templates.map((template) => template.path ?? "<fallback>");
+  const duplicatePaths = paths.reduce(
+    (duplicatePaths: string[], path, index) => {
+      if (index !== paths.indexOf(path) && !duplicatePaths.includes(path)) {
+        duplicatePaths.push(path);
+      }
+      return duplicatePaths;
+    },
+    []
+  );
+  if (duplicatePaths.length > 0) {
+    throw new Error(
+      `Multiple templates given for path: ${duplicatePaths.join(", ")}`
+    );
+  }
+
+  if (options.preferSamePath) {
+    const targetPathTemplateIndex = templates.findIndex(
+      (template) => template.path === target.path
+    );
+    const targetPathTemplate = templates[targetPathTemplateIndex];
+    if (targetPathTemplate !== undefined) {
+      templates.splice(targetPathTemplateIndex, 1);
+      templates.unshift(targetPathTemplate);
+    }
+  }
+
+  let outputs: TemplateOutput[];
+  if (options.tryAllTemplates) {
+    outputs = await Promise.all(
+      templates.map((template) => template.translate(target))
+    );
+  } else {
+    outputs = [];
+    for (const template of templates) {
+      // todo: catch errors?
+      const output = await template.translate(target);
+      if (output.applicable) {
+        outputs.push(output);
+        break;
+      }
+    }
+  }
+  return outputs;
 }
 
 export interface TemplateOutput {
@@ -124,12 +205,10 @@ export interface TemplateOutput {
   outputs: Array<TemplateFieldOutput>;
   applicable: boolean;
   timestamp: Date;
-  template: TranslationTemplate;
+  template: BaseTranslationTemplate;
 }
 
 export interface TemplateDefinition {
-  // path is mandatory for template definition
-  // fallback templates (without a path) should not have a definition
   path: string;
   fields?: Array<TemplateFieldDefinition>;
   label?: string;
