@@ -5,6 +5,7 @@ import {
   FallbackTemplate,
   BaseTranslationTemplate,
   translateWithTemplates,
+  TemplateOutput,
 } from "./templates/template";
 import { PathPattern, PatternDefinition } from "./pattern";
 import log from "loglevel";
@@ -15,8 +16,12 @@ import { StepOutput } from "./templates/step";
 import { TransformationDefinition } from "./templates/transformation";
 import { FieldName } from "./translationField";
 import { Webpage } from ".";
+import {
+  outputToCitation,
+  TemplateFieldOutput,
+} from "./templates/templateField";
 
-class Domain {
+export class Domain {
   readonly domain: string;
   readonly catchallPattern: Readonly<PathPattern> | undefined;
   private _templates: Array<TranslationTemplate> = [];
@@ -24,10 +29,10 @@ class Domain {
   // private _tests: Array<Object> = [];
   private _fallbackTemplate: FallbackTemplate | undefined;
   private revIDs: {
-    templates: number | undefined;
-    patterns: number | undefined;
-    tests: number | undefined;
-  };
+    templates?: number;
+    patterns?: number;
+    tests?: number;
+  } = {};
   constructor(
     domain: string,
     definition: {
@@ -274,6 +279,8 @@ class Domain {
     return templates;
   }
 
+  // todo: consider alternative fallback approach without fallback templates
+  // see T302019
   async translate(
     target: Webpage,
     options: {
@@ -291,17 +298,33 @@ class Domain {
     }
   ): Promise<TranslationOutput> {
     let pattern: string | undefined; // remains undefined if forceTemplatePaths
-    // determine what pattern the target belongs to
-    // use forcePattern option, skip step if forceTemplatePaths
-    // handle an empty response (stop here)
+    let templates: BaseTranslationTemplate[];
 
-    // get all templates for that pattern
-    // use forceTemplatePaths
-    // get the actual templates plus fallback (even with forceTemplates?)
+    if (options.forceTemplatePaths === undefined) {
+      // determine what pattern the target belongs to
+      pattern =
+        options.forcePattern ?? this.sortPaths(target.path).keys().next().value;
+      if (pattern !== undefined) {
+        // get all templates for that pattern
+        templates = this.getTemplatesForPattern(pattern);
+      } else {
+        templates = [];
+      }
+      // if (this._fallbackTemplate !== undefined) templates.push(this._fallbackTemplate);
+    } else {
+      // no fallback template if forced template paths
+      templates = options.forceTemplatePaths.reduce(
+        (templates: BaseTranslationTemplate[], path) => {
+          const template = this.getTemplate(path);
+          if (template !== undefined) templates.push(template);
+          return templates;
+        },
+        []
+      );
+    }
 
     // translate target with templates returned above
-    // use allTemplates option
-    let templateOutputs = await translateWithTemplates(target, [], {
+    let templateOutputs = await translateWithTemplates(target, templates, {
       tryAllTemplates: options.allTemplates,
     });
 
@@ -312,14 +335,19 @@ class Domain {
       );
     }
 
-    // create citoid citations from output
-    // use fillWithCitiod
-    // template output to citoid function
-    // should we have this in the template file?
-    // in the citoid file?
+    let baseCitation: MediaWikiBaseFieldCitation | undefined;
+    if (options.fillWithCitoid) {
+      // baseCitation = (await target.cache.citoid.getData()).citation
+    }
 
     // compose the final outputs
-    const outputs = [];
+    const outputs: Translation[] = templateOutputs.map((templateOutput) => {
+      return this.composeOutput(
+        templateOutput,
+        options.templateFieldInfo,
+        baseCitation
+      );
+    });
 
     return {
       domain: {
@@ -353,8 +381,125 @@ class Domain {
     };
   }
 
+  /**
+   * Compose a final translation from a template output
+   * @param templateOutput
+   * @param templateFieldInfo
+   * @param baseCitation
+   * @returns
+   */
+  private composeOutput(
+    templateOutput: TemplateOutput,
+    templateFieldInfo: boolean,
+    baseCitation: MediaWikiBaseFieldCitation | undefined
+  ): Translation {
+    // create citoid citations from output
+    const citation = this.makeCitation(
+      templateOutput.outputs,
+      templateOutput.target.url.href,
+      baseCitation
+    );
+
+    let fields: FieldInfo[] | undefined;
+    if (templateFieldInfo) {
+      fields = templateOutput.outputs.map((fieldOutput) => {
+        // fixme: this should be simplified when SelectionOutput is changed
+        const selections = fieldOutput.procedureOutput.procedure.selections.map(
+          (selection, index) => {
+            return {
+              type: selection.type,
+              value: selection.config,
+              output: fieldOutput.procedureOutput.output.selection[
+                index
+              ] as StepOutput,
+            };
+          }
+        );
+        const transformations =
+          fieldOutput.procedureOutput.procedure.transformations.map(
+            (transformation, index) => {
+              return {
+                type: transformation.type,
+                value: transformation.config,
+                itemwise: transformation.itemwise,
+                output: fieldOutput.procedureOutput.output.transformation[
+                  index
+                ] as StepOutput,
+              };
+            }
+          );
+        const fieldInfo: FieldInfo = {
+          name: fieldOutput.fieldname,
+          required: fieldOutput.required,
+          procedure: {
+            selections,
+            transformations,
+            output: fieldOutput.procedureOutput.output.procedure,
+          },
+          output: fieldOutput.output,
+          applicable: fieldOutput.applicable,
+        };
+        return fieldInfo;
+      });
+    }
+
+    const translation: Translation = {
+      citation: citation,
+      timestamp: templateOutput.timestamp,
+      template: {
+        path: templateOutput.template.path,
+        applicable: templateOutput.applicable,
+        fields,
+      },
+    };
+    return translation;
+  }
+
+  private makeCitation(
+    fieldOutputs: TemplateFieldOutput[],
+    url: string,
+    baseCitation?: MediaWikiBaseFieldCitation
+  ): WebToCitCitation {
+    const tmpCitation = outputToCitation(fieldOutputs);
+
+    const itemType = tmpCitation.itemType ?? baseCitation?.itemType;
+    if (itemType === undefined) {
+      throw new Error(
+        `"itemType" not found in template output or base citation`
+      );
+    }
+    const title = tmpCitation.title ?? baseCitation?.title;
+    if (title === undefined) {
+      throw new Error(`"title" not found in template output or base citation`);
+    }
+
+    const citation: WebToCitCitation = {
+      ...baseCitation,
+      ...tmpCitation,
+
+      // required fields...
+      // ...for which we may have a template output (see above)
+      itemType,
+      title,
+      // ...for which we may have template fields in the future
+      tags: baseCitation?.tags ?? [],
+      url,
+      // ...for which we always override the baseCitation value
+      key: "",
+      version: 0,
+
+      // optional fields...
+      // ...for which we never want the baseCitation value
+      source: baseCitation ? ["Web2Cit", "Zotero"] : ["Web2Cit"],
+    };
+    return citation;
+  }
+
   async fetchTemplates(): Promise<void> {
     // update templatesRevID
+
+    // Unknown field, selection and transformation types should be silently ignored so new versions can be tested without breaking old versions.
+    // Same with selection and transformation configuration values.
     return;
   }
   async fetchPatterns(): Promise<void> {
@@ -381,8 +526,6 @@ class Domain {
 
 type PathString = string;
 type PatternString = string;
-
-export { Domain };
 
 /**
  * Return whether the host name provided is a valid fully qualified domain name
@@ -428,42 +571,44 @@ export type TranslationOutput = {
     path: string;
     caches: {
       http?: {
-        timestamp: number;
+        timestamp: string;
       };
       citoid?: {
-        timestamp: number;
+        timestamp: string;
       };
     };
   };
   translation: {
-    outputs: {
-      // todo: move out; it's a template output with extra "citation"
-      template: {
-        applicable?: boolean; // for some specific types it should always be true; // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
-        path: string | null; // undefined for fallback template
-        fields?: {
-          // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
-          // todo: move out; a merge between field definition and field output
-          // field definition
-          name: FieldName;
-          required: boolean;
-          // field output
-          procedure: {
-            selections: Array<SelectionDefinition & { output: StepOutput }>;
-            transformations: Array<
-              TransformationDefinition & { output: StepOutput }
-            >;
-            output: StepOutput;
-          };
-          output: Array<string | null>; // this is a validated output; no need to have separate valid property
-          applicable: boolean;
-        }[];
-      };
-      citation: MediaWikiBaseFieldCitation;
-      timestamp: number;
-    }[];
+    outputs: Translation[];
     pattern?: string; // undefined if forced templates
   };
+};
+
+type Translation = {
+  // todo: move out; it's a template output with extra "citation"
+  template: {
+    applicable?: boolean; // for some specific types it should always be true; // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
+    path: string | undefined; // undefined for fallback template
+    fields?: FieldInfo[];
+  };
+  citation: WebToCitCitation;
+  timestamp: string;
+};
+
+type FieldInfo = {
+  // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
+  // todo: move out; a merge between field definition and field output
+  // field definition
+  name: FieldName;
+  required: boolean;
+  // field output
+  procedure: {
+    selections: Array<SelectionDefinition & { output: StepOutput }>;
+    transformations: Array<TransformationDefinition & { output: StepOutput }>;
+    output: StepOutput;
+  };
+  output: Array<string | null>; // this is a validated output; no need to have separate valid property
+  applicable: boolean;
 };
 
 export class DomainNameError extends Error {
@@ -478,3 +623,7 @@ export class DuplicateTemplatePathError extends Error {
     this.name = "Duplicate template path error";
   }
 }
+
+type WebToCitCitation = Omit<MediaWikiBaseFieldCitation, "source"> & {
+  source: Array<"Web2Cit" | "Zotero">;
+};

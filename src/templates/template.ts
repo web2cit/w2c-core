@@ -83,7 +83,7 @@ export abstract class BaseTranslationTemplate {
       target,
       outputs,
       applicable: outputs.every((output) => output.applicable),
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       template: this,
     };
   }
@@ -204,7 +204,7 @@ export interface TemplateOutput {
   target: Webpage;
   outputs: Array<TemplateFieldOutput>;
   applicable: boolean;
-  timestamp: Date;
+  timestamp: string;
   template: BaseTranslationTemplate;
 }
 

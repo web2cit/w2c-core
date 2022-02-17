@@ -71,6 +71,9 @@ export const ITEM_TYPES = [
   "webpage",
 ] as const;
 export type ItemType = typeof ITEM_TYPES[number];
+export function isItemType(itemType: string): itemType is ItemType {
+  return ITEM_TYPES.includes(itemType as ItemType);
+}
 
 export abstract class TranslationField {
   private static params: Record<FieldName, FieldParameters> = {
