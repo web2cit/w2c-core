@@ -28,7 +28,8 @@ export abstract class DomainConfiguration<
         storageFilename: string,
         storageKey: string,
         configuration?: ConfigurationDefinitionType,
-        storageRoot = 'https://https://meta.wikimedia.org/wiki/Web2Cit/data/',
+        storageServer = 'https://meta.wikimedia.org/wiki/',
+        storageRoot = 'Web2Cit/data/',
     ) {
         if (!isDomainName(domain)) {
             throw new DomainNameError(domain);
@@ -38,7 +39,7 @@ export abstract class DomainConfiguration<
         labels.reverse();
         this.storage = {
             root: storageRoot,
-            path: labels.join('/'),
+            path: labels.join('/') + '/',
             filename: storageFilename,
             key: storageKey
         }
@@ -92,9 +93,14 @@ export abstract class DomainConfiguration<
                 break;
             }
             
-            const query = Object.entries(params).map(([param, value]) => {
-                return `${param}=${value}`
-            }).join('&');
+            const query = Object.entries(params).reduce(
+                (query: string[], [param, value]) => {
+                    if (value !== undefined) {
+                        query.push(`${param}=${value}`)
+                    }
+                    return query;
+                }, []
+            ).join('&');
             const url = MEDIAWIKI_API + "?" + query;
             
             let jsonResponse;
@@ -116,7 +122,7 @@ export abstract class DomainConfiguration<
                     const revision: ContentRevision = {
                         'revid': apiRevision.revid,
                         'timestamp': apiRevision.timestamp,
-                        'content': apiRevision.slots.main.content
+                        'content': apiRevision.slots?.main.content
                     }
                     revisions.push(revision);
                 })
@@ -143,9 +149,9 @@ export abstract class DomainConfiguration<
     }
 
     async fetchRevision(
-        revid: RevisionMetadata['revid']
+        revid?: RevisionMetadata['revid']
     ): Promise<ConfigurationRevision<ConfigurationDefinitionType>> {
-        const revisions = await this.fetchRevisions(true);
+        const revisions = await this.fetchRevisions(true, revid, 1);
         const revision = revisions[0];
 
         if (revision === undefined) {
@@ -161,12 +167,14 @@ export abstract class DomainConfiguration<
         // todo: do not parse content here
         const strippedContent = revision.content
         .replace('<syntaxhighlight lang="json">', '')
-        .replace('</syntaxhighlight>​', '');
+        // fixme: why do we have to escape?
+        .replace('</syntaxhighlight>', '');
         
         let jsonContent;
         try {
             jsonContent = JSON.parse(strippedContent);
         } catch {
+            // todo: include strippedContent in the rejection
             return Promise.reject('Failed to JSON-parse the revision content');
         }
 
@@ -185,14 +193,14 @@ export abstract class DomainConfiguration<
         }
     }
 
-    async getRevisionIds(refresh = false): Promise<RevisionMetadata[]> {
+    getRevisionIds(refresh = false): Promise<RevisionMetadata[]> {
         if (this.revisions === undefined || refresh) {
             this.revisions = this.fetchRevisionIds();
         }
         return this.revisions;
     }
 
-    async getRevision(
+    getRevision(
         revid: RevisionMetadata['revid'], refresh = false
     ): Promise<ConfigurationRevision<ConfigurationDefinitionType>> {
         let revision = this.revisionCache.get(revid);
@@ -201,6 +209,19 @@ export abstract class DomainConfiguration<
             this.revisionCache.set(revid, revision);
         }
         return revision;
+    }
+
+    // fixme: no-async
+    getLatestRevision(): Promise<ConfigurationRevision<ConfigurationDefinitionType>> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const revision = await this.fetchRevision();
+                this.revisionCache.set(revision.revid, Promise.resolve(revision));
+                resolve(revision);
+            } catch (e) {
+                reject(e);
+            }
+        });
     }
    
     // fixme: make it not abstract
@@ -251,7 +272,7 @@ interface RevisionsApiResponse {
                     revid: number,
                     parentid: number,
                     timestamp: string,
-                    slots: {
+                    slots?: {
                         main: {
                             contentmodel: string,
                             contentformat: string,
