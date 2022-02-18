@@ -15,7 +15,7 @@ import { SelectionDefinition } from "./templates/selection";
 import { StepOutput } from "./templates/step";
 import { TransformationDefinition } from "./templates/transformation";
 import { FieldName } from "./translationField";
-import { Webpage } from ".";
+import { Webpage } from "./webpage";
 import {
   outputToCitation,
   TemplateFieldOutput,
@@ -364,14 +364,14 @@ export class Domain {
       target: {
         path: target.path,
         caches: {
-          http: {
-            // fixme: do not call getdata if not needed!
-            timestamp: (await target.cache.http.getData()).timestamp,
-          },
-          citoid: {
-            // fixme: idem
-            timestamp: (await target.cache.http.getData()).timestamp,
-          },
+          http:
+            target.cache.http.timestamp !== undefined
+              ? { timestamp: target.cache.http.timestamp }
+              : undefined,
+          citoid:
+            target.cache.citoid.timestamp !== undefined
+              ? { timestamp: target.cache.citoid.timestamp }
+              : undefined,
         },
       },
       translation: {

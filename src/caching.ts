@@ -6,6 +6,7 @@ import { JSDOM } from "jsdom";
 
 abstract class ResponseCache {
   url: string;
+  timestamp: string | undefined;
   abstract getData(refresh: boolean): Promise<CacheData>;
   abstract fetchData(): Promise<CacheData>;
   // if using this["_dataPromise"] below, can't make this protected; see
@@ -32,11 +33,9 @@ abstract class ResponseCache {
   }
 }
 
-interface CacheData {
-  timestamp: string;
-}
+type CacheData = HttpCacheData | CitoidCacheData;
 
-interface HttpCacheData extends CacheData {
+interface HttpCacheData {
   body: string;
   doc: Document;
   headers: Map<string, string>;
@@ -67,8 +66,8 @@ class HttpCache extends ResponseCache {
               body,
               doc: document,
               headers: new Map(response.headers),
-              timestamp: new Date().toISOString(),
             };
+            this.timestamp = new Date().toISOString();
             this._refreshing = false;
             resolve(data);
           } else {
@@ -111,7 +110,7 @@ function cleanDom(window: JSDOM["window"]): Document {
   return document;
 }
 
-interface CitoidCacheData extends CacheData {
+interface CitoidCacheData {
   citation: SimpleCitoidCitation;
 }
 
@@ -131,8 +130,8 @@ class CitoidCache extends ResponseCache {
         .then((citation) => {
           const data: CitoidCacheData = {
             citation: citation,
-            timestamp: new Date().toISOString(),
           };
+          this.timestamp = new Date().toISOString();
           resolve(data);
         })
         .catch((reason) => {
