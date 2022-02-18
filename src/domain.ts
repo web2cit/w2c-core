@@ -20,508 +20,269 @@ import {
   outputToCitation,
   TemplateFieldOutput,
 } from "./templates/templateField";
+import { TemplateConfiguration } from "./domain/templateConfiguration";
+import { PatternConfiguration } from "./domain/patternConfiguration";
 
 export class Domain {
-  readonly domain: string;
-  readonly catchallPattern: Readonly<PathPattern> | undefined;
-  private _templates: Array<TranslationTemplate> = [];
-  private _patterns: Array<PathPattern> = [];
-  // private _tests: Array<Object> = [];
-  private _fallbackTemplate: FallbackTemplate | undefined;
-  private revIDs: {
-    templates?: number;
-    patterns?: number;
-    tests?: number;
-  } = {};
-  constructor(
-    domain: string,
-    definition: {
-      templates?: Array<TemplateDefinition>;
-      patterns?: Array<PatternDefinition>;
-      // tests?: Array<Object>,
-    } = {},
-    fallbackTemplate: FallbackTemplateDefinition | undefined,
-    catchallPattern = true
-  ) {
-    if (isDomainName(domain)) {
-      this.domain = domain;
-    } else {
-      throw new DomainNameError(domain);
-    }
-    if (fallbackTemplate) this.fallbackTemplate = fallbackTemplate;
-    if (catchallPattern) this.catchallPattern = PathPattern.catchall;
-    if (definition && definition.templates) {
-      definition.templates.forEach((templateDef) => {
-        try {
-          this.addTemplate(templateDef);
-        } catch (e) {
-          if (e instanceof DuplicateTemplatePathError) {
-            // silently ignore duplicate template paths
-            log.info(
-              `Skipping duplicate templates for path ${templateDef.path}`
-            );
-          } else {
-            throw e;
-          }
-        }
-      });
-    }
-    if (definition && definition.patterns) {
-      definition.patterns.forEach((patternDef) => this.addPattern(patternDef));
-    }
-  }
+  // readonly domain: string;
+  // templates: TemplateConfiguration;
+  // patterns: PatternConfiguration;
+  // // tests: TestConfiguration;
+  // constructor(
+  //   domain: string,
+  //   definition: {
+  //     templates?: Array<TemplateDefinition>;
+  //     patterns?: Array<PatternDefinition>;
+  //     // tests?: Array<Object>,
+  //   } = {},
+  //   fallbackTemplate: FallbackTemplateDefinition | undefined,
+  //   catchallPattern = true
+  // ) {
+  //   if (isDomainName(domain)) {
+  //     this.domain = domain;
+  //   } else {
+  //     throw new DomainNameError(domain);
+  //   }
+  //   this.templates = new TemplateConfiguration(
+  //     definition && definition.templates,
+  //     fallbackTemplate
+  //   );
+  //   this.patterns = new PatternConfiguration(
+  //     definition && definition.patterns,
+  //     catchallPattern
+  //   );
+  //   }
+  // }
 
-  get templates() {
-    return Object.freeze([...this._templates]);
-  }
+  // // fixme: add an option to not add fallback at the end
+  // getTemplatesForPattern(pattern: string): Array<BaseTranslationTemplate> {
+  //   const paths = this.sortPaths(
+  //     this.templates.map((template) => template.path),
+  //     pattern
+  //   );
+  //   const templates: BaseTranslationTemplate[] = paths.map(
+  //     // path came from sortPaths(), so getTemplate(path) should be defined
+  //     (path) => this.getTemplate(path) as TranslationTemplate
+  //   );
+  //   if (this._fallbackTemplate) templates.push(this._fallbackTemplate);
+  //   return templates;
+  // }
 
-  set templates(templates) {
-    throw new Error(
-      `Cannot set templates. Use add/move/removeTemplate methods instead`
-    );
-  }
+  // // todo: consider alternative fallback approach without fallback templates
+  // // see T302019
+  // async translate(
+  //   target: Webpage,
+  //   options: {
+  //     templateFieldInfo: boolean; // returns the fieldoutput array or not, rename array?
+  //     allTemplates: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
+  //     onlyApplicable: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
+  //     fillWithCitoid: boolean; // replace all invalid fields with citoid response
+  //     forceTemplatePaths?: string[];
+  //     forcePattern?: string; // make as if target matched this pattern; ignored if forceTemplates
+  //   } = {
+  //     templateFieldInfo: false, // returns the fieldoutput array or not, rename array?
+  //     allTemplates: false, // pass this to template set: don't do sequential, don't stop when first applicable found
+  //     onlyApplicable: true, // only return results for applicable templates; if allTemplates false, only tried templates will be returned
+  //     fillWithCitoid: false,
+  //   }
+  // ): Promise<TranslationOutput> {
+  //   let pattern: string | undefined; // remains undefined if forceTemplatePaths
+  //   let templates: BaseTranslationTemplate[];
 
-  get patterns() {
-    const patterns = [...this._patterns];
-    return Object.freeze(patterns);
-  }
+  //   if (options.forceTemplatePaths === undefined) {
+  //     // determine what pattern the target belongs to
+  //     pattern =
+  //       options.forcePattern ?? this.sortPaths(target.path).keys().next().value;
+  //     if (pattern !== undefined) {
+  //       // get all templates for that pattern
+  //       templates = this.getTemplatesForPattern(pattern);
+  //     } else {
+  //       templates = [];
+  //     }
+  //     // if (this._fallbackTemplate !== undefined) templates.push(this._fallbackTemplate);
+  //   } else {
+  //     // no fallback template if forced template paths
+  //     templates = options.forceTemplatePaths.reduce(
+  //       (templates: BaseTranslationTemplate[], path) => {
+  //         const template = this.getTemplate(path);
+  //         if (template !== undefined) templates.push(template);
+  //         return templates;
+  //       },
+  //       []
+  //     );
+  //   }
 
-  set patterns(patterns) {
-    throw new Error(
-      `Cannot set patterns. Use add/move/removePattern methods instead`
-    );
-  }
+  //   // translate target with templates returned above
+  //   let templateOutputs = await translateWithTemplates(target, templates, {
+  //     tryAllTemplates: options.allTemplates,
+  //   });
 
-  get fallbackTemplate() {
-    if (this._fallbackTemplate !== undefined) {
-      return this._fallbackTemplate.toJSON();
-    }
-  }
+  //   // parse output with onlyApplicable option
+  //   if (options.onlyApplicable) {
+  //     templateOutputs = templateOutputs.filter(
+  //       (templateOutput) => templateOutput.applicable
+  //     );
+  //   }
 
-  set fallbackTemplate(definition: FallbackTemplateDefinition | undefined) {
-    if (definition === undefined) {
-      this._fallbackTemplate = undefined;
-    } else {
-      if ("path" in definition) {
-        throw new Error("Fallback template should not have template path");
-      }
-      this._fallbackTemplate = new FallbackTemplate(
-        this.domain,
-        definition,
-        config.forceRequiredFields
-      );
-    }
-  }
+  //   let baseCitation: MediaWikiBaseFieldCitation | undefined;
+  //   if (options.fillWithCitoid) {
+  //     // baseCitation = (await target.cache.citoid.getData()).citation
+  //   }
 
-  // fixme:
-  // running any of these should change the corresponding revid?
-  // beware: also mutating one of the templates, patterns, etc!!
+  //   // compose the final outputs
+  //   const outputs: Translation[] = templateOutputs.map((templateOutput) => {
+  //     return this.composeOutput(
+  //       templateOutput,
+  //       options.templateFieldInfo,
+  //       baseCitation
+  //     );
+  //   });
 
-  addTemplate(
-    definition: TemplateDefinition,
-    index?: number
-  ): TranslationTemplate {
-    // create template instance before checking if path already exists
-    // because the template constructor may make changes to the path
-    const newTemplate = new TranslationTemplate(
-      this.domain,
-      definition,
-      config.forceRequiredFields
-    );
-    if (
-      this._templates.some((template) => template.path === newTemplate.path)
-    ) {
-      throw new DuplicateTemplatePathError(definition.path);
-    } else {
-      if (index !== undefined) {
-        this._templates.splice(index, 0, newTemplate);
-      } else {
-        this._templates.push(newTemplate);
-      }
-    }
-    return newTemplate;
-  }
+  //   return {
+  //     domain: {
+  //       name: this.domain,
+  //       definitions: {
+  //         patterns: {
+  //           revid: this.revIDs.patterns,
+  //         },
+  //         templates: {
+  //           revid: this.revIDs.templates,
+  //         },
+  //       },
+  //     },
+  //     target: {
+  //       path: target.path,
+  //       caches: {
+  //         http:
+  //           target.cache.http.timestamp !== undefined
+  //             ? { timestamp: target.cache.http.timestamp }
+  //             : undefined,
+  //         citoid:
+  //           target.cache.citoid.timestamp !== undefined
+  //             ? { timestamp: target.cache.citoid.timestamp }
+  //             : undefined,
+  //       },
+  //     },
+  //     translation: {
+  //       pattern: pattern,
+  //       outputs: outputs,
+  //     },
+  //   };
+  // }
 
-  getTemplate(path: string): TranslationTemplate | undefined {
-    const index = this._templates.findIndex(
-      (template) => template.path === path
-    );
-    const template = this._templates[index];
-    return template;
-  }
+  // /**
+  //  * Compose a final translation from a template output
+  //  * @param templateOutput
+  //  * @param templateFieldInfo
+  //  * @param baseCitation
+  //  * @returns
+  //  */
+  // private composeOutput(
+  //   templateOutput: TemplateOutput,
+  //   templateFieldInfo: boolean,
+  //   baseCitation: MediaWikiBaseFieldCitation | undefined
+  // ): Translation {
+  //   // create citoid citations from output
+  //   const citation = this.makeCitation(
+  //     templateOutput.outputs,
+  //     templateOutput.target.url.href,
+  //     baseCitation
+  //   );
 
-  moveTemplate(path: string, newIndex: number): void {
-    const oldIndex = this._templates.findIndex(
-      (template) => template.path === path
-    );
-    const template = this._templates.splice(oldIndex, 1)[0];
-    if (template !== undefined) {
-      this._templates.splice(newIndex, 0, template);
-    }
-  }
+  //   let fields: FieldInfo[] | undefined;
+  //   if (templateFieldInfo) {
+  //     fields = templateOutput.outputs.map((fieldOutput) => {
+  //       // fixme: this should be simplified when SelectionOutput is changed
+  //       const selections = fieldOutput.procedureOutput.procedure.selections.map(
+  //         (selection, index) => {
+  //           return {
+  //             type: selection.type,
+  //             value: selection.config,
+  //             output: fieldOutput.procedureOutput.output.selection[
+  //               index
+  //             ] as StepOutput,
+  //           };
+  //         }
+  //       );
+  //       const transformations =
+  //         fieldOutput.procedureOutput.procedure.transformations.map(
+  //           (transformation, index) => {
+  //             return {
+  //               type: transformation.type,
+  //               value: transformation.config,
+  //               itemwise: transformation.itemwise,
+  //               output: fieldOutput.procedureOutput.output.transformation[
+  //                 index
+  //               ] as StepOutput,
+  //             };
+  //           }
+  //         );
+  //       const fieldInfo: FieldInfo = {
+  //         name: fieldOutput.fieldname,
+  //         required: fieldOutput.required,
+  //         procedure: {
+  //           selections,
+  //           transformations,
+  //           output: fieldOutput.procedureOutput.output.procedure,
+  //         },
+  //         output: fieldOutput.output,
+  //         applicable: fieldOutput.applicable,
+  //       };
+  //       return fieldInfo;
+  //     });
+  //   }
 
-  removeTemplate(path: string): void {
-    const index = this._templates.findIndex(
-      (template) => template.path === path
-    );
-    if (index > -1) {
-      this._templates.splice(index, 1);
-      log.info(
-        `Template for path ${path} at index ${index} successfully removed`
-      );
-    } else {
-      log.info(`Could not remove template for path ${path}. No template found`);
-    }
-  }
+  //   const translation: Translation = {
+  //     citation: citation,
+  //     timestamp: templateOutput.timestamp,
+  //     template: {
+  //       path: templateOutput.template.path,
+  //       applicable: templateOutput.applicable,
+  //       fields,
+  //     },
+  //   };
+  //   return translation;
+  // }
 
-  addPattern(definition: PatternDefinition, index?: number): PathPattern {
-    const newPattern = new PathPattern(definition.pattern, definition.label);
-    if (
-      this._patterns.some((pattern) => pattern.pattern === newPattern.pattern)
-    ) {
-      // silently ignore patterns already in the list
-      log.info(`Pattern ${definition.pattern} already in the pattern list`);
-    } else if (
-      this.catchallPattern &&
-      this.catchallPattern.pattern === newPattern.pattern
-    ) {
-      // silently ignore pattern matching the catchall pattern
-      log.info(`Pattern ${definition.pattern} matches the catchall pattern`);
-    } else {
-      if (index !== undefined) {
-        this._patterns.splice(index, 0, newPattern);
-      } else {
-        this._patterns.push(newPattern);
-      }
-    }
-    return newPattern;
-  }
+  // private makeCitation(
+  //   fieldOutputs: TemplateFieldOutput[],
+  //   url: string,
+  //   baseCitation?: MediaWikiBaseFieldCitation
+  // ): WebToCitCitation {
+  //   const tmpCitation = outputToCitation(fieldOutputs);
 
-  getPattern(pattern: string): PathPattern | undefined {
-    const index = this._patterns.findIndex(
-      (patternObj) => patternObj.pattern === pattern
-    );
-    return this._patterns[index];
-  }
+  //   const itemType = tmpCitation.itemType ?? baseCitation?.itemType;
+  //   if (itemType === undefined) {
+  //     throw new Error(
+  //       `"itemType" not found in template output or base citation`
+  //     );
+  //   }
+  //   const title = tmpCitation.title ?? baseCitation?.title;
+  //   if (title === undefined) {
+  //     throw new Error(`"title" not found in template output or base citation`);
+  //   }
 
-  movePattern(pattern: string, newIndex: number): void {
-    const oldIndex = this._patterns.findIndex((patternObj) => {
-      patternObj.pattern === pattern;
-    });
-    const patternObj = this._patterns[oldIndex];
-    if (patternObj !== undefined) {
-      this._patterns.splice(newIndex, 0, patternObj);
-    }
-  }
+  //   const citation: WebToCitCitation = {
+  //     ...baseCitation,
+  //     ...tmpCitation,
 
-  removePattern(pattern: string): void {
-    const index = this._patterns.findIndex((patternObj) => {
-      patternObj.pattern === pattern;
-    });
-    if (index > -1) this._patterns.splice(index, 1);
-  }
+  //     // required fields...
+  //     // ...for which we may have a template output (see above)
+  //     itemType,
+  //     title,
+  //     // ...for which we may have template fields in the future
+  //     tags: baseCitation?.tags ?? [],
+  //     url,
+  //     // ...for which we always override the baseCitation value
+  //     key: "",
+  //     version: 0,
 
-  sortPaths(paths: PathString[] | PathString): Map<PatternString, PathString[]>;
-  sortPaths(
-    paths: PathString[] | PathString,
-    targetPattern: PatternString
-  ): PathString[];
-  sortPaths(
-    paths: PathString[] | PathString,
-    targetPattern?: PatternString
-  ): Map<PatternString, PathString[]> | PathString[] {
-    const output: Map<PatternString, Array<PathString>> = new Map();
-    if (
-      targetPattern !== undefined &&
-      // fixme: inject catchall pattern
-      this._patterns.every((pattern) => pattern.pattern !== targetPattern)
-    ) {
-      // immediately return an empty array if the target pattern is not in the pattern list
-      return [];
-      // throw new Error(`Pattern "${targetPattern}" not in the pattern list`);
-    }
-    if (!Array.isArray(paths)) {
-      paths = [paths];
-    }
-    let pendingPaths = [...paths];
-    for (const pattern of this._patterns) {
-      const matches: PathString[] = [];
-      const newPending: PathString[] = [];
-      for (const path of pendingPaths) {
-        if (pattern.match(path)) {
-          matches.push(path);
-        } else {
-          newPending.push(path);
-        }
-      }
-      if (matches.length) output.set(pattern.pattern, matches);
-      pendingPaths = newPending;
-      if (pattern.pattern === targetPattern) break;
-    }
-    if (targetPattern) {
-      return output.get(targetPattern) ?? [];
-    } else {
-      return output;
-    }
-  }
-
-  // fixme: add an option to not add fallback at the end
-  getTemplatesForPattern(pattern: string): Array<BaseTranslationTemplate> {
-    const paths = this.sortPaths(
-      this.templates.map((template) => template.path),
-      pattern
-    );
-    const templates: BaseTranslationTemplate[] = paths.map(
-      // path came from sortPaths(), so getTemplate(path) should be defined
-      (path) => this.getTemplate(path) as TranslationTemplate
-    );
-    if (this._fallbackTemplate) templates.push(this._fallbackTemplate);
-    return templates;
-  }
-
-  // todo: consider alternative fallback approach without fallback templates
-  // see T302019
-  async translate(
-    target: Webpage,
-    options: {
-      templateFieldInfo: boolean; // returns the fieldoutput array or not, rename array?
-      allTemplates: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
-      onlyApplicable: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
-      fillWithCitoid: boolean; // replace all invalid fields with citoid response
-      forceTemplatePaths?: string[];
-      forcePattern?: string; // make as if target matched this pattern; ignored if forceTemplates
-    } = {
-      templateFieldInfo: false, // returns the fieldoutput array or not, rename array?
-      allTemplates: false, // pass this to template set: don't do sequential, don't stop when first applicable found
-      onlyApplicable: true, // only return results for applicable templates; if allTemplates false, only tried templates will be returned
-      fillWithCitoid: false,
-    }
-  ): Promise<TranslationOutput> {
-    let pattern: string | undefined; // remains undefined if forceTemplatePaths
-    let templates: BaseTranslationTemplate[];
-
-    if (options.forceTemplatePaths === undefined) {
-      // determine what pattern the target belongs to
-      pattern =
-        options.forcePattern ?? this.sortPaths(target.path).keys().next().value;
-      if (pattern !== undefined) {
-        // get all templates for that pattern
-        templates = this.getTemplatesForPattern(pattern);
-      } else {
-        templates = [];
-      }
-      // if (this._fallbackTemplate !== undefined) templates.push(this._fallbackTemplate);
-    } else {
-      // no fallback template if forced template paths
-      templates = options.forceTemplatePaths.reduce(
-        (templates: BaseTranslationTemplate[], path) => {
-          const template = this.getTemplate(path);
-          if (template !== undefined) templates.push(template);
-          return templates;
-        },
-        []
-      );
-    }
-
-    // translate target with templates returned above
-    let templateOutputs = await translateWithTemplates(target, templates, {
-      tryAllTemplates: options.allTemplates,
-    });
-
-    // parse output with onlyApplicable option
-    if (options.onlyApplicable) {
-      templateOutputs = templateOutputs.filter(
-        (templateOutput) => templateOutput.applicable
-      );
-    }
-
-    let baseCitation: MediaWikiBaseFieldCitation | undefined;
-    if (options.fillWithCitoid) {
-      // baseCitation = (await target.cache.citoid.getData()).citation
-    }
-
-    // compose the final outputs
-    const outputs: Translation[] = templateOutputs.map((templateOutput) => {
-      return this.composeOutput(
-        templateOutput,
-        options.templateFieldInfo,
-        baseCitation
-      );
-    });
-
-    return {
-      domain: {
-        name: this.domain,
-        definitions: {
-          patterns: {
-            revid: this.revIDs.patterns,
-          },
-          templates: {
-            revid: this.revIDs.templates,
-          },
-        },
-      },
-      target: {
-        path: target.path,
-        caches: {
-          http:
-            target.cache.http.timestamp !== undefined
-              ? { timestamp: target.cache.http.timestamp }
-              : undefined,
-          citoid:
-            target.cache.citoid.timestamp !== undefined
-              ? { timestamp: target.cache.citoid.timestamp }
-              : undefined,
-        },
-      },
-      translation: {
-        pattern: pattern,
-        outputs: outputs,
-      },
-    };
-  }
-
-  /**
-   * Compose a final translation from a template output
-   * @param templateOutput
-   * @param templateFieldInfo
-   * @param baseCitation
-   * @returns
-   */
-  private composeOutput(
-    templateOutput: TemplateOutput,
-    templateFieldInfo: boolean,
-    baseCitation: MediaWikiBaseFieldCitation | undefined
-  ): Translation {
-    // create citoid citations from output
-    const citation = this.makeCitation(
-      templateOutput.outputs,
-      templateOutput.target.url.href,
-      baseCitation
-    );
-
-    let fields: FieldInfo[] | undefined;
-    if (templateFieldInfo) {
-      fields = templateOutput.outputs.map((fieldOutput) => {
-        // fixme: this should be simplified when SelectionOutput is changed
-        const selections = fieldOutput.procedureOutput.procedure.selections.map(
-          (selection, index) => {
-            return {
-              type: selection.type,
-              value: selection.config,
-              output: fieldOutput.procedureOutput.output.selection[
-                index
-              ] as StepOutput,
-            };
-          }
-        );
-        const transformations =
-          fieldOutput.procedureOutput.procedure.transformations.map(
-            (transformation, index) => {
-              return {
-                type: transformation.type,
-                value: transformation.config,
-                itemwise: transformation.itemwise,
-                output: fieldOutput.procedureOutput.output.transformation[
-                  index
-                ] as StepOutput,
-              };
-            }
-          );
-        const fieldInfo: FieldInfo = {
-          name: fieldOutput.fieldname,
-          required: fieldOutput.required,
-          procedure: {
-            selections,
-            transformations,
-            output: fieldOutput.procedureOutput.output.procedure,
-          },
-          output: fieldOutput.output,
-          applicable: fieldOutput.applicable,
-        };
-        return fieldInfo;
-      });
-    }
-
-    const translation: Translation = {
-      citation: citation,
-      timestamp: templateOutput.timestamp,
-      template: {
-        path: templateOutput.template.path,
-        applicable: templateOutput.applicable,
-        fields,
-      },
-    };
-    return translation;
-  }
-
-  private makeCitation(
-    fieldOutputs: TemplateFieldOutput[],
-    url: string,
-    baseCitation?: MediaWikiBaseFieldCitation
-  ): WebToCitCitation {
-    const tmpCitation = outputToCitation(fieldOutputs);
-
-    const itemType = tmpCitation.itemType ?? baseCitation?.itemType;
-    if (itemType === undefined) {
-      throw new Error(
-        `"itemType" not found in template output or base citation`
-      );
-    }
-    const title = tmpCitation.title ?? baseCitation?.title;
-    if (title === undefined) {
-      throw new Error(`"title" not found in template output or base citation`);
-    }
-
-    const citation: WebToCitCitation = {
-      ...baseCitation,
-      ...tmpCitation,
-
-      // required fields...
-      // ...for which we may have a template output (see above)
-      itemType,
-      title,
-      // ...for which we may have template fields in the future
-      tags: baseCitation?.tags ?? [],
-      url,
-      // ...for which we always override the baseCitation value
-      key: "",
-      version: 0,
-
-      // optional fields...
-      // ...for which we never want the baseCitation value
-      source: baseCitation ? ["Web2Cit", "Zotero"] : ["Web2Cit"],
-    };
-    return citation;
-  }
-
-  async fetchTemplates(): Promise<void> {
-    // update templatesRevID
-
-    // Unknown field, selection and transformation types should be silently ignored so new versions can be tested without breaking old versions.
-    // Same with selection and transformation configuration values.
-    return;
-  }
-  async fetchPatterns(): Promise<void> {
-    // update patternsRevID
-    return;
-  }
-  async fetchTests(): Promise<void> {
-    // update testsRevID
-    return;
-  }
-
-  toJSON(): {
-    templates: TemplateDefinition[];
-    patterns: PatternDefinition[];
-    tests: [];
-  } {
-    return {
-      templates: [],
-      patterns: [], // do not include the fallback pattern
-      tests: [],
-    };
-  }
+  //     // optional fields...
+  //     // ...for which we never want the baseCitation value
+  //     source: baseCitation ? ["Web2Cit", "Zotero"] : ["Web2Cit"],
+  //   };
+  //   return citation;
+  // }
 }
 
 type PathString = string;
