@@ -1,157 +1,146 @@
-import { PathPattern, PatternDefinition } from "../pattern";
+import { PathPattern } from "../patterns/pattern";
 import { DomainConfiguration } from "./domainConfiguration";
+import log from "loglevel";
+import { PatternDefinition } from "../types";
 
 export class PatternConfiguration extends DomainConfiguration<
-  PathPattern, PatternDefinition
+  PathPattern,
+  PatternDefinition
 > {
+  private patterns: PathPattern[];
+  readonly catchall: Readonly<PathPattern> | null;
   constructor(
     domain: string,
-    configuration?: PatternDefinition,
+    patterns?: PatternDefinition[],
+    useCatchall = true
   ) {
-    super(
-      domain, 'templates.json', 'templates', configuration
-    );
+    super(domain, "patterns.json");
+    this.patterns = this.values;
+    this.catchall = useCatchall ? PathPattern.catchall : null;
+    if (patterns) this.loadConfiguration(patterns);
   }
 
-  get() { return [] };
+  get(patterns?: string | string[] | undefined): PathPattern[] {
+    let patternObjs: PathPattern[];
+    if (patterns === undefined) {
+      patternObjs = [...this.patterns];
+    } else {
+      const patternArray = Array.isArray(patterns) ? patterns : [patterns];
+      patternObjs = this.patterns.filter((pattern) =>
+        patternArray.includes(pattern.pattern)
+      );
+    }
+    return patternObjs;
+  }
 
-  add() { return new PathPattern('') };
+  // todo: do we want a method to edit a pattern
+  // to make sure that the currentRevid is set to undefined upon changes?
 
-  move() { return };
+  add(definition: PatternDefinition, index?: number): PathPattern {
+    const newPattern = new PathPattern(definition.pattern, definition.label);
+    if (
+      this.patterns.some((pattern) => pattern.pattern === newPattern.pattern)
+    ) {
+      // silently ignore patterns already in the list
+      log.info(`Pattern ${definition.pattern} already in the pattern list`);
+    } else if (
+      this.catchall !== null &&
+      this.catchall.pattern === newPattern.pattern
+    ) {
+      // silently ignore pattern matching the catchall pattern
+      log.info(`Pattern ${definition.pattern} matches the catchall pattern`);
+    } else {
+      if (index !== undefined) {
+        this.patterns.splice(index, 0, newPattern);
+      } else {
+        this.patterns.push(newPattern);
+      }
+      this.currentRevid = undefined;
+    }
+    return newPattern;
+  }
 
-  remove() { return };
+  move(pattern: string, newIndex: number): void {
+    const oldIndex = this.patterns.findIndex((patternObj) => {
+      patternObj.pattern === pattern;
+    });
+    const patternObj = this.patterns[oldIndex];
+    if (patternObj !== undefined) {
+      this.patterns.splice(newIndex, 0, patternObj);
+      this.currentRevid = undefined;
+    }
+  }
 
-  parse() { return [] };
+  remove(pattern: string): void {
+    const index = this.patterns.findIndex((patternObj) => {
+      patternObj.pattern === pattern;
+    });
+    if (index > -1) {
+      this.patterns.splice(index, 1);
+      this.currentRevid = undefined;
+    }
+  }
 
-  toJSON() { return {'pattern': ''} }
+  loadConfiguration(patterns: PatternDefinition[]) {
+    if (this.catchall === undefined) {
+      throw new Error(
+        "Catchall pattern must be defined before loading pattern configuration"
+      );
+    }
+    patterns.forEach((definition) => {
+      this.add(definition);
+    });
+  }
+
+  sortPaths(paths: PathString[] | PathString): Map<PatternString, PathString[]>;
+  sortPaths(
+    paths: PathString[] | PathString,
+    targetPattern: PatternString
+  ): PathString[];
+  sortPaths(
+    paths: PathString[] | PathString,
+    targetPattern?: PatternString
+  ): Map<PatternString, PathString[]> | PathString[] {
+    const output: Map<PatternString, Array<PathString>> = new Map();
+
+    const patterns: Array<PathPattern | Readonly<PathPattern>> = [
+      ...this.patterns,
+    ];
+    if (this.catchall) patterns.push(this.catchall);
+
+    if (
+      targetPattern !== undefined &&
+      patterns.every((pattern) => pattern.pattern !== targetPattern)
+    ) {
+      // immediately return an empty array if the target pattern is not in the pattern list
+      return [];
+      // throw new Error(`Pattern "${targetPattern}" not in the pattern list`);
+    }
+    if (!Array.isArray(paths)) {
+      paths = [paths];
+    }
+    let pendingPaths = [...paths];
+    for (const pattern of patterns) {
+      const matches: PathString[] = [];
+      const newPending: PathString[] = [];
+      for (const path of pendingPaths) {
+        if (pattern.match(path)) {
+          matches.push(path);
+        } else {
+          newPending.push(path);
+        }
+      }
+      if (matches.length) output.set(pattern.pattern, matches);
+      pendingPaths = newPending;
+      if (pattern.pattern === targetPattern) break;
+    }
+    if (targetPattern) {
+      return output.get(targetPattern) ?? [];
+    } else {
+      return output;
+    }
+  }
 }
 
-//   patterns // ??
-//   readonly catchallPattern: Readonly<PathPattern> | undefined; //???
-
-//   constructor(
-//     patterns?: Array<PatternDefinition>;
-//     catchallPattern = true
-
-//   ) {
-//     definition.patterns.forEach((patternDef) => this.addPattern(patternDef));
-
-//   }
-
-//   // do i need these?
-
-//   get patterns() {
-//     const patterns = [...this._patterns];
-//     return Object.freeze(patterns);
-//   }
-
-//   set patterns(patterns) {
-//     throw new Error(
-//       `Cannot set patterns. Use add/move/removePattern methods instead`
-//     );
-//   }
-
-
-
-
-//     // fixme:
-//   // running any of these should change the corresponding revid?
-//   // beware: also mutating one of the templates, patterns, etc!!
-
-//     addPattern(definition: PatternDefinition, index?: number): PathPattern {
-//         const newPattern = new PathPattern(definition.pattern, definition.label);
-//         if (
-//           this._patterns.some((pattern) => pattern.pattern === newPattern.pattern)
-//         ) {
-//           // silently ignore patterns already in the list
-//           log.info(`Pattern ${definition.pattern} already in the pattern list`);
-//         } else if (
-//           this.catchallPattern &&
-//           this.catchallPattern.pattern === newPattern.pattern
-//         ) {
-//           // silently ignore pattern matching the catchall pattern
-//           log.info(`Pattern ${definition.pattern} matches the catchall pattern`);
-//         } else {
-//           if (index !== undefined) {
-//             this._patterns.splice(index, 0, newPattern);
-//           } else {
-//             this._patterns.push(newPattern);
-//           }
-//         }
-//         return newPattern;
-//       }
-    
-//       getPattern(pattern: string): PathPattern | undefined {
-//         const index = this._patterns.findIndex(
-//           (patternObj) => patternObj.pattern === pattern
-//         );
-//         return this._patterns[index];
-//       }
-    
-//       movePattern(pattern: string, newIndex: number): void {
-//         const oldIndex = this._patterns.findIndex((patternObj) => {
-//           patternObj.pattern === pattern;
-//         });
-//         const patternObj = this._patterns[oldIndex];
-//         if (patternObj !== undefined) {
-//           this._patterns.splice(newIndex, 0, patternObj);
-//         }
-//       }
-    
-//       removePattern(pattern: string): void {
-//         const index = this._patterns.findIndex((patternObj) => {
-//           patternObj.pattern === pattern;
-//         });
-//         if (index > -1) this._patterns.splice(index, 1);
-//       }
-
-//       async fetchPatterns(): Promise<void> {
-//         // update patternsRevID
-//         return;
-//       }
-
-//       sortPaths(paths: PathString[] | PathString): Map<PatternString, PathString[]>;
-//       sortPaths(
-//         paths: PathString[] | PathString,
-//         targetPattern: PatternString
-//       ): PathString[];
-//       sortPaths(
-//         paths: PathString[] | PathString,
-//         targetPattern?: PatternString
-//       ): Map<PatternString, PathString[]> | PathString[] {
-//         const output: Map<PatternString, Array<PathString>> = new Map();
-//         if (
-//           targetPattern !== undefined &&
-//           // fixme: inject catchall pattern
-//           this._patterns.every((pattern) => pattern.pattern !== targetPattern)
-//         ) {
-//           // immediately return an empty array if the target pattern is not in the pattern list
-//           return [];
-//           // throw new Error(`Pattern "${targetPattern}" not in the pattern list`);
-//         }
-//         if (!Array.isArray(paths)) {
-//           paths = [paths];
-//         }
-//         let pendingPaths = [...paths];
-//         for (const pattern of this._patterns) {
-//           const matches: PathString[] = [];
-//           const newPending: PathString[] = [];
-//           for (const path of pendingPaths) {
-//             if (pattern.match(path)) {
-//               matches.push(path);
-//             } else {
-//               newPending.push(path);
-//             }
-//           }
-//           if (matches.length) output.set(pattern.pattern, matches);
-//           pendingPaths = newPending;
-//           if (pattern.pattern === targetPattern) break;
-//         }
-//         if (targetPattern) {
-//           return output.get(targetPattern) ?? [];
-//         } else {
-//           return output;
-//         }
-//       }
-    
-// }
+type PathString = string;
+type PatternString = string;

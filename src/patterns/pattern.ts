@@ -1,29 +1,22 @@
 import minimatch from "minimatch";
 import { normalize } from "path";
+import { PatternDefinition } from "../types";
 
 export class PathPattern {
   label: string;
-  private _pattern = "";
+  readonly pattern: string;
   private regexp = new RegExp("");
   constructor(pattern: string, label?: string) {
-    this.pattern = pattern;
-    this.label = label || "";
-  }
-
-  get pattern(): string {
-    return this._pattern;
-  }
-
-  set pattern(pattern: string) {
     try {
       this.regexp = minimatch.makeRe(pattern);
-      this._pattern = pattern;
+      this.pattern = pattern;
     } catch {
       throw new Error(`${pattern} is not a valid glob pattern`);
     }
+    this.label = label || "";
   }
 
-  static catchall = Object.freeze(new PathPattern("**/*"));
+  static catchall = Object.freeze(new PathPattern("**"));
 
   match(path: string): boolean {
     // ignore query string
@@ -36,9 +29,11 @@ export class PathPattern {
 
     return this.regexp.test(path);
   }
-}
 
-export type PatternDefinition = {
-  pattern: string;
-  label?: string;
-};
+  toJSON(): PatternDefinition {
+    return {
+      pattern: this.pattern,
+      label: this.label,
+    };
+  }
+}

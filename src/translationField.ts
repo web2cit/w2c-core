@@ -1,4 +1,4 @@
-import { TranslationProcedureDefinition } from "./templates/procedure";
+import { ProcedureDefinition } from "./types";
 const FIELD_NAMES = [
   "itemType",
   "title",
@@ -19,7 +19,7 @@ interface FieldParameters {
   // that understands this syntax (same as in templates file)
   // and returns a procedure object
   // same with getSelection and getTransformation
-  defaultProcedure: TranslationProcedureDefinition;
+  defaultProcedure: ProcedureDefinition;
 
   // control field is the only which is not unique and control
   // and it can't be used as a TestField

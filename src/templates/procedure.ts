@@ -1,14 +1,15 @@
-import { Selection, SelectionDefinition } from "./selection";
-import { Transformation, TransformationDefinition } from "./transformation";
-import { Webpage } from "../webpage";
-import { StepOutput } from "./step";
+import { Selection } from "./selection";
+import { Transformation } from "./transformation";
+import { Webpage } from "../webpage/webpage";
+import { StepOutput } from "../types";
+import { ProcedureDefinition, ProcedureOutput } from "../types";
 
 export class TranslationProcedure {
   selections: Array<Selection>;
   transformations: Array<Transformation>;
 
   constructor(
-    procedure: TranslationProcedureDefinition = {
+    procedure: ProcedureDefinition = {
       selections: [],
       transformations: [],
     }
@@ -66,7 +67,7 @@ export class TranslationProcedure {
     return outputs;
   }
 
-  toJSON(): TranslationProcedureDefinition {
+  toJSON(): ProcedureDefinition {
     return {
       selections: this.selections.map((selection) => selection.toJSON()),
       transformations: this.transformations.map((transformation) =>
@@ -74,19 +75,4 @@ export class TranslationProcedure {
       ),
     };
   }
-}
-
-export interface ProcedureOutput {
-  target: Webpage;
-  procedure: TranslationProcedure;
-  output: {
-    selection: Array<StepOutput>;
-    transformation: Array<StepOutput>;
-    procedure: StepOutput;
-  };
-}
-
-export interface TranslationProcedureDefinition {
-  selections: Array<SelectionDefinition>;
-  transformations: Array<TransformationDefinition>;
 }

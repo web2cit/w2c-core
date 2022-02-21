@@ -1,13 +1,13 @@
 import { FieldName } from "../translationField";
-import { Webpage } from "../webpage";
-import {
-  TemplateField,
-  TemplateFieldDefinition,
-  TemplateFieldOutput,
-} from "./templateField";
+import { Webpage } from "../webpage/webpage";
+import { TemplateField } from "./templateField";
 import log from "loglevel";
-import { isDomainName, DomainNameError } from "../domain";
-
+import { isDomainName, DomainNameError } from "../domain/domain";
+import {
+  FallbackTemplateDefinition,
+  TemplateDefinition,
+  TemplateOutput,
+} from "../types";
 export abstract class BaseTranslationTemplate {
   readonly domain: string;
   abstract template?: Webpage;
@@ -135,86 +135,15 @@ export class FallbackTemplate extends BaseTranslationTemplate {
     template: FallbackTemplateDefinition,
     forceRequiredFields: Array<FieldName> = []
   ) {
+    if ("path" in template) {
+      throw new Error("Fallback template should not have template path");
+    }
     super(domain, template, forceRequiredFields);
   }
   get path() {
     return undefined;
   }
 }
-
-export async function translateWithTemplates(
-  target: Webpage,
-  templates: BaseTranslationTemplate[],
-  options: {
-    preferSamePath?: boolean;
-    tryAllTemplates?: boolean;
-  } = {
-    preferSamePath: true,
-    tryAllTemplates: false,
-  }
-): Promise<TemplateOutput[]> {
-  // no duplicate templates for the same path
-  const paths = templates.map((template) => template.path ?? "<fallback>");
-  const duplicatePaths = paths.reduce(
-    (duplicatePaths: string[], path, index) => {
-      if (index !== paths.indexOf(path) && !duplicatePaths.includes(path)) {
-        duplicatePaths.push(path);
-      }
-      return duplicatePaths;
-    },
-    []
-  );
-  if (duplicatePaths.length > 0) {
-    throw new Error(
-      `Multiple templates given for path: ${duplicatePaths.join(", ")}`
-    );
-  }
-
-  if (options.preferSamePath) {
-    const targetPathTemplateIndex = templates.findIndex(
-      (template) => template.path === target.path
-    );
-    const targetPathTemplate = templates[targetPathTemplateIndex];
-    if (targetPathTemplate !== undefined) {
-      templates.splice(targetPathTemplateIndex, 1);
-      templates.unshift(targetPathTemplate);
-    }
-  }
-
-  let outputs: TemplateOutput[];
-  if (options.tryAllTemplates) {
-    outputs = await Promise.all(
-      templates.map((template) => template.translate(target))
-    );
-  } else {
-    outputs = [];
-    for (const template of templates) {
-      // todo: catch errors?
-      const output = await template.translate(target);
-      if (output.applicable) {
-        outputs.push(output);
-        break;
-      }
-    }
-  }
-  return outputs;
-}
-
-export interface TemplateOutput {
-  target: Webpage;
-  outputs: Array<TemplateFieldOutput>;
-  applicable: boolean;
-  timestamp: string;
-  template: BaseTranslationTemplate;
-}
-
-export interface TemplateDefinition {
-  path: string;
-  fields?: Array<TemplateFieldDefinition>;
-  label?: string;
-}
-
-export type FallbackTemplateDefinition = Omit<TemplateDefinition, "path">;
 
 class DuplicateUniqueFieldError extends Error {
   constructor(fieldname: string) {

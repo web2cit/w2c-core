@@ -1,12 +1,12 @@
-import { Webpage } from "../webpage";
-import {
-  ProcedureOutput,
-  TranslationProcedure,
-  TranslationProcedureDefinition,
-} from "./procedure";
+import { Webpage } from "../webpage/webpage";
+import { TranslationProcedure } from "./procedure";
 import { FieldName, isItemType, TranslationField } from "../translationField";
 import { MediaWikiBaseFieldCitation, MediaWikiCreator } from "../citoid";
-
+import {
+  TemplateFieldDefinition,
+  TemplateFieldOutput,
+  ProcedureOutput,
+} from "../types";
 export class TemplateField extends TranslationField {
   procedure: TranslationProcedure;
   private _required: boolean;
@@ -163,19 +163,4 @@ export function outputToCitation(
     // CSL publisher field
     publisher: fields.get("source")?.at(0),
   };
-}
-export interface TemplateFieldOutput {
-  fieldname: FieldName;
-  procedureOutput: ProcedureOutput;
-  output: Array<string | null>; // todo: change Array<string>, see T302024
-  valid: boolean; // todo: remove, see T302024
-  required: boolean;
-  applicable: boolean; // valid || !required
-  control: boolean;
-}
-
-export interface TemplateFieldDefinition {
-  fieldname: FieldName;
-  procedure: TranslationProcedureDefinition;
-  required: boolean;
 }

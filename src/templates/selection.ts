@@ -1,7 +1,8 @@
-import { TranslationStep, StepOutput, StepDefinition } from "./step";
-import { Webpage } from "../webpage";
+import { TranslationStep } from "./step";
+import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 import { JSDOM } from "jsdom";
+import { StepOutput, SelectionDefinition } from "../types";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -207,5 +208,3 @@ export class UndefinedSelectionConfigError extends Error {
     super("Set selection config value before attempting selection");
   }
 }
-
-export type SelectionDefinition = StepDefinition;
