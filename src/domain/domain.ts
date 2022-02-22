@@ -28,7 +28,7 @@ export class Domain {
       patterns?: Array<PatternDefinition>;
       // tests?: Array<Object>,
     } = {},
-    fallbackTemplate: FallbackTemplateDefinition | undefined,
+    fallbackTemplate?: FallbackTemplateDefinition,
     catchallPattern = true
   ) {
     if (isDomainName(domain)) {
