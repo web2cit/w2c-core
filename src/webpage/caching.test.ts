@@ -3,7 +3,7 @@ import { pages } from "./samplePages";
 import fetch, * as nodeFetch from "node-fetch";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
-const mockNodeFetch = nodeFetch as typeof import("../__mocks__/node-fetch");
+const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
 beforeEach(() => {
   mockNodeFetch.__reset();

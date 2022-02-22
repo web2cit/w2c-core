@@ -1,7 +1,7 @@
-import { Webpage } from "../webpage";
+import { Webpage } from "../webpage/webpage";
 import { TemplateField } from "./templateField";
 import * as nodeFetch from "node-fetch";
-import { pages } from "../samplePages";
+import { pages } from "../webpage/samplePages";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 

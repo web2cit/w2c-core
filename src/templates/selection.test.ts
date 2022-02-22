@@ -4,9 +4,9 @@ import {
   SelectionConfigTypeError,
   UndefinedSelectionConfigError,
 } from "./selection";
-import { Webpage } from "../webpage";
+import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
-import { pages } from "../samplePages";
+import { pages } from "../webpage/samplePages";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 

@@ -1,9 +1,9 @@
-import { Webpage } from "../webpage";
+import { Webpage } from "../webpage/webpage";
 import { TranslationProcedure } from "./procedure";
 import { CitoidSelection } from "./selection";
 import { JoinTransformation, RangeTransformation } from "./transformation";
 import * as nodeFetch from "node-fetch";
-import { pages } from "../samplePages";
+import { pages } from "../webpage/samplePages";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
