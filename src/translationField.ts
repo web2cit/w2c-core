@@ -5,8 +5,8 @@ const FIELD_NAMES = [
   "authorFirst",
   "authorLast",
   "date",
-  // todo: consider splitting source into citoid's publicationTitle and publisher
-  "source",
+  "publishedIn",
+  "publishedBy",
   "control",
   "language",
 ] as const;
@@ -126,7 +126,7 @@ export abstract class TranslationField {
       },
       control: false,
     },
-    source: {
+    publishedIn: {
       array: false,
       forceRequired: false,
       pattern: /^.+$/,
@@ -134,16 +134,21 @@ export abstract class TranslationField {
         selections: [
           // items may have one of publicationTitle, code OR reporter
           // (representing "container-title")
-          // and may or may not have publisher
           { type: "citoid", value: "publicationTitle" },
           { type: "citoid", value: "code" },
           { type: "citoid", value: "reporter" },
-          { type: "citoid", value: "publisher" },
         ],
-        transformations: [
-          // if container-title, keep that. otherwise, use publisher
-          { type: "range", value: "0", itemwise: false },
-        ],
+        transformations: [{ type: "range", value: "0", itemwise: false }],
+      },
+      control: false,
+    },
+    publishedBy: {
+      array: false,
+      forceRequired: false,
+      pattern: /^.+$/,
+      defaultProcedure: {
+        selections: [{ type: "citoid", value: "publisher" }],
+        transformations: [],
       },
       control: false,
     },

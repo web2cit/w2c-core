@@ -156,12 +156,11 @@ export function outputToCitation(
     title: fields.get("itemType")?.at(0),
     date: fields.get("date")?.at(0),
     language: fields.get("language")?.at(0),
-    // todo: split source template field, see T302021
     // CSL container-title fields
-    publicationTitle: fields.get("source")?.at(0),
-    code: fields.get("source")?.at(0),
-    reporter: fields.get("source")?.at(0),
+    publicationTitle: fields.get("publishedIn")?.at(0),
+    code: fields.get("publishedIn")?.at(0),
+    reporter: fields.get("publishedIn")?.at(0),
     // CSL publisher field
-    publisher: fields.get("source")?.at(0),
+    publisher: fields.get("publishedBy")?.at(0),
   };
 }

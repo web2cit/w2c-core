@@ -60,12 +60,18 @@ describe("Use default procedures", () => {
       expect(output.applicable).toBe(true);
     });
   });
-  test("source template field", () => {
-    const field = new TemplateField("source", true);
+  test("publishedIn template field", () => {
+    const field = new TemplateField("publishedIn", true);
     return field.translate(target).then((output) => {
-      expect(output.output).toEqual(
-        ["Journal title"] // default transformation keeps first item
-      );
+      expect(output.output).toEqual(["Journal title"]);
+      expect(output.valid).toBe(true);
+      expect(output.applicable).toBe(true);
+    });
+  });
+  test("publishedby template field", () => {
+    const field = new TemplateField("publishedBy", true);
+    return field.translate(target).then((output) => {
+      expect(output.output).toEqual(["Journal publisher"]);
       expect(output.valid).toBe(true);
       expect(output.applicable).toBe(true);
     });
