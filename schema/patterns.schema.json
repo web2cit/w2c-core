@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.wikimedia.org/diegodlh/w2c-core/-/blob/main/patterns.schema.json",
+  "title": "Domain URL path patterns configuration for Web2Cit",
+  "description": "A list of URL path patterns",
+  "type": "array",
+  "items": {
+    "description": "A URL path pattern",
+    "type": "object",
+    "properties": {
+      "pattern": {
+        "description": "Glob path pattern defining a URL matching group",
+        "type": "string"
+      },
+      "label": {
+        "description": "Fancy name for this URL path pattern",
+        "type": "string"
+      }
+    },
+    "required": ["pattern"]
+  }
+}
