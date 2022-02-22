@@ -1,8 +1,9 @@
-import { TemplateField, TemplateFieldDefinition } from "./templateField";
-import { TemplateDefinition, TranslationTemplate } from "./template";
+import { TemplateField } from "./templateField";
+import { TranslationTemplate } from "./template";
 import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../webpage/samplePages";
+import { TemplateFieldDefinition, TemplateDefinition } from "../types";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
@@ -86,6 +87,7 @@ it("refuses cross-domain translations", () => {
 it("outputs a JSON template definition", () => {
   const template = new TranslationTemplate("example.com", {
     path: "/article1",
+    fields: [],
   });
   template.label = "sample label";
   template.addField(new TemplateField("itemType", true));
