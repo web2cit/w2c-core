@@ -1,101 +1,94 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gitlab.wikimedia.org/diegodlh/w2c-core/-/blob/main/templates.schema.json",
-  "title": "Translation templates",
-  "description": "Domain translation templates configuration for Web2Cit",
-  "type": "object",
-  "properties": {
-    "templates": {
-      "description": "A list of translation templates",
-      "type": "array",
-      "items": {
-        "description": "A translation template",
-        "type": "object",
-        "properties": {
-          "path": {
-            "description": "Path of the webpage used as translation template",
-            "type": "string"
-          },
-          "label": {
-            "description": "Fancy name for this translation template",
-            "type": "string"
-          },
-          "fields": {
-            "description": "A list of template fields",
-            "type": "array",
-            "items": {
-              "description": "A template field",
-              "type": "object",
-              "properties": {
-                "fieldname": {
-                  "description": "Name of the template field",
-                  "type": "string"
-                },
-                "required": {
-                  "description": "whether the template field is required",
-                  "type": "boolean"
-                },
-                "procedures": {
-                  "description": "A list of translation procedures",
-                  "type": "array",
-                  "items": {
-                    "description": "A translation procedure",
-                    "type": "object",
-                    "properties": {
-                      "selections": {
-                        "description": "A list of selection steps",
-                        "type": "array",
-                        "items": {
-                          "description": "A selection step",
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "description": "The specific type of selection step",
-                              "type": "string"
-                            },
-                            "config": {
-                              "description": "the specific configuration for the selection step",
-                              "type": "string"
-                            }
-                          },
-                          "required": ["type", "config"]
+  "title": "Domain translation templates configuration for Web2Cit",
+  "description": "A list of translation templates",
+  "type": "array",
+  "items": {
+    "description": "A translation template",
+    "type": "object",
+    "properties": {
+      "path": {
+        "description": "Path of the webpage used as translation template",
+        "type": "string"
+      },
+      "label": {
+        "description": "Fancy name for this translation template",
+        "type": "string"
+      },
+      "fields": {
+        "description": "A list of template fields",
+        "type": "array",
+        "items": {
+          "description": "A template field",
+          "type": "object",
+          "properties": {
+            "fieldname": {
+              "description": "Name of the template field",
+              "type": "string"
+            },
+            "required": {
+              "description": "whether the template field is required",
+              "type": "boolean"
+            },
+            "procedures": {
+              "description": "A list of translation procedures",
+              "type": "array",
+              "items": {
+                "description": "A translation procedure",
+                "type": "object",
+                "properties": {
+                  "selections": {
+                    "description": "A list of selection steps",
+                    "type": "array",
+                    "items": {
+                      "description": "A selection step",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "The specific type of selection step",
+                          "type": "string"
+                        },
+                        "config": {
+                          "description": "the specific configuration for the selection step",
+                          "type": "string"
                         }
                       },
-                      "transformations": {
-                        "description": "A list of transformation steps",
-                        "type": "array",
-                        "items": {
-                          "description": "A transformation step",
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "description": "The specific type of transformation step",
-                              "type": "string"
-                            },
-                            "config": {
-                              "description": "The specific configuration for the transformation step",
-                              "type": "string"
-                            },
-                            "itemwise": {
-                              "description": "Apply transformation to each item of the input independently (true), or to the entire input as a whole (false)",
-                              "type": "boolean"
-                            }
-                          },
-                          "required": ["type", "config", "itemwise"]
+                      "required": ["type", "config"]
+                    }
+                  },
+                  "transformations": {
+                    "description": "A list of transformation steps",
+                    "type": "array",
+                    "items": {
+                      "description": "A transformation step",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "The specific type of transformation step",
+                          "type": "string"
+                        },
+                        "config": {
+                          "description": "The specific configuration for the transformation step",
+                          "type": "string"
+                        },
+                        "itemwise": {
+                          "description": "Apply transformation to each item of the input independently (true), or to the entire input as a whole (false)",
+                          "type": "boolean"
                         }
-                      }
-                    },
-                    "required": ["selections", "transformations"]
+                      },
+                      "required": ["type", "config", "itemwise"]
+                    }
                   }
-                }
-              },
-              "required": ["fieldname", "required", "procedures"]
+                },
+                "required": ["selections", "transformations"]
+              }
             }
-          }
-        },
-        "required": ["path", "fields"]
+          },
+          "required": ["fieldname", "required", "procedures"]
+        }
       }
-    }
-  },
-  "required": ["templates"]
+    },
+    "required": ["path", "fields"]
+  }
 }
