@@ -169,38 +169,41 @@ export class Domain {
     if (templateFieldInfo) {
       fields = templateOutput.outputs.map((fieldOutput) => {
         // fixme: this should be simplified when SelectionOutput is changed
-        const selections = fieldOutput.procedureOutput.procedure.selections.map(
-          (selection, index) => {
+        const procedures = fieldOutput.procedureOutputs.map(
+          (procedureOutput) => {
+            const selections = procedureOutput.procedure.selections.map(
+              (selection, index) => {
+                return {
+                  type: selection.type,
+                  value: selection.config,
+                  output: procedureOutput.output.selection[index] as StepOutput,
+                };
+              }
+            );
+            const transformations =
+              procedureOutput.procedure.transformations.map(
+                (transformation, index) => {
+                  return {
+                    type: transformation.type,
+                    value: transformation.config,
+                    itemwise: transformation.itemwise,
+                    output: procedureOutput.output.transformation[
+                      index
+                    ] as StepOutput,
+                  };
+                }
+              );
             return {
-              type: selection.type,
-              value: selection.config,
-              output: fieldOutput.procedureOutput.output.selection[
-                index
-              ] as StepOutput,
+              selections,
+              transformations,
+              output: procedureOutput.output.procedure,
             };
           }
         );
-        const transformations =
-          fieldOutput.procedureOutput.procedure.transformations.map(
-            (transformation, index) => {
-              return {
-                type: transformation.type,
-                value: transformation.config,
-                itemwise: transformation.itemwise,
-                output: fieldOutput.procedureOutput.output.transformation[
-                  index
-                ] as StepOutput,
-              };
-            }
-          );
         const fieldInfo: FieldInfo = {
           name: fieldOutput.fieldname,
           required: fieldOutput.required,
-          procedure: {
-            selections,
-            transformations,
-            output: fieldOutput.procedureOutput.output.procedure,
-          },
+          procedures,
           output: fieldOutput.output,
           applicable: fieldOutput.applicable,
         };
@@ -336,11 +339,11 @@ type FieldInfo = {
   name: FieldName;
   required: boolean;
   // field output
-  procedure: {
+  procedures: {
     selections: Array<SelectionDefinition & { output: StepOutput }>;
     transformations: Array<TransformationDefinition & { output: StepOutput }>;
     output: StepOutput;
-  };
+  }[];
   output: Array<string | null>; // this is a validated output; no need to have separate valid property
   applicable: boolean;
 };

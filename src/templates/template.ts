@@ -31,8 +31,8 @@ export abstract class BaseTranslationTemplate {
         try {
           this.addField(field);
         } catch (e) {
-          if (e instanceof DuplicateUniqueFieldError) {
-            log.info(`Skipping duplicate unique field "${field.name}"`);
+          if (e instanceof DuplicateFieldError) {
+            log.info(`Skipping duplicate field "${field.name}"`);
           } else {
             throw e;
           }
@@ -46,11 +46,8 @@ export abstract class BaseTranslationTemplate {
   }
 
   addField(newField: TemplateField) {
-    if (
-      newField.isUnique &&
-      this._fields.some((field) => field.name === newField.name)
-    ) {
-      throw new DuplicateUniqueFieldError(newField.name);
+    if (this._fields.some((field) => field.name === newField.name)) {
+      throw new DuplicateFieldError(newField.name);
     } else {
       this._fields.push(newField);
     }
@@ -145,9 +142,9 @@ export class FallbackTemplate extends BaseTranslationTemplate {
   }
 }
 
-class DuplicateUniqueFieldError extends Error {
+class DuplicateFieldError extends Error {
   constructor(fieldname: string) {
-    super(`Unique template ${fieldname} already exists in template`);
-    this.name = "Duplicate unique field error";
+    super(`Field "${fieldname}" already exists in template`);
+    this.name = "Duplicate field error";
   }
 }

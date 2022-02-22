@@ -21,13 +21,11 @@ interface FieldParameters {
   // same with getSelection and getTransformation
   defaultProcedure: ProcedureDefinition;
 
-  // control field is the only which is not unique and control
+  // control field is the only which is control
   // and it can't be used as a TestField
   // we may remove from here and define in TemplateField
   // but it may be useful to have all possible fields in this file
 
-  // the template object above in the hierarchy should ensure there are no two unique fields with same name
-  unique: boolean;
   control: boolean; // output of control fields should be ignored
 }
 
@@ -85,7 +83,6 @@ export abstract class TranslationField {
         selections: [{ type: "citoid", value: "itemType" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     title: {
@@ -96,7 +93,6 @@ export abstract class TranslationField {
         selections: [{ type: "citoid", value: "title" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     authorFirst: {
@@ -107,7 +103,6 @@ export abstract class TranslationField {
         selections: [{ type: "citoid", value: "authorFirst" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     authorLast: {
@@ -118,7 +113,6 @@ export abstract class TranslationField {
         selections: [{ type: "citoid", value: "authorLast" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     date: {
@@ -130,7 +124,6 @@ export abstract class TranslationField {
         selections: [{ type: "citoid", value: "date" }],
         transformations: [{ type: "date", value: "en", itemwise: false }],
       },
-      unique: true,
       control: false,
     },
     source: {
@@ -152,7 +145,6 @@ export abstract class TranslationField {
           { type: "range", value: "0", itemwise: false },
         ],
       },
-      unique: true,
       control: false,
     },
     control: {
@@ -163,7 +155,6 @@ export abstract class TranslationField {
         selections: [],
         transformations: [], // a match transformation may be recommended
       },
-      unique: false, // multiple control fields may be defined
       control: true,
     },
     language: {
@@ -174,7 +165,6 @@ export abstract class TranslationField {
         selections: [{ type: "citoid", value: "language" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
   };

@@ -22,7 +22,7 @@ export type FallbackTemplateDefinition = Omit<TemplateDefinition, "path">;
 export type TemplateFieldDefinition = {
   fieldname: FieldName;
   // fixme: change to procedures
-  procedure: ProcedureDefinition;
+  procedures: ProcedureDefinition[];
   required: boolean;
 };
 
@@ -71,7 +71,7 @@ export type TemplateOutput = {
 
 export type TemplateFieldOutput = {
   fieldname: FieldName;
-  procedureOutput: ProcedureOutput;
+  procedureOutputs: ProcedureOutput[];
   output: Array<string | null>; // todo: change Array<string>, see T302024
   valid: boolean; // todo: remove, see T302024
   required: boolean;

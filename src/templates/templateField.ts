@@ -6,36 +6,38 @@ import {
   TemplateFieldDefinition,
   TemplateFieldOutput,
   ProcedureOutput,
+  ProcedureDefinition,
 } from "../types";
 export class TemplateField extends TranslationField {
-  procedure: TranslationProcedure;
+  procedures: TranslationProcedure[];
   private _required: boolean;
   // parameter shortcuts
   readonly forceRequired: boolean;
-  readonly isUnique: boolean;
   readonly isControl: boolean;
   constructor(
     field: TemplateFieldDefinition | FieldName,
     loadDefaults = false
   ) {
-    let fieldname;
-    let procedure;
+    let fieldname: FieldName;
+    let procedures: ProcedureDefinition[];
     let required = false;
     if (field instanceof Object) {
-      ({ fieldname, procedure, required } = field);
+      ({ fieldname, procedures, required } = field);
     } else {
       fieldname = field;
+      procedures = [];
     }
     super(fieldname);
     if (loadDefaults) {
-      procedure = this.params.defaultProcedure;
+      procedures = [this.params.defaultProcedure];
     }
     this.forceRequired = this.params.forceRequired;
     // if force-required field, ignore field definition's required setting
     this._required = this.forceRequired || required || false;
-    this.isUnique = this.params.unique;
     this.isControl = this.params.control;
-    this.procedure = new TranslationProcedure(procedure);
+    this.procedures = procedures.map(
+      (procedure) => new TranslationProcedure(procedure)
+    );
   }
 
   get required() {
@@ -49,29 +51,32 @@ export class TemplateField extends TranslationField {
     }
   }
 
-  translate(target: Webpage): Promise<TemplateFieldOutput> {
-    return this.procedure.translate(target).then((procedureOutput) => {
-      const output = this.validate(procedureOutput.output.procedure);
-      const valid =
-        output.length > 0 && output.every((value) => value !== null);
-      const fieldOutput: TemplateFieldOutput = {
-        fieldname: this.name,
-        required: this.required,
-        procedureOutput: procedureOutput,
-        output,
-        valid,
-        applicable: valid || !this.required,
-        control: this.isControl,
-      };
-      return fieldOutput;
-    });
+  async translate(target: Webpage): Promise<TemplateFieldOutput> {
+    const procedureOutputs = await Promise.all(
+      this.procedures.map((procedure) => procedure.translate(target))
+    );
+    const combinedOutput = ([] as string[]).concat(
+      ...procedureOutputs.map((output) => output.output.procedure)
+    );
+    const output = this.validate(combinedOutput);
+    const valid = output.length > 0 && output.every((value) => value !== null);
+    const fieldOutput: TemplateFieldOutput = {
+      fieldname: this.name,
+      required: this.required,
+      procedureOutputs: procedureOutputs,
+      output,
+      valid,
+      applicable: valid || !this.required,
+      control: this.isControl,
+    };
+    return fieldOutput;
   }
 
   toJSON(): TemplateFieldDefinition {
     return {
       fieldname: this.name,
       required: this.required,
-      procedure: this.procedure.toJSON(),
+      procedures: this.procedures.map((procedure) => procedure.toJSON()),
     };
   }
 
@@ -108,7 +113,6 @@ export function outputToCitation(
     | "publisher"
   >
 > {
-  // todo: fields should be unique, see T301920
   const fields: Map<FieldName, string[]> = new Map();
   for (const field of fieldOutputs) {
     // ignore invalid and control fields
@@ -119,10 +123,7 @@ export function outputToCitation(
       if (field.output.some((value) => value === null)) {
         throw new Error(`Unexpected non-string value in valid field output`);
       }
-      const thisOutput = field.output as string[];
-      // workaround while fields may not be unique, see T301920
-      const prevOutputs = fields.get(fieldName) || [];
-      fields.set(fieldName, [...prevOutputs, ...thisOutput]);
+      fields.set(fieldName, field.output as string[]);
     }
   }
 

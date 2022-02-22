@@ -11,28 +11,32 @@ const templatePath = "/";
 const fieldDefinitions: Array<TemplateFieldDefinition> = [
   {
     fieldname: "itemType",
-    procedure: {
-      selections: [
-        {
-          type: "citoid",
-          value: "itemType",
-        },
-      ],
-      transformations: [],
-    },
+    procedures: [
+      {
+        selections: [
+          {
+            type: "citoid",
+            value: "itemType",
+          },
+        ],
+        transformations: [],
+      },
+    ],
     required: true,
   },
   {
     fieldname: "title",
-    procedure: {
-      selections: [
-        {
-          type: "citoid",
-          value: "title",
-        },
-      ],
-      transformations: [],
-    },
+    procedures: [
+      {
+        selections: [
+          {
+            type: "citoid",
+            value: "title",
+          },
+        ],
+        transformations: [],
+      },
+    ],
     required: true,
   },
 ];
@@ -91,15 +95,17 @@ it("outputs a JSON template definition", () => {
     fields: [
       {
         fieldname: "itemType",
-        procedure: {
-          selections: [
-            {
-              type: "citoid",
-              value: "itemType",
-            },
-          ],
-          transformations: [],
-        },
+        procedures: [
+          {
+            selections: [
+              {
+                type: "citoid",
+                value: "itemType",
+              },
+            ],
+            transformations: [],
+          },
+        ],
         required: true,
       },
     ],

@@ -84,21 +84,23 @@ it("marks empty outputs as invalid", async () => {
   const templateField = new TemplateField({
     fieldname: "itemType",
     required: true,
-    procedure: {
-      selections: [
-        {
-          type: "citoid",
-          value: "itemType",
-        },
-      ],
-      transformations: [
-        {
-          type: "range",
-          value: "10", // should return an empty step output
-          itemwise: false,
-        },
-      ],
-    },
+    procedures: [
+      {
+        selections: [
+          {
+            type: "citoid",
+            value: "itemType",
+          },
+        ],
+        transformations: [
+          {
+            type: "range",
+            value: "10", // should return an empty step output
+            itemwise: false,
+          },
+        ],
+      },
+    ],
   });
   const fieldOutput = await templateField.translate(target);
   expect(fieldOutput.output).toEqual([]);
