@@ -8,3 +8,9 @@ export class HTTPResponseError extends Error {
     this.name = "HTTPResponseError";
   }
 }
+
+export class DomainNameError extends Error {
+  constructor(domain: string) {
+    super(`"${domain}" is not a valid domain name`);
+  }
+}

@@ -2,7 +2,8 @@ import { FieldName } from "../translationField";
 import { Webpage } from "../webpage/webpage";
 import { TemplateField } from "./templateField";
 import log from "loglevel";
-import { isDomainName, DomainNameError } from "../domain/domain";
+import { isDomainName } from "../utils";
+import { DomainNameError } from "../errors";
 import {
   FallbackTemplateDefinition,
   TemplateDefinition,

@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
-import { DomainNameError, isDomainName } from "./domain";
+import { isDomainName } from "../utils";
+import { DomainNameError } from "../errors";
 
 const MEDIAWIKI_INSTANCE = "https://meta.wikimedia.org";
 const API_PATH = "/w/api.php";
