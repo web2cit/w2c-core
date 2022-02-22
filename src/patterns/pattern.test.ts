@@ -27,6 +27,25 @@ it("matches globstars against zero", () => {
   expect(pattern.match("/path/page.html")).toBe(true);
 });
 
+it('"**" matches all', () => {
+  const pattern = new PathPattern("**");
+  expect(pattern.match("/")).toBe(true);
+  expect(pattern.match("/page")).toBe(true);
+  expect(pattern.match("/page/")).toBe(true);
+  expect(pattern.match("/path/page")).toBe(true);
+  expect(pattern.match("/path/page/")).toBe(true);
+  expect(pattern.match("path/page/")).toBe(true);
+});
+
+it('"**/*" matches all ending without "/"', () => {
+  const pattern = new PathPattern("**/*");
+  expect(pattern.match("/")).toBe(false);
+  expect(pattern.match("/page")).toBe(true);
+  expect(pattern.match("/page/")).toBe(false);
+  expect(pattern.match("/path/page")).toBe(true);
+  expect(pattern.match("/path/page/")).toBe(false);
+});
+
 // can't think of any wrong glob
 // it("rejects wrong glob", () => {
 //   expect(() => { new PathPattern("") }).toThrow();
