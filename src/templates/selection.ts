@@ -16,14 +16,14 @@ export abstract class Selection extends TranslationStep {
   abstract suggest(target: Webpage, query: string): Promise<string>;
 
   static create(selection: SelectionDefinition) {
-    const value = selection.value;
+    const config = selection.config;
     switch (selection.type) {
       case "citoid":
-        // assume value is SimpleCitoidField and let constructor fail otherwise
-        return new CitoidSelection(value as SimpleCitoidField);
+        // assume config is SimpleCitoidField and let constructor fail otherwise
+        return new CitoidSelection(config as SimpleCitoidField);
         break;
       case "xpath":
-        return new XPathSelection(value);
+        return new XPathSelection(config);
         break;
       default:
         throw new Error(`Unknown selection of type ${selection.type}`);

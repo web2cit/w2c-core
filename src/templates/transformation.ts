@@ -28,20 +28,20 @@ export abstract class Transformation extends TranslationStep {
 
   static create(transformation: TransformationDefinition) {
     const itemwise = transformation.itemwise;
-    const value = transformation.value;
+    const config = transformation.config;
     switch (transformation.type) {
       case "join":
-        return new JoinTransformation(itemwise, value);
+        return new JoinTransformation(itemwise, config);
         break;
       case "split":
-        return new SplitTransformation(itemwise, value);
+        return new SplitTransformation(itemwise, config);
         break;
       case "date":
-        // asume value is DateConfig and let DateTransformation fail otherwise
-        return new DateTransformation(itemwise, value as DateConfig);
+        // asume config is DateConfig and let DateTransformation fail otherwise
+        return new DateTransformation(itemwise, config as DateConfig);
         break;
       case "range":
-        return new RangeTransformation(itemwise, value);
+        return new RangeTransformation(itemwise, config);
         break;
       default:
         throw new Error(

@@ -33,7 +33,7 @@ export type ProcedureDefinition = {
 
 export type StepDefinition = {
   type: string;
-  value: string;
+  config: string;
 };
 
 export type SelectionDefinition = StepDefinition;

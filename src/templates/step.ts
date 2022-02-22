@@ -10,7 +10,7 @@ export abstract class TranslationStep {
   toJSON(): StepDefinition {
     return {
       type: this.type,
-      value: this.config,
+      config: this.config,
     };
   }
 }

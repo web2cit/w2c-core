@@ -16,7 +16,7 @@ const fieldDefinitions: Array<TemplateFieldDefinition> = [
         selections: [
           {
             type: "citoid",
-            value: "itemType",
+            config: "itemType",
           },
         ],
         transformations: [],
@@ -31,7 +31,7 @@ const fieldDefinitions: Array<TemplateFieldDefinition> = [
         selections: [
           {
             type: "citoid",
-            value: "title",
+            config: "title",
           },
         ],
         transformations: [],
@@ -100,7 +100,7 @@ it("outputs a JSON template definition", () => {
             selections: [
               {
                 type: "citoid",
-                value: "itemType",
+                config: "itemType",
               },
             ],
             transformations: [],

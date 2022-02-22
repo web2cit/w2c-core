@@ -175,7 +175,7 @@ export class Domain {
               (selection, index) => {
                 return {
                   type: selection.type,
-                  value: selection.config,
+                  config: selection.config,
                   output: procedureOutput.output.selection[index] as StepOutput,
                 };
               }
@@ -185,7 +185,7 @@ export class Domain {
                 (transformation, index) => {
                   return {
                     type: transformation.type,
-                    value: transformation.config,
+                    config: transformation.config,
                     itemwise: transformation.itemwise,
                     output: procedureOutput.output.transformation[
                       index

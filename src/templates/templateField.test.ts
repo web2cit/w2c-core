@@ -95,13 +95,13 @@ it("marks empty outputs as invalid", async () => {
         selections: [
           {
             type: "citoid",
-            value: "itemType",
+            config: "itemType",
           },
         ],
         transformations: [
           {
             type: "range",
-            value: "10", // should return an empty step output
+            config: "10", // should return an empty step output
             itemwise: false,
           },
         ],
