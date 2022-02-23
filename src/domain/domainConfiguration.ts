@@ -1,6 +1,10 @@
 import { isDomainName } from "../utils";
 import { DomainNameError } from "../errors";
-import { RevisionsApi, RevisionMetadata } from "../mediawiki/revisions";
+import {
+  RevisionsApi,
+  RevisionMetadata,
+  ContentRevision,
+} from "../mediawiki/revisions";
 import log from "loglevel";
 
 export abstract class DomainConfiguration<
@@ -64,6 +68,8 @@ export abstract class DomainConfiguration<
 
   abstract remove(id: string): void;
 
+  abstract parse(content: string): ConfigurationDefinitionType[];
+
   abstract loadConfiguration(
     configuration: ConfigurationDefinitionType[]
   ): void;
@@ -101,24 +107,24 @@ export abstract class DomainConfiguration<
       return Promise.reject(`Unexpected undefined revision content`);
     }
 
-    // todo: do not parse content here
     const strippedContent = revision.content
       .replace('<syntaxhighlight lang="json">', "")
       // fixme: why do we have to escape?
       .replace("</syntaxhighlight>", "");
 
-    let jsonContent;
+    let configuration: ConfigurationDefinitionType[];
     try {
-      jsonContent = JSON.parse(strippedContent);
-    } catch {
-      // todo: include strippedContent in the rejection
-      return Promise.reject("Failed to JSON-parse the revision content");
+      configuration = this.parse(strippedContent);
+    } catch (e) {
+      let message = "Could not parse revision content";
+      if (e instanceof Error) message = message + `: ${e.message}`;
+      throw new ContentRevisionError(message, revision);
     }
 
     return {
       revid: revision.revid,
       timestamp: revision.timestamp,
-      configuration: jsonContent,
+      configuration: configuration,
     };
   }
 
@@ -187,4 +193,13 @@ ${this.toJSON()}
 
 interface ConfigurationRevision<T> extends RevisionMetadata {
   configuration: T[];
+}
+
+class ContentRevisionError extends Error {
+  revision: ContentRevision;
+  constructor(message: string, revision: ContentRevision) {
+    super(message);
+    this.revision = revision;
+    this.name = "ContentRevisionError";
+  }
 }
