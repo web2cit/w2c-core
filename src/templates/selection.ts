@@ -1,7 +1,8 @@
-import { TranslationStep, StepOutput, StepDefinition } from "./step";
-import { Webpage } from "../webpage";
+import { TranslationStep } from "./step";
+import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
 import { JSDOM } from "jsdom";
+import { StepOutput, SelectionDefinition } from "../types";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -15,14 +16,14 @@ export abstract class Selection extends TranslationStep {
   abstract suggest(target: Webpage, query: string): Promise<string>;
 
   static create(selection: SelectionDefinition) {
-    const value = selection.value;
+    const config = selection.config;
     switch (selection.type) {
       case "citoid":
-        // assume value is SimpleCitoidField and let constructor fail otherwise
-        return new CitoidSelection(value as SimpleCitoidField);
+        // assume config is SimpleCitoidField and let constructor fail otherwise
+        return new CitoidSelection(config as SimpleCitoidField);
         break;
       case "xpath":
-        return new XPathSelection(value);
+        return new XPathSelection(config);
         break;
       default:
         throw new Error(`Unknown selection of type ${selection.type}`);
@@ -207,5 +208,3 @@ export class UndefinedSelectionConfigError extends Error {
     super("Set selection config value before attempting selection");
   }
 }
-
-export type SelectionDefinition = StepDefinition;

@@ -1,7 +1,7 @@
-import { Webpage } from "../webpage";
+import { Webpage } from "../webpage/webpage";
 import { TemplateField } from "./templateField";
 import * as nodeFetch from "node-fetch";
-import { pages } from "../samplePages";
+import { pages } from "../webpage/samplePages";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
@@ -60,12 +60,18 @@ describe("Use default procedures", () => {
       expect(output.applicable).toBe(true);
     });
   });
-  test("source template field", () => {
-    const field = new TemplateField("source", true);
+  test("publishedIn template field", () => {
+    const field = new TemplateField("publishedIn", true);
     return field.translate(target).then((output) => {
-      expect(output.output).toEqual(
-        ["Journal title"] // default transformation keeps first item
-      );
+      expect(output.output).toEqual(["Journal title"]);
+      expect(output.valid).toBe(true);
+      expect(output.applicable).toBe(true);
+    });
+  });
+  test("publishedby template field", () => {
+    const field = new TemplateField("publishedBy", true);
+    return field.translate(target).then((output) => {
+      expect(output.output).toEqual(["Journal publisher"]);
       expect(output.valid).toBe(true);
       expect(output.applicable).toBe(true);
     });
@@ -84,21 +90,23 @@ it("marks empty outputs as invalid", async () => {
   const templateField = new TemplateField({
     fieldname: "itemType",
     required: true,
-    procedure: {
-      selections: [
-        {
-          type: "citoid",
-          value: "itemType",
-        },
-      ],
-      transformations: [
-        {
-          type: "range",
-          value: "10", // should return an empty step output
-          itemwise: false,
-        },
-      ],
-    },
+    procedures: [
+      {
+        selections: [
+          {
+            type: "citoid",
+            config: "itemType",
+          },
+        ],
+        transformations: [
+          {
+            type: "range",
+            config: "10", // should return an empty step output
+            itemwise: false,
+          },
+        ],
+      },
+    ],
   });
   const fieldOutput = await templateField.translate(target);
   expect(fieldOutput.output).toEqual([]);

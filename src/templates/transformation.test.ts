@@ -28,7 +28,7 @@ describe("Join tranformation", () => {
     expect(JSON.stringify(transformation)).toEqual(
       JSON.stringify({
         type: "join",
-        value: " - ",
+        config: " - ",
         itemwise: true,
       })
     );

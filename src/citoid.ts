@@ -322,7 +322,7 @@ interface TwoFieldZoteroCreator {
 
 type ZoteroCreator = OneFieldZoteroCreator | TwoFieldZoteroCreator;
 
-type MediaWikiCreator = [FirstName: string, LastName: string];
+export type MediaWikiCreator = [FirstName: string, LastName: string];
 
 export type ZoteroCitation = RequiredFields &
   Partial<BaseFields & NonBaseFields & ZoteroFields>;

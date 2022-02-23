@@ -1,2 +1,2 @@
-export { Domain } from './domain';
+export { Domain } from "./domain/domain";
 // export { TargetURL } from './targetUrl';

@@ -1,73 +1,72 @@
 import { FieldName } from "../translationField";
-import { Webpage } from "../webpage";
-import {
-  TemplateField,
-  TemplateFieldDefinition,
-  TemplateFieldOutput,
-} from "./templateField";
+import { Webpage } from "../webpage/webpage";
+import { TemplateField } from "./templateField";
 import log from "loglevel";
-import { isDomain, DomainNameError } from "../domain";
-
-export class TranslationTemplate {
-  domain: string;
-  // a fallback template does not have a path
-  template?: Webpage;
+import { isDomainName } from "../utils";
+import { DomainNameError } from "../errors";
+import {
+  FallbackTemplateDefinition,
+  TemplateDefinition,
+  TemplateOutput,
+} from "../types";
+export abstract class BaseTranslationTemplate {
+  readonly domain: string;
+  abstract template?: Webpage;
   label: string;
+  private forceRequiredFields: Array<FieldName>;
   private _fields: Array<TemplateField> = [];
-  constructor(domain: string, template: Partial<TemplateDefinition> = {}) {
-    if (!isDomain(domain)) {
+  protected constructor(
+    domain: string,
+    template: TemplateDefinition | FallbackTemplateDefinition,
+    forceRequiredFields: Array<FieldName> = []
+  ) {
+    if (!isDomainName(domain)) {
       throw new DomainNameError(domain);
     }
     this.domain = domain;
-    this.path = template.path;
+    this.forceRequiredFields = forceRequiredFields;
     this.label = template.label ?? "";
     if (template.fields) {
-      this.fields = template.fields.map((field) => {
-        return new TemplateField(field);
+      template.fields.forEach((definition) => {
+        const field = new TemplateField(definition);
+        try {
+          this.addField(field);
+        } catch (e) {
+          if (e instanceof DuplicateFieldError) {
+            log.info(`Skipping duplicate field "${field.name}"`);
+          } else {
+            throw e;
+          }
+        }
       });
     }
   }
 
-  get fields(): TranslationTemplate["_fields"] {
-    return this._fields;
+  get fields(): ReadonlyArray<TemplateField> {
+    return Object.freeze([...this._fields]);
   }
 
-  set fields(fields: TranslationTemplate["_fields"]) {
-    const uniqueFields: Array<FieldName> = [];
-    this._fields = fields.reduce((dedupFields: Array<TemplateField>, field) => {
-      if (field.isUnique && uniqueFields.includes(field.name)) {
-        // consider alternatives, such as winston, debug, and console.info
-        log.info(`Skipping duplicate unique field "${field.name}"`);
-      } else {
-        if (field.isUnique) {
-          uniqueFields.push(field.name);
-        }
-        dedupFields.push(field);
-      }
-      return dedupFields;
-    }, []);
-  }
-
-  get path() {
-    return this.template && this.template.path;
-  }
-
-  set path(path: string | undefined) {
-    if (path) {
-      const url = "http://" + this.domain + path;
-      try {
-        this.template = new Webpage(url);
-      } catch {
-        throw new Error(
-          "Could not create a Webpage object for the URL " +
-            "formed by the domain and path provided: " +
-            url
-        );
-      }
+  addField(newField: TemplateField) {
+    if (this._fields.some((field) => field.name === newField.name)) {
+      throw new DuplicateFieldError(newField.name);
     } else {
-      this.template = undefined;
+      this._fields.push(newField);
     }
   }
+
+  removeField(name: FieldName, order?: number) {
+    if (this.forceRequiredFields.includes(name)) {
+      throw new Error(`Cannot remove forced-required field ${name}`);
+    }
+    const indices = this._fields.reduce((indices: number[], field, index) => {
+      if (field.name === name) indices.push(index);
+      return indices;
+    }, []);
+    const index = indices.at(order ?? -1);
+    if (index !== undefined) this._fields.splice(index, 1);
+  }
+
+  abstract get path(): string | undefined;
 
   async translate(target: Webpage): Promise<TemplateOutput> {
     if (target.domain !== this.domain) {
@@ -82,36 +81,71 @@ export class TranslationTemplate {
       target,
       outputs,
       applicable: outputs.every((output) => output.applicable),
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       template: this,
     };
   }
 
-  toJSON(): TemplateDefinition | undefined {
-    if (this.template === undefined) {
-      // fallback templates without a template path should not be printed
-      return;
-    }
+  toJSON(): TemplateDefinition | FallbackTemplateDefinition {
     return {
-      path: this.template.path,
       fields: this.fields.map((field) => field.toJSON()),
       label: this.label,
     };
   }
 }
 
-export interface TemplateOutput {
-  target: Webpage;
-  outputs: Array<TemplateFieldOutput>;
-  applicable: boolean;
-  timestamp: Date;
-  template: TranslationTemplate;
+export class TranslationTemplate extends BaseTranslationTemplate {
+  readonly template: Webpage;
+  constructor(
+    domain: string,
+    template: TemplateDefinition,
+    forceRequiredFields: Array<FieldName> = []
+  ) {
+    super(domain, template, forceRequiredFields);
+    const url = "http://" + this.domain + template.path;
+    try {
+      this.template = new Webpage(url);
+    } catch {
+      throw new Error(
+        "Could not create a Webpage object for the URL " +
+          "formed by the domain and path provided: " +
+          url
+      );
+    }
+  }
+
+  get path() {
+    return this.template.path;
+  }
+
+  toJSON(): TemplateDefinition {
+    return {
+      ...super.toJSON(),
+      path: this.path,
+    };
+  }
 }
 
-export interface TemplateDefinition {
-  // path is mandatory for template definition
-  // fallback templates (without a path) should not have a definition
-  path: string;
-  label: string;
-  fields: Array<TemplateFieldDefinition>;
+export class FallbackTemplate extends BaseTranslationTemplate {
+  template: undefined;
+  constructor(
+    domain: string,
+    template: FallbackTemplateDefinition,
+    forceRequiredFields: Array<FieldName> = []
+  ) {
+    if ("path" in template) {
+      throw new Error("Fallback template should not have template path");
+    }
+    super(domain, template, forceRequiredFields);
+  }
+  get path() {
+    return undefined;
+  }
+}
+
+class DuplicateFieldError extends Error {
+  constructor(fieldname: string) {
+    super(`Field "${fieldname}" already exists in template`);
+    this.name = "Duplicate field error";
+  }
 }

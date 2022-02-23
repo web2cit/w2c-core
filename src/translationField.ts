@@ -1,16 +1,20 @@
-import { TranslationProcedureDefinition } from "./templates/procedure";
+import { ProcedureDefinition } from "./types";
 const FIELD_NAMES = [
   "itemType",
   "title",
   "authorFirst",
   "authorLast",
   "date",
-  // todo: consider splitting source into citoid's publicationTitle and publisher
-  "source",
+  "publishedIn",
+  "publishedBy",
   "control",
   "language",
 ] as const;
 export type FieldName = typeof FIELD_NAMES[number];
+export function isFieldName(fieldname: unknown): fieldname is FieldName {
+  return FIELD_NAMES.includes(fieldname as FieldName);
+}
+
 interface FieldParameters {
   array: boolean;
   forceRequired: boolean;
@@ -19,15 +23,13 @@ interface FieldParameters {
   // that understands this syntax (same as in templates file)
   // and returns a procedure object
   // same with getSelection and getTransformation
-  defaultProcedure: TranslationProcedureDefinition;
+  defaultProcedure: ProcedureDefinition;
 
-  // control field is the only which is not unique and control
+  // control field is the only which is control
   // and it can't be used as a TestField
   // we may remove from here and define in TemplateField
   // but it may be useful to have all possible fields in this file
 
-  // the template object above in the hierarchy should ensure there are no two unique fields with same name
-  unique: boolean;
   control: boolean; // output of control fields should be ignored
 }
 
@@ -71,6 +73,9 @@ export const ITEM_TYPES = [
   "webpage",
 ] as const;
 export type ItemType = typeof ITEM_TYPES[number];
+export function isItemType(itemType: string): itemType is ItemType {
+  return ITEM_TYPES.includes(itemType as ItemType);
+}
 
 export abstract class TranslationField {
   private static params: Record<FieldName, FieldParameters> = {
@@ -79,10 +84,9 @@ export abstract class TranslationField {
       forceRequired: true,
       pattern: new RegExp(`^${ITEM_TYPES.join("|")}$`),
       defaultProcedure: {
-        selections: [{ type: "citoid", value: "itemType" }],
+        selections: [{ type: "citoid", config: "itemType" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     title: {
@@ -90,10 +94,9 @@ export abstract class TranslationField {
       forceRequired: true,
       pattern: /^.+$/,
       defaultProcedure: {
-        selections: [{ type: "citoid", value: "title" }],
+        selections: [{ type: "citoid", config: "title" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     authorFirst: {
@@ -101,10 +104,9 @@ export abstract class TranslationField {
       forceRequired: false,
       pattern: /^.*$/, // allow empty strings as author first names
       defaultProcedure: {
-        selections: [{ type: "citoid", value: "authorFirst" }],
+        selections: [{ type: "citoid", config: "authorFirst" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     authorLast: {
@@ -112,10 +114,9 @@ export abstract class TranslationField {
       forceRequired: false,
       pattern: /^.+$/, // do not allow empty strings as author last names
       defaultProcedure: {
-        selections: [{ type: "citoid", value: "authorLast" }],
+        selections: [{ type: "citoid", config: "authorLast" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
     date: {
@@ -124,13 +125,12 @@ export abstract class TranslationField {
       // todo: handle negative and 1-3-digit years
       pattern: /^\d{4}(-\d{2}(-\d{2})?)?$/,
       defaultProcedure: {
-        selections: [{ type: "citoid", value: "date" }],
-        transformations: [{ type: "date", value: "en", itemwise: false }],
+        selections: [{ type: "citoid", config: "date" }],
+        transformations: [{ type: "date", config: "en", itemwise: false }],
       },
-      unique: true,
       control: false,
     },
-    source: {
+    publishedIn: {
       array: false,
       forceRequired: false,
       pattern: /^.+$/,
@@ -138,18 +138,22 @@ export abstract class TranslationField {
         selections: [
           // items may have one of publicationTitle, code OR reporter
           // (representing "container-title")
-          // and may or may not have publisher
-          { type: "citoid", value: "publicationTitle" },
-          { type: "citoid", value: "code" },
-          { type: "citoid", value: "reporter" },
-          { type: "citoid", value: "publisher" },
+          { type: "citoid", config: "publicationTitle" },
+          { type: "citoid", config: "code" },
+          { type: "citoid", config: "reporter" },
         ],
-        transformations: [
-          // if container-title, keep that. otherwise, use publisher
-          { type: "range", value: "0", itemwise: false },
-        ],
+        transformations: [{ type: "range", config: "0", itemwise: false }],
       },
-      unique: true,
+      control: false,
+    },
+    publishedBy: {
+      array: false,
+      forceRequired: false,
+      pattern: /^.+$/,
+      defaultProcedure: {
+        selections: [{ type: "citoid", config: "publisher" }],
+        transformations: [],
+      },
       control: false,
     },
     control: {
@@ -160,7 +164,6 @@ export abstract class TranslationField {
         selections: [],
         transformations: [], // a match transformation may be recommended
       },
-      unique: false, // multiple control fields may be defined
       control: true,
     },
     language: {
@@ -168,10 +171,9 @@ export abstract class TranslationField {
       forceRequired: false,
       pattern: /^[a-z]{2}(?:-?[a-z]{2,})*$/i, // from Citoid's fixLang()
       defaultProcedure: {
-        selections: [{ type: "citoid", value: "language" }],
+        selections: [{ type: "citoid", config: "language" }],
         transformations: [],
       },
-      unique: true,
       control: false,
     },
   };

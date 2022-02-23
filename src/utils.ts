@@ -1,17 +1,8 @@
-class Domain {
-  domain: string;
-  constructor(domain: string) {
-    this.domain = domain;
-  }
-}
-
-export { Domain };
-
 /**
  * Return whether the host name provided is a valid fully qualified domain name
  * https://en.wikipedia.org/wiki/Fully_qualified_domain_name
  */
-export function isDomain(hostname: string): boolean {
+export function isDomainName(hostname: string): boolean {
   // remove trailing dot
   hostname = hostname.replace(/\.$/, "");
 
@@ -31,10 +22,4 @@ export function isDomain(hostname: string): boolean {
   }
 
   return true;
-}
-
-export class DomainNameError extends Error {
-  constructor(domain: string) {
-    super(`"${domain}" is not a valid domain name`);
-  }
 }

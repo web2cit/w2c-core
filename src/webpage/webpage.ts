@@ -3,6 +3,7 @@ import { HttpCache, CitoidCache } from "./caching";
 class Webpage {
   domain: string;
   path: string;
+  url: URL;
   cache: {
     http: HttpCache;
     citoid: CitoidCache;
@@ -19,6 +20,7 @@ class Webpage {
         throw e;
       }
     }
+    this.url = url;
     this.domain = url.hostname;
     this.path = url.pathname + url.search;
     this.cache = {

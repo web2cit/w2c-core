@@ -1,4 +1,5 @@
-import { Webpage } from "../webpage";
+import { Webpage } from "../webpage/webpage";
+import { StepDefinition, StepOutput } from "../types";
 
 export abstract class TranslationStep {
   abstract type: string;
@@ -9,14 +10,7 @@ export abstract class TranslationStep {
   toJSON(): StepDefinition {
     return {
       type: this.type,
-      value: this.config,
+      config: this.config,
     };
   }
 }
-
-export type StepOutput = Array<string>;
-
-export type StepDefinition = {
-  type: string;
-  value: string;
-};

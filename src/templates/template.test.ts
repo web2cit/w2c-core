@@ -1,8 +1,9 @@
-import { TemplateField, TemplateFieldDefinition } from "./templateField";
-import { TemplateDefinition, TranslationTemplate } from "./template";
-import { Webpage } from "../webpage";
+import { TemplateField } from "./templateField";
+import { TranslationTemplate } from "./template";
+import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
-import { pages } from "../samplePages";
+import { pages } from "../webpage/samplePages";
+import { TemplateFieldDefinition, TemplateDefinition } from "../types";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
@@ -11,28 +12,32 @@ const templatePath = "/";
 const fieldDefinitions: Array<TemplateFieldDefinition> = [
   {
     fieldname: "itemType",
-    procedure: {
-      selections: [
-        {
-          type: "citoid",
-          value: "itemType",
-        },
-      ],
-      transformations: [],
-    },
+    procedures: [
+      {
+        selections: [
+          {
+            type: "citoid",
+            config: "itemType",
+          },
+        ],
+        transformations: [],
+      },
+    ],
     required: true,
   },
   {
     fieldname: "title",
-    procedure: {
-      selections: [
-        {
-          type: "citoid",
-          value: "title",
-        },
-      ],
-      transformations: [],
-    },
+    procedures: [
+      {
+        selections: [
+          {
+            type: "citoid",
+            config: "title",
+          },
+        ],
+        transformations: [],
+      },
+    ],
     required: true,
   },
 ];
@@ -80,25 +85,29 @@ it("refuses cross-domain translations", () => {
 });
 
 it("outputs a JSON template definition", () => {
-  const template = new TranslationTemplate("example.com");
-  template.path = "/article1";
+  const template = new TranslationTemplate("example.com", {
+    path: "/article1",
+    fields: [],
+  });
   template.label = "sample label";
-  template.fields = [new TemplateField("itemType", true)];
+  template.addField(new TemplateField("itemType", true));
   expect(template.toJSON()).toEqual<TemplateDefinition>({
     path: "/article1",
     label: "sample label",
     fields: [
       {
         fieldname: "itemType",
-        procedure: {
-          selections: [
-            {
-              type: "citoid",
-              value: "itemType",
-            },
-          ],
-          transformations: [],
-        },
+        procedures: [
+          {
+            selections: [
+              {
+                type: "citoid",
+                config: "itemType",
+              },
+            ],
+            transformations: [],
+          },
+        ],
         required: true,
       },
     ],
