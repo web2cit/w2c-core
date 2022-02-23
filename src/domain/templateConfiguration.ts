@@ -134,9 +134,20 @@ export class TemplateConfiguration extends DomainConfiguration<
       throw new Error("Template configuration should be an array of templates");
     }
     const templateDefinitions = definitions.reduce(
-      (templateDefinitions: TemplateDefinition[], definition) => {
+      (templateDefinitions: TemplateDefinition[], definition, index) => {
+        // fixme: instead of ignoring templates
+        // with unsupported fields or selection/transformation steps
+        // simply ignore the unsupported objects
         if (isTemplateDefinition(definition)) {
           templateDefinitions.push(definition);
+        } else {
+          let info = "Ignoring misformatted template";
+          if ("path" in definition) {
+            info = info + ` for path "${definition.path}"`;
+          } else {
+            info = info + ` at index ${index}`;
+          }
+          log.info(info);
         }
         return templateDefinitions;
       },
@@ -163,8 +174,6 @@ export class TemplateConfiguration extends DomainConfiguration<
           // silently ignore duplicate template paths
           log.info(`Skipping duplicate templates for path ${definition.path}`);
         } else {
-          // fixme: catch unsupported field names and
-          // selection/transformation types and values
           throw e;
         }
       }

@@ -92,9 +92,11 @@ export class PatternConfiguration extends DomainConfiguration<
       throw new Error("Pattern configuration should be an array of patterns");
     }
     const patternDefinitions = definitions.reduce(
-      (patternDefinitions: PatternDefinition[], definition) => {
+      (patternDefinitions: PatternDefinition[], definition, index) => {
         if (isPatternDefinition(definition)) {
           patternDefinitions.push(definition);
+        } else {
+          log.info(`Ignoring misformatted pattern at index ${index}`);
         }
         return patternDefinitions;
       },
