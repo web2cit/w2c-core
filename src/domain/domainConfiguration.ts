@@ -27,7 +27,8 @@ export abstract class DomainConfiguration<
   revisions: Promise<RevisionMetadata[]> | undefined;
   revisionCache: Map<
     RevisionMetadata["revid"],
-    Promise<ConfigurationRevision<ConfigurationDefinitionType>> | undefined
+    | Promise<ConfigurationRevision<ConfigurationDefinitionType> | undefined>
+    | undefined
   > = new Map();
   currentRevid: RevisionMetadata["revid"] | undefined;
 
@@ -138,31 +139,25 @@ export abstract class DomainConfiguration<
   getRevision(
     revid: RevisionMetadata["revid"],
     refresh = false
-  ): Promise<ConfigurationRevision<ConfigurationDefinitionType>> {
-    let revision = this.revisionCache.get(revid);
-    if (revision === undefined || refresh) {
-      revision = this.fetchRevision(revid);
-      this.revisionCache.set(revid, revision);
+  ): Promise<ConfigurationRevision<ConfigurationDefinitionType> | undefined> {
+    let revisionPromise = this.revisionCache.get(revid);
+    if (revisionPromise === undefined || refresh) {
+      revisionPromise = this.fetchRevision(revid);
+      this.revisionCache.set(revid, revisionPromise);
     }
-    return revision;
+    return revisionPromise;
   }
 
   getLatestRevision(): Promise<
-    ConfigurationRevision<ConfigurationDefinitionType>
+    ConfigurationRevision<ConfigurationDefinitionType> | undefined
   > {
     return this.fetchRevision().then((revision) => {
-      this.revisionCache.set(revision.revid, Promise.resolve(revision));
+      if (revision !== undefined) {
+        const revisionPromise = Promise.resolve(revision);
+        this.revisionCache.set(revision.revid, revisionPromise);
+      }
       return revision;
     });
-    // return new Promise(async (resolve, reject) => {
-    //     try {
-    //         const revision = await this.fetchRevision();
-    //         this.revisionCache.set(revision.revid, Promise.resolve(revision));
-    //         resolve(revision);
-    //     } catch (e) {
-    //         reject(e);
-    //     }
-    // });
   }
 
   loadRevision(
