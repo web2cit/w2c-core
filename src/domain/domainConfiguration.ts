@@ -1,22 +1,22 @@
-import fetch from "node-fetch";
 import { isDomainName } from "../utils";
 import { DomainNameError } from "../errors";
-
-const MEDIAWIKI_INSTANCE = "https://meta.wikimedia.org";
-const API_PATH = "/w/api.php";
-const WIKI_PATH = "/wiki/";
-const RVLIMIT_MAX = 500;
+import { RevisionsApi, RevisionMetadata } from "../mediawiki/revisions";
 
 export abstract class DomainConfiguration<
   ConfigurationType extends { toJSON(): ConfigurationDefinitionType },
   ConfigurationDefinitionType
 > {
   domain: string;
+  mediawiki: {
+    instance: string;
+    wiki: string;
+  };
   storage: {
     root: string;
     path: string;
     filename: string;
   };
+
   protected values: ConfigurationType[] = [];
 
   revisions: Promise<RevisionMetadata[]> | undefined;
@@ -30,7 +30,9 @@ export abstract class DomainConfiguration<
     domain: string,
     storageFilename: string,
     configuration?: ConfigurationDefinitionType[],
-    storageRoot = "Web2Cit/data/"
+    storageRoot = "Web2Cit/data/",
+    mwInstance = "https://meta.wikimedia.org",
+    mwWiki = "/wiki/"
   ) {
     if (!isDomainName(domain)) {
       throw new DomainNameError(domain);
@@ -44,6 +46,10 @@ export abstract class DomainConfiguration<
       filename: storageFilename,
     };
     if (configuration) this.loadConfiguration(configuration);
+    this.mediawiki = {
+      instance: mwInstance,
+      wiki: mwWiki,
+    };
   }
 
   abstract get(id?: string | string[]): ConfigurationType[];
@@ -61,85 +67,13 @@ export abstract class DomainConfiguration<
     configuration: ConfigurationDefinitionType[]
   ): void;
 
-  private async fetchRevisions(
-    fetchContent: boolean,
-    startid?: number,
-    max?: number
-  ): Promise<ContentRevision[]> {
-    const revisions: ContentRevision[] = [];
-
-    const rvprop = ["ids", "timestamp"];
-    if (fetchContent) rvprop.push("content");
-
-    let rvlimit: number;
-    if (max !== undefined && max < RVLIMIT_MAX) {
-      rvlimit = max;
-    } else {
-      rvlimit = RVLIMIT_MAX;
-    }
-
-    const params: {
-      [param: string]: string | number | undefined;
-    } = {
-      action: "query",
-      prop: "revisions",
-      titles: this.storage.root + this.storage.path + this.storage.filename,
-      rvprop: rvprop.join("|"),
-      rvlimit,
-      rvslots: "main",
-      rvstartid: startid,
-      rvcontinue: undefined,
-      formatversion: "2",
-      format: "json",
-    };
-
-    do {
-      if (max !== undefined && revisions.length >= max) {
-        break;
-      }
-      const query = Object.entries(params)
-        .reduce((query: string[], [param, value]) => {
-          if (value !== undefined) {
-            query.push(`${param}=${value}`);
-          }
-          return query;
-        }, [])
-        .join("&");
-      const url = MEDIAWIKI_INSTANCE + API_PATH + "?" + query;
-
-      let jsonResponse;
-      // eslint-disable-next-line no-useless-catch
-      try {
-        const response = await fetch(url);
-        jsonResponse = await response.json();
-      } catch (e) {
-        // fixme
-        throw e;
-      }
-      if (!isRevisionsApiResponse(jsonResponse)) {
-        // fixme
-        throw new Error();
-      }
-
-      const page = Object.values(jsonResponse.query.pages)[0];
-      if (page !== undefined) {
-        page.revisions.forEach((apiRevision) => {
-          const revision: ContentRevision = {
-            revid: apiRevision.revid,
-            timestamp: apiRevision.timestamp,
-            content: apiRevision.slots?.main.content,
-          };
-          revisions.push(revision);
-        });
-      }
-      params.rvcontinue = jsonResponse.continue?.rvcontinue;
-    } while (params.rvcontinue !== undefined);
-
-    return revisions.slice(0, max);
+  get title() {
+    return this.storage.root + this.storage.path + this.storage.filename;
   }
 
-  async fetchRevisionIds(): Promise<RevisionMetadata[]> {
-    const revisions = await this.fetchRevisions(false);
+  private async fetchRevisionIds(): Promise<RevisionMetadata[]> {
+    const api = new RevisionsApi(this.mediawiki.instance);
+    const revisions = await api.fetchRevisions(this.title, false);
     return revisions.map((revision) => {
       return {
         revid: revision.revid,
@@ -148,10 +82,11 @@ export abstract class DomainConfiguration<
     });
   }
 
-  async fetchRevision(
+  private async fetchRevision(
     revid?: RevisionMetadata["revid"]
   ): Promise<ConfigurationRevision<ConfigurationDefinitionType>> {
-    const revisions = await this.fetchRevisions(true, revid, 1);
+    const api = new RevisionsApi(this.mediawiki.instance);
+    const revisions = await api.fetchRevisions(this.title, true, revid, 1);
     const revision = revisions[0];
 
     if (revision === undefined) {
@@ -233,8 +168,8 @@ export abstract class DomainConfiguration<
 
   save(): void {
     const saveToPath =
-      MEDIAWIKI_INSTANCE +
-      WIKI_PATH +
+      this.mediawiki.instance +
+      this.mediawiki.wiki +
       this.storage.root +
       this.storage.path +
       this.storage.filename;
@@ -246,55 +181,6 @@ ${this.toJSON()}
   }
 }
 
-type RevisionMetadata = {
-  revid: number;
-  timestamp: string;
-};
-
-interface ContentRevision extends RevisionMetadata {
-  content?: string;
-}
-
 interface ConfigurationRevision<T> extends RevisionMetadata {
   configuration: T[];
-}
-
-interface RevisionsApiResponse {
-  continue?: {
-    rvcontinue: string;
-  };
-  query: {
-    pages: {
-      [pageid: string]: {
-        pageid: number;
-        ns: number;
-        title: string;
-        revisions: {
-          revid: number;
-          parentid: number;
-          timestamp: string;
-          slots?: {
-            main: {
-              contentmodel: string;
-              contentformat: string;
-              content: string;
-            };
-          };
-        }[];
-      };
-    };
-  };
-}
-
-function isRevisionsApiResponse(
-  response: unknown
-): response is RevisionsApiResponse {
-  if (
-    (response as RevisionsApiResponse).query !== undefined &&
-    (response as RevisionsApiResponse).query.pages !== undefined
-  ) {
-    return true;
-  } else {
-    return false;
-  }
 }
