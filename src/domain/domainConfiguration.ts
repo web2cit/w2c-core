@@ -110,7 +110,6 @@ export abstract class DomainConfiguration<
 
     const strippedContent = revision.content
       .replace('<syntaxhighlight lang="json">', "")
-      // fixme: why do we have to escape?
       .replace("</syntaxhighlight>", "");
 
     let configuration: ConfigurationDefinitionType[];

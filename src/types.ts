@@ -39,7 +39,6 @@ export type FallbackTemplateDefinition = Omit<TemplateDefinition, "path">;
 
 export type TemplateFieldDefinition = {
   fieldname: FieldName;
-  // fixme: change to procedures
   procedures: ProcedureDefinition[];
   required: boolean;
 };

@@ -104,7 +104,6 @@ class RevisionsApi {
 
       const page = Object.values(jsonResponse.query.pages)[0];
       if (page !== undefined) {
-        // todo: test that methods calling fetchRevision handle non-existing page
         if ("missing" in page) {
           log.info(`Page ${title} does not exist`);
         } else {
