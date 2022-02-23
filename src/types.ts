@@ -1,4 +1,4 @@
-import { FieldName } from "./translationField";
+import { FieldName, isFieldName } from "./translationField";
 
 // fixme: remove dependencies below
 import { Webpage } from "./webpage/webpage";
@@ -17,6 +17,24 @@ export type TemplateDefinition = {
   label?: string;
 };
 
+export function isTemplateDefinition(
+  definition: unknown
+): definition is TemplateDefinition {
+  const { path, fields, label } = definition as TemplateDefinition;
+  if (
+    path !== undefined &&
+    typeof path === "string" &&
+    (label === undefined || typeof label === "string") &&
+    fields !== undefined &&
+    Array.isArray(fields) &&
+    fields.every((field) => isTemplateFieldDefinition(field))
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export type FallbackTemplateDefinition = Omit<TemplateDefinition, "path">;
 
 export type TemplateFieldDefinition = {
@@ -26,10 +44,50 @@ export type TemplateFieldDefinition = {
   required: boolean;
 };
 
+export function isTemplateFieldDefinition(
+  definition: unknown
+): definition is TemplateFieldDefinition {
+  const { fieldname, procedures, required } =
+    definition as TemplateFieldDefinition;
+  if (
+    fieldname !== undefined &&
+    isFieldName(fieldname) &&
+    required !== undefined &&
+    typeof required === "boolean" &&
+    procedures !== undefined &&
+    Array.isArray(procedures) &&
+    procedures.every((procedure) => isProcedureDefinition(procedure))
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export type ProcedureDefinition = {
   selections: Array<SelectionDefinition>;
   transformations: Array<TransformationDefinition>;
 };
+
+export function isProcedureDefinition(
+  definition: unknown
+): definition is ProcedureDefinition {
+  const { selections, transformations } = definition as ProcedureDefinition;
+  if (
+    selections !== undefined &&
+    Array.isArray(selections) &&
+    selections.every((selection) => isSelectionDefinition(selection)) &&
+    transformations !== undefined &&
+    Array.isArray(transformations) &&
+    selections.every((transformation) =>
+      isTransformationDefinition(transformation)
+    )
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 export type StepDefinition = {
   type: string;
@@ -38,8 +96,42 @@ export type StepDefinition = {
 
 export type SelectionDefinition = StepDefinition;
 
+export function isSelectionDefinition(
+  definition: unknown
+): definition is SelectionDefinition {
+  const { type, config } = definition as SelectionDefinition;
+  if (
+    type !== undefined &&
+    typeof type === "string" &&
+    config !== undefined &&
+    typeof config === "string"
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export interface TransformationDefinition extends StepDefinition {
   itemwise: boolean;
+}
+
+export function isTransformationDefinition(
+  definition: unknown
+): definition is TransformationDefinition {
+  const { type, config, itemwise } = definition as TransformationDefinition;
+  if (
+    type !== undefined &&
+    typeof type === "string" &&
+    config !== undefined &&
+    typeof config === "string" &&
+    itemwise !== undefined &&
+    typeof itemwise === "boolean"
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 // Pattern definitions
@@ -50,6 +142,21 @@ export type PatternDefinition = {
   pattern: string;
   label?: string;
 };
+
+export function isPatternDefinition(
+  definition: unknown
+): definition is PatternDefinition {
+  const { pattern, label } = definition as PatternDefinition;
+  if (
+    pattern !== undefined &&
+    typeof pattern === "string" &&
+    (label === undefined || typeof label === "string")
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 // Test definitions
 

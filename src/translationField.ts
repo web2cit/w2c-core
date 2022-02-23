@@ -11,6 +11,10 @@ const FIELD_NAMES = [
   "language",
 ] as const;
 export type FieldName = typeof FIELD_NAMES[number];
+export function isFieldName(fieldname: unknown): fieldname is FieldName {
+  return FIELD_NAMES.includes(fieldname as FieldName);
+}
+
 interface FieldParameters {
   array: boolean;
   forceRequired: boolean;
