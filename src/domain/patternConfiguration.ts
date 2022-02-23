@@ -1,7 +1,7 @@
 import { PathPattern } from "../patterns/pattern";
 import { DomainConfiguration } from "./domainConfiguration";
 import log from "loglevel";
-import { PatternDefinition } from "../types";
+import { isPatternDefinition, PatternDefinition } from "../types";
 
 export class PatternConfiguration extends DomainConfiguration<
   PathPattern,
@@ -79,6 +79,28 @@ export class PatternConfiguration extends DomainConfiguration<
       this.patterns.splice(index, 1);
       this.currentRevid = undefined;
     }
+  }
+
+  parse(content: string): PatternDefinition[] {
+    let definitions;
+    try {
+      definitions = JSON.parse(content) as unknown;
+    } catch {
+      throw new Error("Not a valid JSON");
+    }
+    if (!(definitions instanceof Array)) {
+      throw new Error("Pattern configuration should be an array of patterns");
+    }
+    const patternDefinitions = definitions.reduce(
+      (patternDefinitions: PatternDefinition[], definition) => {
+        if (isPatternDefinition(definition)) {
+          patternDefinitions.push(definition);
+        }
+        return patternDefinitions;
+      },
+      []
+    );
+    return patternDefinitions;
   }
 
   loadConfiguration(patterns: PatternDefinition[]) {

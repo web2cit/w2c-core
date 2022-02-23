@@ -9,6 +9,7 @@ import log from "loglevel";
 import { Webpage } from "../webpage/webpage";
 import {
   FallbackTemplateDefinition,
+  isTemplateDefinition,
   TemplateDefinition,
   TemplateOutput,
 } from "../types";
@@ -120,6 +121,28 @@ export class TemplateConfiguration extends DomainConfiguration<
     } else {
       log.info(`Could not remove template for path ${path}. No template found`);
     }
+  }
+
+  parse(content: string): TemplateDefinition[] {
+    let definitions;
+    try {
+      definitions = JSON.parse(content) as unknown;
+    } catch {
+      throw new Error("Not a valid JSON");
+    }
+    if (!(definitions instanceof Array)) {
+      throw new Error("Template configuration should be an array of templates");
+    }
+    const templateDefinitions = definitions.reduce(
+      (templateDefinitions: TemplateDefinition[], definition) => {
+        if (isTemplateDefinition(definition)) {
+          templateDefinitions.push(definition);
+        }
+        return templateDefinitions;
+      },
+      []
+    );
+    return templateDefinitions;
   }
 
   loadConfiguration(templates: TemplateDefinition[]): void {
