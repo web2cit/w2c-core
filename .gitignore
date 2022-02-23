@@ -1,4 +1,5 @@
 node_modules
 /coverage
 /dist
+/src/debug.ts
 .eslintcache
