@@ -79,7 +79,7 @@ export function isProcedureDefinition(
     selections.every((selection) => isSelectionDefinition(selection)) &&
     transformations !== undefined &&
     Array.isArray(transformations) &&
-    selections.every((transformation) =>
+    transformations.every((transformation) =>
       isTransformationDefinition(transformation)
     )
   ) {
