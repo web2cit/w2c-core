@@ -1,6 +1,7 @@
 import { isDomainName } from "../utils";
 import { DomainNameError } from "../errors";
 import { RevisionsApi, RevisionMetadata } from "../mediawiki/revisions";
+import log from "loglevel";
 
 export abstract class DomainConfiguration<
   ConfigurationType extends { toJSON(): ConfigurationDefinitionType },
@@ -84,13 +85,16 @@ export abstract class DomainConfiguration<
 
   private async fetchRevision(
     revid?: RevisionMetadata["revid"]
-  ): Promise<ConfigurationRevision<ConfigurationDefinitionType>> {
+  ): Promise<ConfigurationRevision<ConfigurationDefinitionType> | undefined> {
     const api = new RevisionsApi(this.mediawiki.instance);
     const revisions = await api.fetchRevisions(this.title, true, revid, 1);
     const revision = revisions[0];
 
     if (revision === undefined) {
-      return Promise.reject(`No revision found for revid ${revid}`);
+      let info = `No revision found for page "${this.title}"`;
+      if (revid !== undefined) info = info + ` and revid ${revid}`;
+      log.info(info);
+      return undefined;
     }
 
     if (revision.content === undefined) {

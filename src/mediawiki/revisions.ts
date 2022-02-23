@@ -176,4 +176,4 @@ class RevisionsApiError extends Error {
   }
 }
 
-export { RevisionsApi, RevisionMetadata };
+export { RevisionsApi, RevisionMetadata, ContentRevision };
