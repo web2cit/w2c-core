@@ -252,11 +252,7 @@ export class Domain {
       itemType,
       title,
       // ...for which we may have template fields in the future
-      tags: baseCitation?.tags ?? [],
       url,
-      // ...for which we always override the baseCitation value
-      key: "",
-      version: 0,
 
       // optional fields...
       // ...for which we never want the baseCitation value

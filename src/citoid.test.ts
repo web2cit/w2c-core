@@ -1,4 +1,4 @@
-import { fetchSimpleCitation } from "./citoid";
+import { CitoidCitation, fetchSimpleCitation } from "./citoid";
 import * as nodeFetch from "node-fetch";
 import { pages } from "./webpage/samplePages";
 
@@ -45,5 +45,20 @@ describe("Error responses", () => {
     return expect(fetchSimpleCitation(url)).rejects.toThrow(
       "Unknown Citoid response format"
     );
+  });
+});
+
+it("accepts basic Citoid citation with required fields only", async () => {
+  const basicCitation = {
+    itemType: "journalArticle",
+    title: "sample title",
+    url: "https://example.com/",
+  };
+  mockNodeFetch.__setDefaultResponse(JSON.stringify([basicCitation]));
+  const citation = await fetchSimpleCitation("https://example.com/");
+  expect(citation).toEqual({
+    itemType: "journalArticle",
+    title: "sample title",
+    url: "https://example.com/",
   });
 });

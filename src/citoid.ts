@@ -91,25 +91,13 @@ export function fetchSimpleCitation(
   });
 }
 
-export const REQUIRED_FIELDS = [
-  "itemType",
-  "title",
-  "url",
-  "tags",
-  "key",
-  "version",
-] as const;
+export const REQUIRED_FIELDS = ["itemType", "title", "url"] as const;
 type RequiredField = typeof REQUIRED_FIELDS[number];
 interface RequiredFields {
   // required - https://www.mediawiki.org/wiki/Citoid/API#Field_names
   itemType: ItemType;
   title: string;
   url: string;
-
-  //
-  tags: Array<Tag>;
-  key: string;
-  version: 0;
 }
 // confirm that RequiredFields has all and only the keys in REQUIRED_FIELDS
 // from https://stackoverflow.com/questions/55046211/typescript-check-if-type-a-type-b-type-c
@@ -123,6 +111,15 @@ function assert<T extends boolean>(expect: T) {
   return expect;
 }
 assert<Equals<RequiredField, keyof RequiredFields>>(true);
+
+const SPECIAL_FIELDS = ["tags", "key", "version"] as const;
+type SpecialField = typeof SPECIAL_FIELDS[number];
+interface SpecialFields {
+  tags: Array<Tag>;
+  key: string;
+  version: 0;
+}
+assert<Equals<SpecialField, keyof SpecialFields>>(true);
 
 export const BASE_FIELDS = [
   "abstractNote",
@@ -325,11 +322,12 @@ type ZoteroCreator = OneFieldZoteroCreator | TwoFieldZoteroCreator;
 export type MediaWikiCreator = [FirstName: string, LastName: string];
 
 export type ZoteroCitation = RequiredFields &
-  Partial<BaseFields & NonBaseFields & ZoteroFields>;
+  Partial<SpecialFields & BaseFields & NonBaseFields & ZoteroFields>;
 
 export type MediaWikiCitation = RequiredFields &
   Partial<
-    BaseFields &
+    SpecialFields &
+      BaseFields &
       NonBaseFields &
       BaseMWCreatorFields &
       NonBaseMWCreatorFields &
@@ -337,7 +335,7 @@ export type MediaWikiCitation = RequiredFields &
   >;
 
 export type MediaWikiBaseFieldCitation = RequiredFields &
-  Partial<BaseFields & BaseMWCreatorFields & MediaWikiFields>;
+  Partial<SpecialFields & BaseFields & BaseMWCreatorFields & MediaWikiFields>;
 
 export type CitoidCitation =
   | MediaWikiCitation
@@ -356,14 +354,15 @@ type SplitBaseCreatorType =
   | `${BaseCreatorType}Last`;
 
 const SIMPLE_CITOID_FIELDS = Array.prototype.concat(
-  ["itemType", "title", "url"], // required fields without tags, key & version
-  ["tags"], // other required fields without key & version
+  REQUIRED_FIELDS,
+  ["tags"], // special fields without key & version
   BASE_FIELDS,
   SPLIT_BASE_CREATOR_TYPES,
   MEDIA_WIKI_FIELDS.filter((field) => !["source"].includes(field))
 );
 export type SimpleCitoidField =
-  | keyof Omit<RequiredFields, "key" | "version">
+  | RequiredField
+  | keyof Omit<SpecialFields, "key" | "version">
   | BaseField
   | SplitBaseCreatorType
   | Exclude<MediaWikiField, "source">;
@@ -373,7 +372,7 @@ export type SimpleCitoidCitation = Partial<
 > &
   Pick<
     Record<SimpleCitoidField, string | Array<string>>,
-    "itemType" | "tags" | "title" | "url"
+    "itemType" | "title" | "url"
   > & {
     itemType: ItemType;
   };
@@ -391,9 +390,9 @@ function simplifyCitation(
 ): SimpleCitoidCitation {
   const simpleCitation: SimpleCitoidCitation = {
     itemType: mwbCitation.itemType,
-    tags: mwbCitation.tags.map((tag) => tag.tag),
     title: mwbCitation.title,
     url: mwbCitation.url,
+    tags: mwbCitation.tags?.map((tag) => tag.tag),
   };
   // split mediawiki creator arrays into creatorFirst and creatorLast arrays
   for (const baseCreatorType of BASE_CREATOR_TYPES) {
