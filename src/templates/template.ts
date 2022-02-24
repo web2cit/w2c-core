@@ -62,7 +62,7 @@ export abstract class BaseTranslationTemplate {
       if (field.name === name) indices.push(index);
       return indices;
     }, []);
-    const index = indices.at(order ?? -1);
+    const index = indices[order === undefined ? indices.length - 1 : order];
     if (index !== undefined) this._fields.splice(index, 1);
   }
 

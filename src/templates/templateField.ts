@@ -135,7 +135,7 @@ export function outputToCitation(
     authorLast &&
     authorLast.reduce((author: MediaWikiCreator[], lastName, index) => {
       // replace missing first names with ""
-      const firstName = authorFirst?.at(index) ?? "";
+      const firstName = authorFirst?.[index] ?? "";
       author.push([firstName, lastName]);
       return author;
     }, []);
@@ -146,21 +146,21 @@ export function outputToCitation(
   // consider fixing by having separate field subclasses,
   // each with a specific output type: string | string[] | ItemType | etc
 
-  const itemType = fields.get("itemType")?.at(0);
+  const itemType = fields.get("itemType")?.[0];
   if (itemType !== undefined && !isItemType(itemType)) {
     throw new Error(`${itemType} is not a valid value for field "itemType"`);
   }
   return {
     itemType,
     author,
-    title: fields.get("title")?.at(0),
-    date: fields.get("date")?.at(0),
-    language: fields.get("language")?.at(0),
+    title: fields.get("title")?.[0],
+    date: fields.get("date")?.[0],
+    language: fields.get("language")?.[0],
     // CSL container-title fields
-    publicationTitle: fields.get("publishedIn")?.at(0),
-    code: fields.get("publishedIn")?.at(0),
-    reporter: fields.get("publishedIn")?.at(0),
+    publicationTitle: fields.get("publishedIn")?.[0],
+    code: fields.get("publishedIn")?.[0],
+    reporter: fields.get("publishedIn")?.[0],
     // CSL publisher field
-    publisher: fields.get("publishedBy")?.at(0),
+    publisher: fields.get("publishedBy")?.[0],
   };
 }

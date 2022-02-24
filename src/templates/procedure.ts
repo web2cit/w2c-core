@@ -27,7 +27,7 @@ export class TranslationProcedure {
     const selectionOutput = Array.prototype.concat(...selections);
 
     const transformations = await this.transform(selectionOutput);
-    const transformationOutput = transformations.at(-1) ?? [];
+    const transformationOutput = transformations.slice(-1).pop() ?? [];
 
     const procedureOutput = transformations.length
       ? transformationOutput
