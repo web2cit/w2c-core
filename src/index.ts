@@ -1,2 +1,3 @@
 export { Domain } from "./domain/domain";
-// export { TargetURL } from './targetUrl';
+export { Webpage } from "./webpage/webpage";
+export { fallbackTemplate } from "./fallbackTemplate";
