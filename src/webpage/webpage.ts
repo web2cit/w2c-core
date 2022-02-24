@@ -20,6 +20,10 @@ class Webpage {
         throw e;
       }
     }
+    // The Webpage object's URL is set to that with which the object was instantiated.
+    // We may consider changing it in case of redirects, or if a canonical URL
+    // is available.
+    // However, there may be cases where we may not want to do that (see T210871)
     this.url = url;
     this.domain = url.hostname;
     this.path = url.pathname + url.search;
