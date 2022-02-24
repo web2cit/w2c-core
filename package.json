@@ -35,7 +35,7 @@
   },
   "homepage": "https://meta.wikimedia.org/wiki/Web2Cit",
   "engines": {
-    "node": "> 12"
+    "node": ">= 12"
   },
   "devDependencies": {
     "@types/jest": "^27.4.0",
