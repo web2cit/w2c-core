@@ -153,7 +153,7 @@ export function outputToCitation(
   return {
     itemType,
     author,
-    title: fields.get("itemType")?.at(0),
+    title: fields.get("title")?.at(0),
     date: fields.get("date")?.at(0),
     language: fields.get("language")?.at(0),
     // CSL container-title fields
