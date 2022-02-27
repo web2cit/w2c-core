@@ -3,6 +3,7 @@
 import fetch from "node-fetch";
 import { fetchSimpleCitation, SimpleCitoidCitation } from "../citoid";
 import { JSDOM } from "jsdom";
+import { HTTPResponseError } from "../errors";
 
 abstract class ResponseCache {
   url: string;
@@ -72,7 +73,7 @@ class HttpCache extends ResponseCache {
             resolve(data);
           } else {
             this._refreshing = false;
-            reject("response status not ok");
+            reject(new HTTPResponseError(response));
           }
         })
         .catch((reason) => {
