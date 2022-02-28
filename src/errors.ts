@@ -2,8 +2,10 @@ import { Response } from "node-fetch";
 
 export class HTTPResponseError extends Error {
   response: Response;
-  constructor(response: Response) {
+  url: string;
+  constructor(reqUrl: string, response: Response) {
     super(`HTTP Error Response: ${response.status} ${response.statusText}`);
+    this.url = reqUrl;
     this.response = response;
     this.name = "HTTPResponseError";
   }

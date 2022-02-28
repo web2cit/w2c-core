@@ -73,7 +73,7 @@ class HttpCache extends ResponseCache {
             resolve(data);
           } else {
             this._refreshing = false;
-            reject(new HTTPResponseError(response));
+            reject(new HTTPResponseError(this.url, response));
           }
         })
         .catch((reason) => {

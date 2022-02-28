@@ -43,7 +43,7 @@ function translateUrl(
         } else {
           // the response contains client (4xx) or server (5xx) error responses
           // see https://github.com/node-fetch/node-fetch#handling-client-and-server-errors
-          const error = new HTTPResponseError(response);
+          const error = new HTTPResponseError(url, response);
           if (response.status === 504) {
             // response.body = upstream request timeout
             reject(error);

@@ -79,7 +79,7 @@ class RevisionsApi {
       try {
         response = await fetch(url);
         if (!response.ok) {
-          throw new HTTPResponseError(response);
+          throw new HTTPResponseError(url, response);
         }
       } catch (e) {
         throw new Error(`Failed to fecth ${url}`);
