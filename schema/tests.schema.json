@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gitlab.wikimedia.org/diegodlh/w2c-core/-/blob/main/tests.schema.json",
+  "title": "Domain translation tests configuration for Web2Cit",
+  "description": "A list of translation tests",
+  "type": "array",
+  "items": {
+    "description": "A translation test",
+    "type": "object",
+    "properties": {
+      "path": {
+        "description": "Path of the webpage used as translation template",
+        "type": "string"
+      },
+      "goals": {
+        "description": "A series of one or more field:goal pairs",
+        "type": "object",
+        "propertyNames": {
+            "pattern": ".+"
+        },
+        "patternProperties": {
+            "": {
+                "oneOf": [
+                    { "type": "string" },
+                    {
+                        "type": "array",
+                        "items": {
+                            "description": "Goal array item",
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        }
+      }
+    },
+    "required": ["path", "goals"]
+  }
+}
