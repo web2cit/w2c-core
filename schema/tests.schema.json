@@ -9,11 +9,11 @@
     "type": "object",
     "properties": {
       "path": {
-        "description": "Path of the webpage used as translation template",
+        "description": "Path of the webpage used as translation test",
         "type": "string"
       },
       "goals": {
-        "description": "A series of one or more field:goal pairs",
+        "description": "A series of one or more fieldname:goal pairs",
         "type": "object",
         "propertyNames": {
             "pattern": ".+"
