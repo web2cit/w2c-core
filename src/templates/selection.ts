@@ -25,6 +25,9 @@ export abstract class Selection extends TranslationStep {
       case "xpath":
         return new XPathSelection(config);
         break;
+      case "fixed":
+        return new FixedSelection(config);
+        break;
       default:
         throw new Error(`Unknown selection of type ${selection.type}`);
     }
@@ -193,6 +196,35 @@ function isHTMLElement(node: Node): node is HTMLElement {
 }
 function isAttr(node: Node): node is Attr {
   return (node as Attr).value !== undefined;
+}
+
+export class FixedSelection extends Selection {
+  readonly type: SelectionType = "fixed";
+  protected _config = "";
+  constructor(value?: string) {
+    super();
+    if (value) this.config = value;
+  }
+
+  get config(): string {
+    return this._config;
+  }
+
+  set config(config: string) {
+    if (typeof config === "string") {
+      this._config = config;
+    } else {
+      throw new SelectionConfigTypeError(this.type, config);
+    }
+  }
+
+  select(target: Webpage): Promise<StepOutput> {
+    return Promise.resolve([this.config]);
+  }
+
+  suggest(target: Webpage, query: string): Promise<string> {
+    return Promise.resolve(query);
+  }
 }
 
 export class SelectionConfigTypeError extends TypeError {

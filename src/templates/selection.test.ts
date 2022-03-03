@@ -1,8 +1,10 @@
 import {
+  Selection,
   CitoidSelection,
   XPathSelection,
   SelectionConfigTypeError,
   UndefinedSelectionConfigError,
+  FixedSelection,
 } from "./selection";
 import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
@@ -114,5 +116,41 @@ describe("Citoid selection", () => {
     expect(() => {
       selection.config = "invalidField";
     }).toThrow(SelectionConfigTypeError);
+  });
+});
+
+describe("Fixed selection", () => {
+  it("returns a fixed value regardless of target", () => {
+    const selection = Selection.create({
+      type: "fixed",
+      config: "fixed value",
+    });
+    const target = new Webpage("https://example.com/article");
+    return selection
+      .select(target)
+      .then((value) => expect(value).toEqual(["fixed value"]));
+  });
+
+  it("fails on non-string configuration value", () => {
+    const selection = new FixedSelection();
+    expect(() => {
+      selection.config = 0 as never;
+    }).toThrow();
+  });
+
+  it("does not use any external resources", () => {
+    const selection = new FixedSelection("fixed value");
+    const target = new Webpage("https://example.com/article");
+    const fetchSpy = jest.spyOn(mockNodeFetch, "default");
+    selection.select(target);
+    expect(fetchSpy).toHaveBeenCalledTimes(0);
+  });
+
+  it("accepts empty string as config", () => {
+    const selection = Selection.create({ type: "fixed", config: "" });
+    const target = new Webpage("https://example.com/article");
+    return selection.select(target).then((value) => {
+      expect(value).toEqual([""]);
+    });
   });
 });
