@@ -251,12 +251,16 @@ describe("No applicable templates", () => {
   });
 });
 
-it("rejects multiple templates for the same path", () => {
+it("multiple templates for the same path are silently ignored", () => {
   const duplicatePathTemplate: TemplateDefinition = {
     ...applicableTemplate,
   };
   const templates = [applicableTemplate, duplicatePathTemplate];
-  expect(() => {
-    new TemplateConfiguration(domain, [], undefined, templates);
-  }).toThrow("Multiple templates provided");
+  const configuration = new TemplateConfiguration(
+    domain,
+    [],
+    undefined,
+    templates
+  );
+  expect(configuration.get().length).toBe(1);
 });
