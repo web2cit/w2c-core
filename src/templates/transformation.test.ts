@@ -3,6 +3,7 @@ import {
   JoinTransformation,
   RangeTransformation,
   SplitTransformation,
+  MatchTransformation,
   TransformationConfigTypeError,
 } from "./transformation";
 
@@ -217,5 +218,72 @@ describe("Range transformation", () => {
     expect(() => (transformation.config = "1:2:3")).toThrow(
       TransformationConfigTypeError
     );
+  });
+});
+
+describe("Match transformation", () => {
+  it("extracts single occurrence of target substring", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "matching";
+    const input = ["a substring inside a string"];
+    expect(await transformation.transform(input)).toEqual(["substring"]);
+  });
+
+  it("extracts multiple occurrences of target substring", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "substring";
+    const input = ["a substring and another substring inside a string"];
+    expect(await transformation.transform(input)).toEqual([
+      "substring",
+      "substring",
+    ]);
+  });
+
+  it("returns empty array for non-matching substring", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "substring";
+    const input = ["a string without target"];
+    expect(await transformation.transform(input)).toEqual([]);
+  });
+
+  it("extracts single occurrence of target itemwise", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "matching";
+    const input = ["a matching string", "another matching string"];
+    expect(await transformation.transform(input)).toEqual([
+      "matching",
+      "matching",
+    ]);
+  });
+
+  it("ignores input items without target substring", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "substring";
+    const input = [
+      "a string with substring",
+      "a string without",
+      "another with substring",
+    ];
+    expect(await transformation.transform(input)).toEqual([
+      "substring",
+      "substring",
+    ]);
+  });
+
+  it("combines input before matching if itemwise off", async () => {
+    const transformation = new MatchTransformation(false);
+    transformation.config = "sub,string";
+    const input = ["a sub", "string in combined string"];
+    expect(await transformation.transform(input)).toEqual(["sub,string"]);
+  });
+
+  it("uses regular expressions", async () => {
+    const transformation = new MatchTransformation(false);
+    transformation.config = "(sub)?string";
+    const input = ["a substring inside a string"];
+    expect(await transformation.transform(input)).toEqual([
+      "substring",
+      "string",
+    ]);
   });
 });
