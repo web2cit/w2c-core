@@ -1,5 +1,9 @@
 import { TemplateConfiguration } from "./templateConfiguration";
-import { TemplateDefinition, TemplateOutput } from "../types";
+import {
+  FallbackTemplateDefinition,
+  TemplateDefinition,
+  TemplateOutput,
+} from "../types";
 import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../webpage/samplePages";
@@ -83,6 +87,7 @@ const targetTemplate: TemplateDefinition = {
 
 describe("Use an applicable template", () => {
   const templates = [nonApplicableTemplate, applicableTemplate];
+  const paths = templates.map((template) => template.path);
   const configuration = new TemplateConfiguration(
     domain,
     [],
@@ -99,19 +104,23 @@ describe("Use an applicable template", () => {
   });
 
   it("returns an applicable output", async () => {
-    const output = (await configuration.translateWith(
-      target
-    )) as TemplateOutput;
+    const output = (
+      await configuration.translateWith(target, paths)
+    )[0] as TemplateOutput;
     expect(output.applicable).toBe(true);
   });
 
   it("skips non-applicable templates", async () => {
-    const output = (await templateSet.translate(target)) as TemplateOutput;
+    const output = (
+      await configuration.translateWith(target, paths)
+    )[0] as TemplateOutput;
     expect(output.template.label).toBe("second template");
   });
 
   it("outputs the expected results", async () => {
-    const output = (await templateSet.translate(target)) as TemplateOutput;
+    const output = (
+      await configuration.translateWith(target, paths)
+    )[0] as TemplateOutput;
     expect(
       output.outputs.map((field) => [field.fieldname, field.output])
     ).toEqual([["title", ["Sample article"]]]);
@@ -125,7 +134,7 @@ describe("Use an applicable template", () => {
 
     const fetchSpy = jest.spyOn(mockNodeFetch, "default");
 
-    await templateSet.translate(target);
+    await configuration.translateWith(target, paths);
 
     // the citoid cache's getData method should have been called twice
     // once for the citoid selection step in the first template, and
@@ -138,37 +147,50 @@ describe("Use an applicable template", () => {
   });
 
   it("prefers a template for the same path as the target", async () => {
-    const templateSetWithTargetTemplate = new TemplateSet(domain, [
-      ...templates,
-      targetTemplate,
-    ]);
-    const output = (await templateSetWithTargetTemplate.translate(
-      target
-    )) as TemplateOutput;
+    const configurationWithTargetTemplate = new TemplateConfiguration(
+      domain,
+      [],
+      undefined,
+      [...templates, targetTemplate]
+    );
+    const output = (
+      await configurationWithTargetTemplate.translateWith(target, [
+        ...paths,
+        targetTemplate.path,
+      ])
+    )[0] as TemplateOutput;
     expect(output.template.label).toBe("target template");
   });
 });
 
 describe("Use the fallback template", () => {
   const templates = [nonApplicableTemplate];
-  const fallbackDef: Partial<TemplateDefinition> = {
+  const paths = templates.map((template) => template.path);
+  const fallbackDef: FallbackTemplateDefinition = {
     fields: [
       {
         fieldname: "authorFirst",
-        procedure: {
-          selections: [
-            {
-              type: "citoid",
-              value: "authorFirst",
-            },
-          ],
-          transformations: [],
-        },
+        procedures: [
+          {
+            selections: [
+              {
+                type: "citoid",
+                config: "authorFirst",
+              },
+            ],
+            transformations: [],
+          },
+        ],
         required: true,
       },
     ],
   };
-  const templateSet = new TemplateSet(domain, templates, fallbackDef);
+  const configuration = new TemplateConfiguration(
+    domain,
+    [],
+    fallbackDef,
+    templates
+  );
   const target = new Webpage(targetUrl);
 
   beforeAll(() => {
@@ -184,17 +206,21 @@ describe("Use the fallback template", () => {
       path: "/some-path",
     };
     expect(() => {
-      new TemplateSet(domain, templates, fallbackDefWithPath);
+      new TemplateConfiguration(domain, [], fallbackDefWithPath, templates);
     }).toThrow("should not have template path");
   });
 
   it("returns an applicable output", async () => {
-    const output = (await templateSet.translate(target)) as TemplateOutput;
+    const output = (
+      await configuration.translateWith(target, paths)
+    )[0] as TemplateOutput;
     expect(output.applicable).toBe(true);
   });
 
   it("outputs the expected results", async () => {
-    const output = (await templateSet.translate(target)) as TemplateOutput;
+    const output = (
+      await configuration.translateWith(target, paths)
+    )[0] as TemplateOutput;
     expect(
       output.outputs.map((field) => [field.fieldname, field.output])
     ).toEqual([["authorFirst", ["John", "Jane"]]]);
@@ -202,7 +228,14 @@ describe("Use the fallback template", () => {
 });
 
 describe("No applicable templates", () => {
-  const templateSet = new TemplateSet(domain, [nonApplicableTemplate]);
+  const templates = [nonApplicableTemplate];
+  const paths = templates.map((template) => template.path);
+  const configuration = new TemplateConfiguration(
+    domain,
+    [],
+    undefined,
+    templates
+  );
   const target = new Webpage(targetUrl);
   beforeAll(() => {
     mockNodeFetch.__addCitoidResponse(
@@ -212,7 +245,9 @@ describe("No applicable templates", () => {
   });
 
   it("translation returns false", () => {
-    return expect(templateSet.translate(target)).resolves.toBe(false);
+    return expect(configuration.translateWith(target, paths)).resolves.toBe(
+      false
+    );
   });
 });
 
@@ -222,6 +257,6 @@ it("rejects multiple templates for the same path", () => {
   };
   const templates = [applicableTemplate, duplicatePathTemplate];
   expect(() => {
-    new TemplateSet(domain, templates);
+    new TemplateConfiguration(domain, [], undefined, templates);
   }).toThrow("Multiple templates provided");
 });
