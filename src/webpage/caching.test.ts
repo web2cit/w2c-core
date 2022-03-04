@@ -25,7 +25,7 @@ describe("HTTP Cache", () => {
 
   it("handles not-found error", async () => {
     const cache = new HttpCache(url);
-    return expect(cache.getData()).rejects.toMatch("response status not ok");
+    return expect(cache.getData()).rejects.toThrow("HTTP Error Response");
   });
 
   it("handles network error", () => {
