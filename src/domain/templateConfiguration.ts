@@ -183,19 +183,10 @@ export class TemplateConfiguration extends DomainConfiguration<
   async translateWith(
     target: Webpage,
     paths: string[],
-    options: {
-      useFallback?: boolean;
-      preferSamePath?: boolean;
-      tryAllTemplates?: boolean;
-    }
+    { useFallback = true, preferSamePath = true, tryAllTemplates = false } = {}
   ): Promise<TemplateOutput[]> {
-    // defaults
-    if (options.useFallback === undefined) options.useFallback = true;
-    if (options.preferSamePath === undefined) options.preferSamePath = true;
-    if (options.tryAllTemplates === undefined) options.tryAllTemplates = false;
-
     const templates: BaseTranslationTemplate[] = this.get(paths);
-    if (options.preferSamePath) {
+    if (preferSamePath) {
       const targetPathTemplateIndex = templates.findIndex(
         (template) => template.path === target.path
       );
@@ -206,12 +197,12 @@ export class TemplateConfiguration extends DomainConfiguration<
       }
     }
 
-    if (options.useFallback && this._fallback) {
+    if (useFallback && this._fallback) {
       templates.push(this._fallback);
     }
 
     let outputs: TemplateOutput[];
-    if (options.tryAllTemplates) {
+    if (tryAllTemplates) {
       outputs = await Promise.all(
         templates.map((template) => template.translate(target))
       );
