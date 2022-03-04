@@ -277,13 +277,20 @@ describe("Match transformation", () => {
     expect(await transformation.transform(input)).toEqual(["sub,string"]);
   });
 
-  it("uses regular expressions", async () => {
+  it("supports regular expressions between //, including flags", async () => {
     const transformation = new MatchTransformation(false);
-    transformation.config = "(sub)?string";
-    const input = ["a substring inside a string"];
+    transformation.config = "/(sub)?string/i";
+    const input = ["a Substring inside a string"];
     expect(await transformation.transform(input)).toEqual([
-      "substring",
+      "Substring",
       "string",
     ]);
+  });
+
+  it("accepts optional double quotes to force plain string matching", async () => {
+    const transformation = new MatchTransformation(false);
+    transformation.config = '"/(sub)?string/i"';
+    const input = ["a Substring inside a string", "/(sub)?string/i"];
+    expect(await transformation.transform(input)).toEqual(["/(sub)?string/i"]);
   });
 });
