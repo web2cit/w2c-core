@@ -245,8 +245,8 @@ describe("No applicable templates", () => {
   });
 
   it("translation returns false", () => {
-    return expect(configuration.translateWith(target, paths)).resolves.toBe(
-      false
+    return expect(configuration.translateWith(target, paths)).resolves.toEqual(
+      []
     );
   });
 });
