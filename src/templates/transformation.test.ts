@@ -328,3 +328,38 @@ describe("Match transformation", () => {
     }).toThrow();
   });
 });
+
+describe("Replace transformation", () => {
+  it("makes a simple replacement", async () => {
+    const transformation = Transformation.create({
+      type: "replace",
+      itemwise: true,
+      config: "target, replace",
+    });
+    const input = ["a target in string"];
+    expect(await transformation.transform(input)).toEqual([
+      "a replace in string",
+    ]);
+  });
+
+  it("rejects ambiguous commas", () => {
+    const transformation = new ReplaceTransformation();
+    expect(() => {
+      transformation.config = "multiple, ambiguous, commas";
+    }).toThrow();
+  });
+
+  it("rejects config without target or replacement", async () => {
+    const transformation = new ReplaceTransformation();
+    expect(() => {
+      transformation.config = "no commas here";
+    }).toThrow();
+  });
+
+  it("does not split on commas between quotes or slashes", async () => {
+    const transformation = new ReplacementTransformation();
+    transformation.config = '/1,2,3/, "4,5,6"';
+    const input = ["0,1,2,3"];
+    expect(await transformation.transform(input)).toEqual(["0,4,5,6"]);
+  });
+});
