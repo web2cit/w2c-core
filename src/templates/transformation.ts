@@ -301,12 +301,22 @@ export class MatchTransformation extends Transformation {
     if (!this.itemwise) {
       input = [input.join()];
     }
-    const output: StepOutput = input.reduce((matches: StepOutput, item) => {
-      const match = item.match(this._target);
-      if (match !== null) {
-        matches = matches.concat(match);
+    const output: StepOutput = input.reduce((output: StepOutput, item) => {
+      let matches;
+      if (!this._target.global) {
+        const match = item.match(this._target);
+        matches = match !== null ? [match] : [];
+      } else {
+        matches = Array.from(item.matchAll(this._target));
       }
-      return matches;
+      for (let matchArray of matches) {
+        // drop full match if using capturing groups
+        if (matchArray.length > 1) matchArray.shift();
+        // drop optional capturing groups not found
+        matchArray = matchArray.filter((matchItem) => matchItem !== undefined);
+        output = output.concat(matchArray);
+      }
+      return output;
     }, []);
     return Promise.resolve(output);
   }
