@@ -300,11 +300,25 @@ describe("Match transformation", () => {
     ]);
   });
 
-  it("supports regex capturing groups", async () => {
+  it("does not return full match if using one or more capturing groups", async () => {
     const transformation = new MatchTransformation();
-    transformation.config = "/(sub)string/i";
+    transformation.config = "/(sub)?string/i";
     const input = ["a Substring inside a string"];
-    expect(await transformation.transform(input)).toEqual(["Substring", "Sub"]);
+    expect(await transformation.transform(input)).toEqual(["Sub"]);
+  });
+
+  it("supports capturing groups with global flag", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "/(?:sub)?(str)ing/ig";
+    const input = ["a Substring inside a string"];
+    expect(await transformation.transform(input)).toEqual(["str", "str"]);
+  });
+
+  it("returns empty array if optional capturing group does not exist", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "/(sub)?string/ig";
+    const input = ["a Substring inside a string"];
+    expect(await transformation.transform(input)).toEqual(["Sub"]);
   });
 
   it("rejects invalid regular expressions", async () => {
