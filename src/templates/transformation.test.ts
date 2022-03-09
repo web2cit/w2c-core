@@ -5,6 +5,7 @@ import {
   SplitTransformation,
   MatchTransformation,
   TransformationConfigTypeError,
+  Transformation,
 } from "./transformation";
 
 describe("Join tranformation", () => {
@@ -223,8 +224,11 @@ describe("Range transformation", () => {
 
 describe("Match transformation", () => {
   it("extracts single occurrence of target substring", async () => {
-    const transformation = new MatchTransformation();
-    transformation.config = "matching";
+    const transformation = Transformation.create({
+      type: "match",
+      itemwise: true,
+      config: "substring",
+    });
     const input = ["a substring inside a string"];
     expect(await transformation.transform(input)).toEqual(["substring"]);
   });
@@ -278,19 +282,35 @@ describe("Match transformation", () => {
   });
 
   it("supports regular expressions between //, including flags", async () => {
-    const transformation = new MatchTransformation(false);
-    transformation.config = "/(sub)?string/i";
+    const transformation = new MatchTransformation();
+    transformation.config = "/(?:sub)?string/i";
     const input = ["a Substring inside a string"];
+    expect(await transformation.transform(input)).toEqual(["Substring"]);
+  });
+
+  it("returns first regex match only, unless global flag is set", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "/(?:sub)?string/i";
+    const input = ["a Substring inside a string"];
+    expect(await transformation.transform(input)).toEqual(["Substring"]);
+    transformation.config = "/(?:sub)?string/ig";
     expect(await transformation.transform(input)).toEqual([
       "Substring",
       "string",
     ]);
   });
 
-  it("accepts optional double quotes to force plain string matching", async () => {
-    const transformation = new MatchTransformation(false);
-    transformation.config = '"/(sub)?string/i"';
-    const input = ["a Substring inside a string", "/(sub)?string/i"];
-    expect(await transformation.transform(input)).toEqual(["/(sub)?string/i"]);
+  it("supports regex capturing groups", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = "/(sub)string/i";
+    const input = ["a Substring inside a string"];
+    expect(await transformation.transform(input)).toEqual(["Substring", "Sub"]);
+  });
+
+  it("rejects invalid regular expressions", async () => {
+    const transformation = new MatchTransformation();
+    expect(() => {
+      transformation.config = "/+/";
+    }).toThrow();
   });
 });

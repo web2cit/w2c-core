@@ -43,6 +43,9 @@ export abstract class Transformation extends TranslationStep {
       case "range":
         return new RangeTransformation(itemwise, config);
         break;
+      case "match":
+        return new MatchTransformation(itemwise, config);
+        break;
       default:
         throw new Error(
           `Unknown transformation of type ${transformation.type}`
@@ -257,7 +260,57 @@ type Range = {
 };
 
 /** Regular expression transformation step class. */
-// class MatchTransformation extends Transformation {}
+export class MatchTransformation extends Transformation {
+  private _target!: RegExp;
+  constructor(itemwise = true, target = "/.*/") {
+    super("match", itemwise);
+    this.config = target;
+  }
+
+  set config(config: string) {
+    let regex, flags;
+    const match = config.match(/^\/(?<regex>.*)\/(?<flags>[a-z]+)?$/);
+    if (match === null) {
+      // string matching defaults to global matching
+      this._target = new RegExp(config, "g");
+      this._config = config;
+    } else {
+      ({ regex, flags } = match.groups ?? {});
+      if (regex === undefined) {
+        // the "regex" capturing group can't be undefined if match isn't null
+        throw new Error("Unexpected undefined regex capturing group");
+      } else {
+        try {
+          this._target = new RegExp(regex, flags);
+          this._config = config;
+        } catch (error) {
+          let info;
+          if (error instanceof Error) info = error.message;
+          // config interpreted as regular expression, but failed to parse it
+          throw new TransformationConfigTypeError("match", config, info);
+        }
+      }
+    }
+  }
+
+  get config(): string {
+    return this._config;
+  }
+
+  transform(input: StepOutput): Promise<StepOutput> {
+    if (!this.itemwise) {
+      input = [input.join()];
+    }
+    const output: StepOutput = input.reduce((matches: StepOutput, item) => {
+      const match = item.match(this._target);
+      if (match !== null) {
+        matches = matches.concat(match);
+      }
+      return matches;
+    }, []);
+    return Promise.resolve(output);
+  }
+}
 
 // class ReplaceTransformation extends Transformation {}
 
@@ -271,9 +324,14 @@ type Range = {
 // }
 
 export class TransformationConfigTypeError extends TypeError {
-  constructor(transformationType: TransformationType, config: string) {
+  constructor(
+    transformationType: TransformationType,
+    config: string,
+    info?: string
+  ) {
     super(
       `"${config}" is not a valid configuration value for tranformation type "${transformationType}"`
     );
+    if (info) this.message += `: ${info}`;
   }
 }
