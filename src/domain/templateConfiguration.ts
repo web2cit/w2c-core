@@ -211,10 +211,8 @@ export class TemplateConfiguration extends DomainConfiguration<
       for (const template of templates) {
         // todo: catch errors?
         const output = await template.translate(target);
-        if (output.applicable) {
-          outputs.push(output);
-          break;
-        }
+        outputs.push(output);
+        if (output.applicable) break;
       }
     }
     return outputs;

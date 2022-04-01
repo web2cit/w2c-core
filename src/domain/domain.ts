@@ -161,17 +161,21 @@ export class Domain {
     baseCitation?: MediaWikiBaseFieldCitation
   ): Translation {
     // create citoid citations from output
-    const citation = this.makeCitation(
-      templateOutput.outputs,
-      // With this we are setting the output citation's URL to that of the
-      // target Webpage object, which does not follow redirects.
-      // We may change this to the final response URL, but there may be cases
-      // where we do not want to do that (see T210871).
-      // Alternatively, we may let users manually change this using a URL
-      // template field.
-      templateOutput.target.url.href,
-      baseCitation
-    );
+    let citation;
+    if (templateOutput.applicable) {
+      // only make citations for applicable template outputs
+      citation = this.makeCitation(
+        templateOutput.outputs,
+        // With this we are setting the output citation's URL to that of the
+        // target Webpage object, which does not follow redirects.
+        // We may change this to the final response URL, but there may be cases
+        // where we do not want to do that (see T210871).
+        // Alternatively, we may let users manually change this using a URL
+        // template field.
+        templateOutput.target.url.href,
+        baseCitation
+      );
+    }
 
     let fields: FieldInfo[] | undefined;
     if (templateFieldInfo) {
@@ -306,7 +310,7 @@ type Translation = {
     path: string | undefined; // undefined for fallback template
     fields?: FieldInfo[];
   };
-  citation: WebToCitCitation;
+  citation: WebToCitCitation | undefined;
   timestamp: string;
 };
 
