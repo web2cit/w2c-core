@@ -9,7 +9,6 @@ import log from "loglevel";
 import { Webpage } from "../webpage/webpage";
 import {
   FallbackTemplateDefinition,
-  isTemplateDefinition,
   TemplateDefinition,
   TemplateOutput,
 } from "../types";
@@ -80,11 +79,9 @@ export class TemplateConfiguration extends DomainConfiguration<
   add(definition: TemplateDefinition, index?: number): TranslationTemplate {
     // create template instance before checking if path already exists
     // because the template constructor may make changes to the path
-    const newTemplate = new TranslationTemplate(
-      this.domain,
-      definition,
-      this.mandatoryFields
-    );
+    const newTemplate = new TranslationTemplate(this.domain, definition, {
+      forceRequiredFields: this.mandatoryFields,
+    });
     if (this.templates.some((template) => template.path === newTemplate.path)) {
       throw new DuplicateTemplatePathError(definition.path);
     } else {
@@ -135,12 +132,15 @@ export class TemplateConfiguration extends DomainConfiguration<
     }
     const templateDefinitions = definitions.reduce(
       (templateDefinitions: TemplateDefinition[], definition, index) => {
-        // fixme: instead of ignoring templates
-        // with unsupported fields or selection/transformation steps
-        // simply ignore the unsupported objects
-        if (isTemplateDefinition(definition)) {
-          templateDefinitions.push(definition);
-        } else {
+        // to address T305267, instead of using isTemplateDefinition,
+        // create template from definition, skipping individual invalid elements
+        // and convert back to json
+        try {
+          const template = new TranslationTemplate(this.domain, definition, {
+            strict: false,
+          });
+          templateDefinitions.push(template.toJSON());
+        } catch {
           let info = "Ignoring misformatted template";
           if ("path" in definition) {
             info = info + ` for path "${definition.path}"`;

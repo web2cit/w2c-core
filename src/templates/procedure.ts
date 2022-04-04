@@ -3,6 +3,7 @@ import { Transformation } from "./transformation";
 import { Webpage } from "../webpage/webpage";
 import { StepOutput } from "../types";
 import { ProcedureDefinition, ProcedureOutput } from "../types";
+import log from "loglevel";
 
 export class TranslationProcedure {
   selections: Array<Selection>;
@@ -12,13 +13,48 @@ export class TranslationProcedure {
     procedure: ProcedureDefinition = {
       selections: [],
       transformations: [],
-    }
+    },
+    {
+      strict = true,
+    }: {
+      strict?: boolean;
+    } = {}
   ) {
-    this.selections = procedure.selections.map((selection) =>
-      Selection.create(selection)
+    this.selections = procedure.selections.reduce(
+      (selections: Selection[], selection) => {
+        try {
+          selections.push(Selection.create(selection));
+        } catch (e) {
+          if (!strict) {
+            const type = selection.type ?? "untitled";
+            log.warn(
+              `Failed to parse "${type}" selection step definition: ${e}`
+            );
+          } else {
+            throw e;
+          }
+        }
+        return selections;
+      },
+      []
     );
-    this.transformations = procedure.transformations.map((transformation) =>
-      Transformation.create(transformation)
+    this.transformations = procedure.transformations.reduce(
+      (transformations: Transformation[], transformation) => {
+        try {
+          transformations.push(Transformation.create(transformation));
+        } catch (e) {
+          if (!strict) {
+            const type = transformation.type ?? "untitled";
+            log.warn(
+              `Failed to parse "${type}" transformation step definition: ${e}`
+            );
+          } else {
+            throw e;
+          }
+        }
+        return transformations;
+      },
+      []
     );
   }
 
