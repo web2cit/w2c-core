@@ -153,3 +153,21 @@ it("constructor optionally skips invalid field definitions", () => {
     new TranslationTemplate("example.com", definition as TemplateDefinition);
   }).toThrow();
 });
+
+it("rejects creation if a mandatory field is missing", () => {
+  const definition: TemplateDefinition = {
+    path: "/",
+    fields: [
+      {
+        fieldname: "title",
+        required: true,
+        procedures: [],
+      },
+    ],
+  };
+  expect(() => {
+    new TranslationTemplate("example.com", definition, {
+      forceRequiredFields: ["itemType", "title"],
+    });
+  }).toThrow('Mandatory field "itemType" missing from template definition');
+});

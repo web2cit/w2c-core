@@ -29,6 +29,19 @@ export abstract class BaseTranslationTemplate {
     if (!isDomainName(domain)) {
       throw new DomainNameError(domain);
     }
+
+    // reject template creation if any mandatory field is missing
+    if ("fields" in template) {
+      const fieldnames = template.fields.map((field) => field.fieldname);
+      for (const field of forceRequiredFields) {
+        if (!fieldnames.includes(field)) {
+          throw new Error(
+            `Mandatory field "${field}" missing from template definition`
+          );
+        }
+      }
+    }
+
     this.domain = domain;
     this.forceRequiredFields = forceRequiredFields;
     this.label = template.label ?? "";
