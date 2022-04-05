@@ -18,24 +18,56 @@ export abstract class BaseTranslationTemplate {
   protected constructor(
     domain: string,
     template: TemplateDefinition | FallbackTemplateDefinition,
-    forceRequiredFields: Array<FieldName> = []
+    {
+      forceRequiredFields = [],
+      strict = true,
+    }: {
+      forceRequiredFields?: Array<FieldName>;
+      strict?: boolean;
+    } = {}
   ) {
     if (!isDomainName(domain)) {
       throw new DomainNameError(domain);
     }
+
+    // reject template creation if any mandatory field is missing
+    if ("fields" in template) {
+      const fieldnames = template.fields.map((field) => field.fieldname);
+      for (const field of forceRequiredFields) {
+        if (!fieldnames.includes(field)) {
+          throw new MissingFieldError(field);
+        }
+      }
+    }
+
     this.domain = domain;
     this.forceRequiredFields = forceRequiredFields;
     this.label = template.label ?? "";
     if (template.fields) {
       template.fields.forEach((definition) => {
-        const field = new TemplateField(definition);
+        let field;
         try {
-          this.addField(field);
+          field = new TemplateField(definition, { strict });
         } catch (e) {
-          if (e instanceof DuplicateFieldError) {
-            log.info(`Skipping duplicate field "${field.name}"`);
+          if (!strict) {
+            const fieldname = definition.fieldname ?? "untitled";
+            log.warn(
+              `Failed to parse "${fieldname}" template field definition: ${e}`
+            );
           } else {
             throw e;
+          }
+        }
+        if (field !== undefined) {
+          try {
+            this.addField(field);
+          } catch (e) {
+            if (e instanceof DuplicateFieldError) {
+              log.info(`Skipping duplicate field "${field.name}"`);
+            } else {
+              log.info(``);
+              throw e;
+            }
           }
         }
       });
@@ -99,9 +131,15 @@ export class TranslationTemplate extends BaseTranslationTemplate {
   constructor(
     domain: string,
     template: TemplateDefinition,
-    forceRequiredFields: Array<FieldName> = []
+    {
+      forceRequiredFields = [],
+      strict = true,
+    }: {
+      forceRequiredFields?: Array<FieldName>;
+      strict?: boolean;
+    } = {}
   ) {
-    super(domain, template, forceRequiredFields);
+    super(domain, template, { forceRequiredFields, strict });
     const url = "http://" + this.domain + template.path;
     try {
       this.template = new Webpage(url);
@@ -136,7 +174,7 @@ export class FallbackTemplate extends BaseTranslationTemplate {
     if ("path" in template) {
       throw new Error("Fallback template should not have template path");
     }
-    super(domain, template, forceRequiredFields);
+    super(domain, template, { forceRequiredFields });
   }
   get path() {
     return undefined;
@@ -147,5 +185,12 @@ class DuplicateFieldError extends Error {
   constructor(fieldname: string) {
     super(`Field "${fieldname}" already exists in template`);
     this.name = "Duplicate field error";
+  }
+}
+
+class MissingFieldError extends Error {
+  constructor(fieldname: string) {
+    super(`Mandatory field "${fieldname}" missing from template definition`);
+    this.name = "MissingFieldError";
   }
 }

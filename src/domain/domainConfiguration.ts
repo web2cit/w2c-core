@@ -27,8 +27,7 @@ export abstract class DomainConfiguration<
   revisions: Promise<RevisionMetadata[]> | undefined;
   revisionCache: Map<
     RevisionMetadata["revid"],
-    | Promise<ConfigurationRevision<ConfigurationDefinitionType> | undefined>
-    | undefined
+    Promise<ContentRevision | undefined> | undefined
   > = new Map();
   currentRevid: RevisionMetadata["revid"] | undefined;
 
@@ -92,7 +91,7 @@ export abstract class DomainConfiguration<
 
   private async fetchRevision(
     revid?: RevisionMetadata["revid"]
-  ): Promise<ConfigurationRevision<ConfigurationDefinitionType> | undefined> {
+  ): Promise<ContentRevision | undefined> {
     const api = new RevisionsApi(this.mediawiki.instance);
     const revisions = await api.fetchRevisions(this.title, true, revid, 1);
     const revision = revisions[0];
@@ -101,11 +100,46 @@ export abstract class DomainConfiguration<
       let info = `No revision found for page "${this.title}"`;
       if (revid !== undefined) info = info + ` and revid ${revid}`;
       log.info(info);
-      return undefined;
     }
 
+    return revision;
+  }
+
+  getRevisionIds(refresh = false): Promise<RevisionMetadata[]> {
+    if (this.revisions === undefined || refresh) {
+      this.revisions = this.fetchRevisionIds();
+    }
+    return this.revisions;
+  }
+
+  getRevision(
+    revid: RevisionMetadata["revid"],
+    refresh = false
+  ): Promise<ContentRevision | undefined> {
+    let revisionPromise = this.revisionCache.get(revid);
+    if (revisionPromise === undefined || refresh) {
+      revisionPromise = this.fetchRevision(revid);
+      this.revisionCache.set(revid, revisionPromise);
+    }
+    return revisionPromise;
+  }
+
+  getLatestRevision(): Promise<ContentRevision | undefined> {
+    return this.fetchRevision().then((revision) => {
+      if (revision !== undefined) {
+        const revisionPromise = Promise.resolve(revision);
+        this.revisionCache.set(revision.revid, revisionPromise);
+      }
+      return revision;
+    });
+  }
+
+  loadRevision(revision: ContentRevision): void {
     if (revision.content === undefined) {
-      return Promise.reject(`Unexpected undefined revision content`);
+      throw new ContentRevisionError(
+        `Unexpected undefined revision content`,
+        revision
+      );
     }
 
     const strippedContent = revision.content
@@ -121,48 +155,7 @@ export abstract class DomainConfiguration<
       throw new ContentRevisionError(message, revision);
     }
 
-    return {
-      revid: revision.revid,
-      timestamp: revision.timestamp,
-      configuration: configuration,
-    };
-  }
-
-  getRevisionIds(refresh = false): Promise<RevisionMetadata[]> {
-    if (this.revisions === undefined || refresh) {
-      this.revisions = this.fetchRevisionIds();
-    }
-    return this.revisions;
-  }
-
-  getRevision(
-    revid: RevisionMetadata["revid"],
-    refresh = false
-  ): Promise<ConfigurationRevision<ConfigurationDefinitionType> | undefined> {
-    let revisionPromise = this.revisionCache.get(revid);
-    if (revisionPromise === undefined || refresh) {
-      revisionPromise = this.fetchRevision(revid);
-      this.revisionCache.set(revid, revisionPromise);
-    }
-    return revisionPromise;
-  }
-
-  getLatestRevision(): Promise<
-    ConfigurationRevision<ConfigurationDefinitionType> | undefined
-  > {
-    return this.fetchRevision().then((revision) => {
-      if (revision !== undefined) {
-        const revisionPromise = Promise.resolve(revision);
-        this.revisionCache.set(revision.revid, revisionPromise);
-      }
-      return revision;
-    });
-  }
-
-  loadRevision(
-    revision: ConfigurationRevision<ConfigurationDefinitionType>
-  ): void {
-    this.loadConfiguration(revision.configuration);
+    this.loadConfiguration(configuration);
     this.currentRevid = revision.revid;
   }
 
@@ -183,10 +176,6 @@ Automatic saving not yet supported. Save the following JSON to \
 ${this.toJSON()}
 `);
   }
-}
-
-interface ConfigurationRevision<T> extends RevisionMetadata {
-  configuration: T[];
 }
 
 class ContentRevisionError extends Error {

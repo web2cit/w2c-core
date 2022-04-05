@@ -2,6 +2,8 @@ import { Webpage } from "../webpage/webpage";
 import { TemplateField } from "./templateField";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../webpage/samplePages";
+import log from "loglevel";
+import { TemplateFieldDefinition } from "../types";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
@@ -16,8 +18,9 @@ beforeEach(() => {
 });
 
 describe("Use default procedures", () => {
+  const loadDefaults = true;
   test("itemType template field", () => {
-    const field = new TemplateField("itemType", true);
+    const field = new TemplateField("itemType", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["webpage"]);
       expect(output.valid).toBe(true);
@@ -25,7 +28,7 @@ describe("Use default procedures", () => {
     });
   });
   test("title template field", () => {
-    const field = new TemplateField("title", true);
+    const field = new TemplateField("title", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["Sample article"]);
       expect(output.valid).toBe(true);
@@ -33,7 +36,7 @@ describe("Use default procedures", () => {
     });
   });
   test("authorFirst template field", () => {
-    const field = new TemplateField("authorFirst", true);
+    const field = new TemplateField("authorFirst", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["John", "Jane", ""]);
       expect(output.valid).toBe(true);
@@ -41,7 +44,7 @@ describe("Use default procedures", () => {
     });
   });
   test("authorLast template field", () => {
-    const field = new TemplateField("authorLast", true);
+    const field = new TemplateField("authorLast", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual([
         "Smith",
@@ -53,7 +56,7 @@ describe("Use default procedures", () => {
     });
   });
   test("date template field", () => {
-    const field = new TemplateField("date", true);
+    const field = new TemplateField("date", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["2022-02-04"]);
       expect(output.valid).toBe(true);
@@ -61,7 +64,7 @@ describe("Use default procedures", () => {
     });
   });
   test("publishedIn template field", () => {
-    const field = new TemplateField("publishedIn", true);
+    const field = new TemplateField("publishedIn", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["Journal title"]);
       expect(output.valid).toBe(true);
@@ -69,7 +72,7 @@ describe("Use default procedures", () => {
     });
   });
   test("publishedby template field", () => {
-    const field = new TemplateField("publishedBy", true);
+    const field = new TemplateField("publishedBy", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual(["Journal publisher"]);
       expect(output.valid).toBe(true);
@@ -77,7 +80,7 @@ describe("Use default procedures", () => {
     });
   });
   test("language template field", () => {
-    const field = new TemplateField("language", true);
+    const field = new TemplateField("language", { loadDefaults });
     return field.translate(target).then((output) => {
       expect(output.output).toEqual([]);
       expect(output.valid).toBe(false);
@@ -111,4 +114,41 @@ it("marks empty outputs as invalid", async () => {
   const fieldOutput = await templateField.translate(target);
   expect(fieldOutput.output).toEqual([]);
   expect(fieldOutput.valid).toBe(false);
+});
+
+it("constructor optionally skips invalid procedure definitions", () => {
+  const warnSpy = jest.spyOn(log, "warn").mockImplementation();
+  const definition: unknown = {
+    fieldname: "itemType",
+    required: true,
+    procedures: [
+      {
+        selections: [],
+        transformations: [],
+      },
+      {
+        selections: [],
+      },
+      {
+        transformations: [],
+      },
+    ],
+  };
+  const field = new TemplateField(definition as TemplateFieldDefinition, {
+    strict: false,
+  });
+  expect(warnSpy).toHaveBeenCalledTimes(2);
+  expect(field.toJSON()).toEqual({
+    fieldname: "itemType",
+    required: true,
+    procedures: [
+      {
+        selections: [],
+        transformations: [],
+      },
+    ],
+  });
+  expect(() => {
+    new TemplateField(definition as TemplateFieldDefinition);
+  }).toThrow();
 });

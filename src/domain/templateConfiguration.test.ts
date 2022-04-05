@@ -7,6 +7,8 @@ import {
 import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../webpage/samplePages";
+import log from "loglevel";
+import { ContentRevision } from "../mediawiki/revisions";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
@@ -272,4 +274,129 @@ it("multiple templates for the same path are silently ignored", () => {
     templates
   );
   expect(configuration.get().length).toBe(1);
+});
+
+describe("Configuration revisions", () => {
+  const warnSpy = jest.spyOn(log, "warn").mockImplementation();
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  it("skips misformatted elements individually", () => {
+    const content = JSON.stringify([
+      {
+        path: "/",
+        fields: [
+          {
+            fieldname: "itemType",
+            required: true,
+            procedures: [
+              {
+                selections: [
+                  {
+                    type: "citoid",
+                    config: "itemType",
+                  },
+                  {
+                    type: "invalidType",
+                    config: "itemType",
+                  },
+                ],
+                transformations: [
+                  {
+                    type: "range",
+                    config: "0",
+                    itemwise: true,
+                  },
+                  {
+                    type: "range",
+                    config: "invalidConfig",
+                    itemwise: true,
+                  },
+                ],
+              },
+              {
+                selections: [],
+              },
+              {
+                transformations: [],
+              },
+            ],
+          },
+          {
+            fieldname: "invalidField",
+            required: true,
+            procedures: [],
+          },
+        ],
+      },
+    ]);
+    const revision: ContentRevision = {
+      revid: 0,
+      timestamp: "",
+      content,
+    };
+    const configuration = new TemplateConfiguration(
+      "example.com",
+      [],
+      undefined
+    );
+    configuration.loadRevision(revision);
+    expect(warnSpy).toHaveBeenCalledTimes(5);
+    expect(configuration.get().map((template) => template.toJSON())).toEqual([
+      {
+        path: "/",
+        label: "",
+        fields: [
+          {
+            fieldname: "itemType",
+            required: true,
+            procedures: [
+              {
+                selections: [
+                  {
+                    type: "citoid",
+                    config: "itemType",
+                  },
+                ],
+                transformations: [
+                  {
+                    type: "range",
+                    config: "0",
+                    itemwise: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
+  it("skips templates with missing mandatory fields", () => {
+    const definitions: TemplateDefinition[] = [
+      {
+        path: "/",
+        fields: [
+          {
+            fieldname: "itemType",
+            required: true,
+            procedures: [],
+          },
+        ],
+      },
+    ];
+    const revision: ContentRevision = {
+      revid: 0,
+      timestamp: "",
+      content: JSON.stringify(definitions),
+    };
+    const configuration = new TemplateConfiguration(
+      "example.com",
+      ["itemType", "title"],
+      undefined
+    );
+    configuration.loadRevision(revision);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(configuration.get().length).toBe(0);
+  });
 });

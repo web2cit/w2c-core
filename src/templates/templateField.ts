@@ -8,6 +8,7 @@ import {
   ProcedureOutput,
   ProcedureDefinition,
 } from "../types";
+import log from "loglevel";
 export class TemplateField extends TranslationField {
   procedures: TranslationProcedure[];
   private _required: boolean;
@@ -16,7 +17,13 @@ export class TemplateField extends TranslationField {
   readonly isControl: boolean;
   constructor(
     field: TemplateFieldDefinition | FieldName,
-    loadDefaults = false
+    {
+      loadDefaults = false,
+      strict = true,
+    }: {
+      loadDefaults?: boolean;
+      strict?: boolean;
+    } = {}
   ) {
     let fieldname: FieldName;
     let procedures: ProcedureDefinition[];
@@ -35,8 +42,23 @@ export class TemplateField extends TranslationField {
     // if force-required field, ignore field definition's required setting
     this._required = this.forceRequired || required || false;
     this.isControl = this.params.control;
-    this.procedures = procedures.map(
-      (procedure) => new TranslationProcedure(procedure)
+    this.procedures = procedures.reduce(
+      (procedures: TranslationProcedure[], procedure, index) => {
+        try {
+          procedures.push(new TranslationProcedure(procedure, { strict }));
+        } catch (e) {
+          if (!strict) {
+            log.warn(
+              `In "${this.name}" template field, ` +
+                `failed to parse #${index} procedure definition: ${e})`
+            );
+          } else {
+            throw e;
+          }
+        }
+        return procedures;
+      },
+      []
     );
   }
 

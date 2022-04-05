@@ -4,6 +4,8 @@ import { CitoidSelection } from "./selection";
 import { JoinTransformation, RangeTransformation } from "./transformation";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../webpage/samplePages";
+import log from "loglevel";
+import { ProcedureDefinition } from "../types";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
@@ -64,6 +66,63 @@ it("does not return selection output if transformation output is an empty array"
   return procedure.translate(target).then((output) => {
     expect(output.output.procedure).toEqual([]);
   });
+});
+
+it("constructor optionally skips invalid translation step definitions", () => {
+  const warnSpy = jest.spyOn(log, "warn").mockImplementation();
+  const definition: ProcedureDefinition = {
+    selections: [
+      {
+        type: "citoid",
+        config: "itemType",
+      },
+      {
+        type: "citoid",
+        config: "invalidConfig",
+      },
+      {
+        type: "invalidType",
+        config: "itemType",
+      },
+    ],
+    transformations: [
+      {
+        type: "range",
+        config: "0",
+        itemwise: true,
+      },
+      {
+        type: "invalidType",
+        config: "0",
+        itemwise: true,
+      },
+      {
+        type: "range",
+        config: "invalidConfig",
+        itemwise: true,
+      },
+    ],
+  };
+  const procedure = new TranslationProcedure(definition, { strict: false });
+  expect(warnSpy).toHaveBeenCalledTimes(4);
+  expect(procedure.toJSON()).toEqual({
+    selections: [
+      {
+        type: "citoid",
+        config: "itemType",
+      },
+    ],
+    transformations: [
+      {
+        type: "range",
+        config: "0",
+        itemwise: true,
+      },
+    ],
+  });
+  expect(() => {
+    new TranslationProcedure(definition);
+  }).toThrow();
 });
 
 // empty selection output should give empty transformation output
