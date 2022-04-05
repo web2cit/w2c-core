@@ -17,6 +17,7 @@ import {
 } from "../types";
 import { isDomainName } from "../utils";
 import { DomainNameError } from "../errors";
+import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 
 export class Domain {
   readonly domain: string;
@@ -25,13 +26,19 @@ export class Domain {
   // tests: TestConfiguration;
   constructor(
     domain: string,
-    definition: {
+    {
+      templates,
+      patterns,
+      fallbackTemplate = fallbackTemplateDefinition,
+      catchallPattern = true,
+      forceRequiredFields = config.forceRequiredFields,
+    }: {
       templates?: Array<TemplateDefinition>;
       patterns?: Array<PatternDefinition>;
-      // tests?: Array<Object>,
-    } = {},
-    fallbackTemplate?: FallbackTemplateDefinition,
-    catchallPattern = true
+      fallbackTemplate?: FallbackTemplateDefinition;
+      catchallPattern?: boolean;
+      forceRequiredFields?: FieldName[];
+    } = {}
   ) {
     if (isDomainName(domain)) {
       this.domain = domain;
@@ -40,15 +47,11 @@ export class Domain {
     }
     this.templates = new TemplateConfiguration(
       domain,
-      config.forceRequiredFields,
+      forceRequiredFields,
       fallbackTemplate,
-      definition.templates
+      templates
     );
-    this.patterns = new PatternConfiguration(
-      domain,
-      definition.patterns,
-      catchallPattern
-    );
+    this.patterns = new PatternConfiguration(domain, patterns, catchallPattern);
   }
 
   async translate(
