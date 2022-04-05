@@ -5,7 +5,6 @@ import { MediaWikiBaseFieldCitation, MediaWikiCreator } from "../citoid";
 import {
   TemplateFieldDefinition,
   TemplateFieldOutput,
-  ProcedureOutput,
   ProcedureDefinition,
 } from "../types";
 import log from "loglevel";
@@ -77,16 +76,24 @@ export class TemplateField extends TranslationField {
     const procedureOutputs = await Promise.all(
       this.procedures.map((procedure) => procedure.translate(target))
     );
-    const combinedOutput = ([] as string[]).concat(
+    let combinedOutput = ([] as string[]).concat(
       ...procedureOutputs.map((output) => output.output.procedure)
     );
-    const output = this.validate(combinedOutput);
-    const valid = output.length > 0 && output.every((value) => value !== null);
+
+    // if field does not expect an array for output, join output values
+    if (!this.isArray && combinedOutput.length > 0) {
+      combinedOutput = [combinedOutput.join()];
+    }
+
+    combinedOutput = combinedOutput.map((value) => value.trim());
+
+    const valid = this.validate(combinedOutput);
+
     const fieldOutput: TemplateFieldOutput = {
       fieldname: this.name,
       required: this.required,
       procedureOutputs: procedureOutputs,
-      output,
+      output: combinedOutput,
       valid,
       applicable: valid || !this.required,
       control: this.isControl,
@@ -102,20 +109,10 @@ export class TemplateField extends TranslationField {
     };
   }
 
-  private validate(
-    output: ProcedureOutput["output"]["procedure"]
-  ): Array<string | null> {
-    if (!this.isArray && output.length) {
-      // alternatively, consider:
-      // a. keep first element only
-      // b. return [null] (invalid)
-      output = [output.join()];
-    }
-    const validatedOutput = output.map((output) => {
-      output = output.trim();
-      return this.pattern.test(output) ? output : null;
-    });
-    return validatedOutput;
+  private validate(output: TemplateFieldOutput["output"]): boolean {
+    const valid =
+      output.length > 0 && output.every((value) => this.pattern.test(value));
+    return valid;
   }
 }
 
@@ -140,11 +137,6 @@ export function outputToCitation(
     // ignore invalid and control fields
     if (field.valid && !field.control) {
       const fieldName = field.fieldname;
-      // fixme: reconsider whether field output should accept null values
-      // see T302024
-      if (field.output.some((value) => value === null)) {
-        throw new Error(`Unexpected non-string value in valid field output`);
-      }
       fields.set(fieldName, field.output as string[]);
     }
   }

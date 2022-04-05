@@ -214,6 +214,7 @@ export class Domain {
           required: fieldOutput.required,
           procedures,
           output: fieldOutput.output,
+          valid: fieldOutput.valid,
           applicable: fieldOutput.applicable,
         };
         return fieldInfo;
@@ -323,7 +324,8 @@ type FieldInfo = {
     transformations: Array<TransformationDefinition & { output: StepOutput }>;
     output: StepOutput;
   }[];
-  output: Array<string | null>; // this is a validated output; no need to have separate valid property
+  output: StepOutput;
+  valid: boolean;
   applicable: boolean;
 };
 
