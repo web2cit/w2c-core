@@ -178,7 +178,12 @@ export class TemplateConfiguration extends DomainConfiguration<
   async translateWith(
     target: Webpage,
     paths: string[],
-    { useFallback = true, preferSamePath = true, tryAllTemplates = false } = {}
+    {
+      useFallback = true,
+      preferSamePath = true,
+      tryAllTemplates = false,
+      onlyApplicable = true,
+    } = {}
   ): Promise<TemplateOutput[]> {
     const templates: BaseTranslationTemplate[] = this.get(paths);
     if (preferSamePath) {
@@ -209,6 +214,8 @@ export class TemplateConfiguration extends DomainConfiguration<
         if (output.applicable) {
           outputs.push(output);
           break;
+        } else if (!onlyApplicable) {
+          outputs.push(output);
         }
       }
     }

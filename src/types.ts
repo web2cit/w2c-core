@@ -178,8 +178,8 @@ export type TemplateOutput = {
 export type TemplateFieldOutput = {
   fieldname: FieldName;
   procedureOutputs: ProcedureOutput[];
-  output: Array<string | null>; // todo: change Array<string>, see T302024
-  valid: boolean; // todo: remove, see T302024
+  output: StepOutput;
+  valid: boolean;
   required: boolean;
   applicable: boolean; // valid || !required
   control: boolean;

@@ -116,6 +116,23 @@ it("marks empty outputs as invalid", async () => {
   expect(fieldOutput.valid).toBe(false);
 });
 
+it("always returns field output, even if invalid", async () => {
+  const field = new TemplateField({
+    fieldname: "itemType",
+    required: true,
+    procedures: [
+      {
+        selections: [{ type: "fixed", config: "invalidType" }],
+        transformations: [],
+      },
+    ],
+  });
+  const target = new Webpage("https://example.com/target");
+  const output = await field.translate(target);
+  expect(output.output).toEqual(["invalidType"]);
+  expect(output.valid).toBe(false);
+});
+
 it("constructor optionally skips invalid procedure definitions", () => {
   const warnSpy = jest.spyOn(log, "warn").mockImplementation();
   const definition: unknown = {

@@ -89,21 +89,15 @@ export class Domain {
     }
 
     // translate target with templates for paths returned above
-    let templateOutputs = await this.templates.translateWith(
+    const templateOutputs = await this.templates.translateWith(
       target,
       templatePaths,
       {
         tryAllTemplates: options.allTemplates,
         useFallback: options.forceTemplatePaths === undefined,
+        onlyApplicable: options.onlyApplicable,
       }
     );
-
-    // parse output with onlyApplicable option
-    if (options.onlyApplicable) {
-      templateOutputs = templateOutputs.filter(
-        (templateOutput) => templateOutput.applicable
-      );
-    }
 
     let baseCitation: MediaWikiBaseFieldCitation | undefined;
     if (options.fillWithCitoid) {
@@ -164,17 +158,21 @@ export class Domain {
     baseCitation?: MediaWikiBaseFieldCitation
   ): Translation {
     // create citoid citations from output
-    const citation = this.makeCitation(
-      templateOutput.outputs,
-      // With this we are setting the output citation's URL to that of the
-      // target Webpage object, which does not follow redirects.
-      // We may change this to the final response URL, but there may be cases
-      // where we do not want to do that (see T210871).
-      // Alternatively, we may let users manually change this using a URL
-      // template field.
-      templateOutput.target.url.href,
-      baseCitation
-    );
+    let citation;
+    if (templateOutput.applicable) {
+      // only make citations for applicable template outputs
+      citation = this.makeCitation(
+        templateOutput.outputs,
+        // With this we are setting the output citation's URL to that of the
+        // target Webpage object, which does not follow redirects.
+        // We may change this to the final response URL, but there may be cases
+        // where we do not want to do that (see T210871).
+        // Alternatively, we may let users manually change this using a URL
+        // template field.
+        templateOutput.target.url.href,
+        baseCitation
+      );
+    }
 
     let fields: FieldInfo[] | undefined;
     if (templateFieldInfo) {
@@ -216,6 +214,7 @@ export class Domain {
           required: fieldOutput.required,
           procedures,
           output: fieldOutput.output,
+          valid: fieldOutput.valid,
           applicable: fieldOutput.applicable,
         };
         return fieldInfo;
@@ -309,7 +308,7 @@ type Translation = {
     path: string | undefined; // undefined for fallback template
     fields?: FieldInfo[];
   };
-  citation: WebToCitCitation;
+  citation: WebToCitCitation | undefined;
   timestamp: string;
 };
 
@@ -325,7 +324,8 @@ type FieldInfo = {
     transformations: Array<TransformationDefinition & { output: StepOutput }>;
     output: StepOutput;
   }[];
-  output: Array<string | null>; // this is a validated output; no need to have separate valid property
+  output: StepOutput;
+  valid: boolean;
   applicable: boolean;
 };
 
