@@ -110,11 +110,20 @@ describe("Use an applicable template", () => {
     expect(output.applicable).toBe(true);
   });
 
-  it("skips non-applicable templates", async () => {
+  it("skips non-applicable templates by default", async () => {
     const output = (
       await configuration.translateWith(target, paths)
     )[0] as TemplateOutput;
     expect(output.template.label).toBe("second template");
+  });
+
+  it("optionally returns non-applicable template outputs", async () => {
+    const outputs = (await configuration.translateWith(target, paths, {
+      onlyApplicable: false,
+    })) as TemplateOutput[];
+    expect(outputs.length).toBe(2);
+    expect(outputs[0].applicable).toBe(false);
+    expect(outputs[1].applicable).toBe(true);
   });
 
   it("outputs the expected results", async () => {

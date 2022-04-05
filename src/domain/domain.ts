@@ -86,21 +86,15 @@ export class Domain {
     }
 
     // translate target with templates for paths returned above
-    let templateOutputs = await this.templates.translateWith(
+    const templateOutputs = await this.templates.translateWith(
       target,
       templatePaths,
       {
         tryAllTemplates: options.allTemplates,
         useFallback: options.forceTemplatePaths === undefined,
+        onlyApplicable: options.onlyApplicable,
       }
     );
-
-    // parse output with onlyApplicable option
-    if (options.onlyApplicable) {
-      templateOutputs = templateOutputs.filter(
-        (templateOutput) => templateOutput.applicable
-      );
-    }
 
     let baseCitation: MediaWikiBaseFieldCitation | undefined;
     if (options.fillWithCitoid) {
