@@ -137,17 +137,18 @@ export class TemplateConfiguration extends DomainConfiguration<
         // and convert back to json
         try {
           const template = new TranslationTemplate(this.domain, definition, {
+            forceRequiredFields: this.mandatoryFields,
             strict: false,
           });
           templateDefinitions.push(template.toJSON());
-        } catch {
+        } catch (error) {
           let info = "Ignoring misformatted template";
           if ("path" in definition) {
             info = info + ` for path "${definition.path}"`;
           } else {
             info = info + ` at index ${index}`;
           }
-          log.info(info);
+          log.warn(info + `: ${error}`);
         }
         return templateDefinitions;
       },
@@ -157,15 +158,9 @@ export class TemplateConfiguration extends DomainConfiguration<
   }
 
   loadConfiguration(templates: TemplateDefinition[]): void {
-    if (this.mandatoryFields === undefined) {
-      throw new Error(
-        "Mandatory template fields must be defined before loading any template configuration"
-      );
-    }
     // fixme?: wiping previous translation templates erases template caches
     // see T302239
     this.templates = [];
-    // silently ignore duplicate
     templates.forEach((definition) => {
       try {
         this.add(definition);

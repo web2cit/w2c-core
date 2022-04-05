@@ -35,9 +35,7 @@ export abstract class BaseTranslationTemplate {
       const fieldnames = template.fields.map((field) => field.fieldname);
       for (const field of forceRequiredFields) {
         if (!fieldnames.includes(field)) {
-          throw new Error(
-            `Mandatory field "${field}" missing from template definition`
-          );
+          throw new MissingFieldError(field);
         }
       }
     }
@@ -187,5 +185,12 @@ class DuplicateFieldError extends Error {
   constructor(fieldname: string) {
     super(`Field "${fieldname}" already exists in template`);
     this.name = "Duplicate field error";
+  }
+}
+
+class MissingFieldError extends Error {
+  constructor(fieldname: string) {
+    super(`Mandatory field "${fieldname}" missing from template definition`);
+    this.name = "MissingFieldError";
   }
 }

@@ -269,6 +269,9 @@ it("multiple templates for the same path are silently ignored", () => {
 
 describe("Configuration revisions", () => {
   const warnSpy = jest.spyOn(log, "warn").mockImplementation();
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   it("skips misformatted elements individually", () => {
     const content = JSON.stringify([
       {
@@ -359,5 +362,32 @@ describe("Configuration revisions", () => {
         ],
       },
     ]);
+  });
+  it("skips templates with missing mandatory fields", () => {
+    const definitions: TemplateDefinition[] = [
+      {
+        path: "/",
+        fields: [
+          {
+            fieldname: "itemType",
+            required: true,
+            procedures: [],
+          },
+        ],
+      },
+    ];
+    const revision: ContentRevision = {
+      revid: 0,
+      timestamp: "",
+      content: JSON.stringify(definitions),
+    };
+    const configuration = new TemplateConfiguration(
+      "example.com",
+      ["itemType", "title"],
+      undefined
+    );
+    configuration.loadRevision(revision);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(configuration.get().length).toBe(0);
   });
 });
