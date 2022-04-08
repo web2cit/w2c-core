@@ -5,18 +5,23 @@
   "description": "A list of URL path patterns",
   "type": "array",
   "items": {
-    "description": "A URL path pattern",
+    "title": "URL path pattern",
+    "description": "A URL path pattern defines a translation subgroup within a domain",
     "type": "object",
     "properties": {
       "pattern": {
+        "title": "Pattern",
         "description": "Glob path pattern defining a URL matching group",
         "type": "string"
       },
       "label": {
+        "title": "Label",
         "description": "Fancy name for this URL path pattern",
         "type": "string"
       }
     },
-    "required": ["pattern"]
+    "required": [
+      "pattern"
+    ]
   }
 }
