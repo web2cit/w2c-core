@@ -5,35 +5,61 @@
   "description": "A list of translation tests",
   "type": "array",
   "items": {
-    "description": "A translation test",
+    "title": "Translation test",
+    "description": "A translation test defines translation goals for a specific test webpage",
     "type": "object",
     "properties": {
       "path": {
-        "description": "Path of the webpage used as translation test",
+        "title": "Path",
+        "description": "Path of the webpage used as translation test. Do not include the hostname; just the path beginning with \"/\". You may also include query (?) and fragment (#) components. Duplicate translation tests for the same path will be ignored.",
         "type": "string"
       },
-      "goals": {
-        "description": "A series of one or more fieldname:goal pairs",
-        "type": "object",
-        "propertyNames": {
-            "pattern": ".+"
-        },
-        "patternProperties": {
-            "": {
-                "oneOf": [
-                    { "type": "string" },
-                    {
-                        "type": "array",
-                        "items": {
-                            "description": "Goal array item",
-                            "type": "string"
-                        }
-                    }
-                ]
+      "fields": {
+        "title": "Fields",
+        "description": "A list of test fields and their translation goals",
+        "type": "array",
+        "items": {
+          "title": "Test field",
+          "description": "A test field specifies a translation goal for a specific citation field",
+          "type": "object",
+          "properties": {
+            "fieldname": {
+              "title": "Field name",
+              "description": "Name of the test field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types). Duplicate test fields with the same field name will be ignored.",
+              "type": "string",
+              "enum": [
+                "itemType",
+                "title",
+                "authorFirst",
+                "authorLast",
+                "date",
+                "publishedIn",
+                "publishedBy",
+                "language",
+                "control"
+              ]
+            },
+            "goal": {
+              "title": "Translation goal",
+              "description": "A list of values representing the expected translation output for a test field. Provide an empty list to explicitly express that no output is expected. Translation fields expecting a single-value output should specify a single-value goal (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types).",
+              "type": "array",
+              "items": {
+                "title": "Output value",
+                "description": "An individual value in the expected translation output. Must comply with validation rules for the translation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types).",
+                "type": "string"
+              }
             }
+          },
+          "required": [
+            "fieldname",
+            "goal"
+          ]
         }
       }
     },
-    "required": ["path", "goals"]
+    "required": [
+      "path",
+      "fields"
+    ]
   }
 }
