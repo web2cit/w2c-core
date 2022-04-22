@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gitlab.wikimedia.org/diegodlh/w2c-core/-/blob/main/templates.schema.json",
   "title": "Domain translation templates configuration for Web2Cit",
-  "description": "A list of translation templates",
+  "description": "A list of translation templates. See https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#templates.json",
   "type": "array",
   "items": {
     "title": "Translation template",
@@ -61,74 +61,261 @@
                 "properties": {
                   "selections": {
                     "title": "Selection",
-                    "description": "A list of selection steps; the combined output of all selection steps is given as input to the first transformation step below",
+                    "description": "A list of selection steps (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs); the combined output of all selection steps is given as input to the first transformation step below",
                     "default": [],
                     "type": "array",
                     "items": {
                       "title": "Selection step",
                       "description": "A selection step selects and extracts individual elements from the target webpage",
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "title": "Type",
-                          "description": "The specific selection step type (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs)",
-                          "type": "string",
-                          "enum": [
-                            "citoid",
-                            "xpath",
-                            "fixed"
+                      "oneOf": [
+                        { 
+                          "title": "Citoid selection",
+                          "description": "Selects a field from the Citoid response for the target webpage",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["citoid"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "Any valid Citoid/Zotero base field name; creators (e.g., \"author\") are split into creatorFirst and creatorLast. Use the \"citation\" endpoint of Wikimedia REST API (format \"mediawiki-basefields\") to check what Citoid returns for the target webpage: https://en.wikipedia.org/api/rest_v1/#/Citation/getCitation.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config"
                           ]
                         },
-                        "config": {
-                          "title": "Configuration",
-                          "description": "Selection step configuration; each selection type supports different configuration values (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs)",
-                          "type": "string"
+                        { 
+                          "title": "XPath selection",
+                          "description": "Selects a node from the target webpage's HTML using XPath",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["xpath"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "Any valid XPath expression. Your browser's inspector may help you get one.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config"
+                          ]
+                        },
+                        { 
+                          "title": "Fixed selection",
+                          "description": "Always returns the same predefined value",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["fixed"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "The predefined value to be returned.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config"
+                          ]
                         }
-                      },
-                      "required": [
-                        "type",
-                        "config"
                       ]
                     }
                   },
                   "transformations": {
                     "title": "Transformation",
-                    "description": "A list of transformation steps to be applied one after the other; the output of the last transformation step is the procedure's output",
+                    "description": "A list of transformation steps to be applied one after the other (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs); the output of the last transformation step is the procedure's output",
                     "type": "array",
                     "items": {
                       "title": "Transformation step",
                       "description": "Transformation steps transform selected elements (if needed) to return the expected output",
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "title": "Type",
-                          "description": "The specific transformation step type (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs)",
-                          "type": "string",
-                          "enum": [
-                            "join",
-                            "split",
-                            "date",
-                            "range",
-                            "match"
+                      "oneOf": [
+                        {
+                          "title": "Join transformation",
+                          "description": "Joins two or more items in a list into one, using the separator specified",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["join"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "The separator to use.",
+                              "type": "string"
+                            },
+                            "itemwise": {
+                              "$ref": "#/definitions/itemwise",
+                              "default": false
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config",
+                            "itemwise"
                           ]
                         },
-                        "config": {
-                          "title": "Configuration",
-                          "description": "Transformation step configuration; each transformation type supports different configuration values (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs)",
-                          "type": "string"
+                        {
+                          "title": "Split transformation",
+                          "description": "Splits a string at the separator specified into two or more substrings",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["split"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "The separator to use.",
+                              "type": "string"
+                            },
+                            "itemwise": {
+                              "$ref": "#/definitions/itemwise",
+                              "default": true
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config",
+                            "itemwise"
+                          ]
                         },
-                        "itemwise": {
-                          "title": "Item-wise",
-                          "description": "Whether transformation should be applied to each item of the input independently (true), or to the entire input as a whole (false)",
-                          "type": "boolean"
+                        {
+                          "title": "Date transformation",
+                          "description": "Uses the Sugar.js to try and parse natural language dates into the YYYY-MM-DD format",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["date"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "Any of the currently supported locales",
+                              "type": "string",
+                              "enum": [
+                                "ca",
+                                "da",
+                                "de",
+                                "en",
+                                "es",
+                                "fi",
+                                "fr",
+                                "it",
+                                "ja",
+                                "ko",
+                                "nl",
+                                "no",
+                                "pl",
+                                "pt",
+                                "ru",
+                                "sv",
+                                "zh-CN",
+                                "zh-TW"
+                              ],
+                              "options": {
+                                "enum_titles": [
+                                  "Catalan (ca)",
+                                  "Danish (da)",
+                                  "German (de)",
+                                  "English (en)",
+                                  "Spanish (es)",
+                                  "Finnish (fi)",
+                                  "French (fr)",
+                                  "Italian (it)",
+                                  "Japanese (ja)",
+                                  "Korean (ko)",
+                                  "Dutch (nl)",
+                                  "Norwegian (no)",
+                                  "Polish (pl)",
+                                  "Portuguese (pt)",
+                                  "Russian (ru)",
+                                  "Swedish (sv)",
+                                  "Chinese (zh-CN)",
+                                  "Chinese (zh-TW)"
+                                ]
+                              }
+                            },
+                            "itemwise": {
+                              "$ref": "#/definitions/itemwise",
+                              "default": true
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config",
+                            "itemwise"
+                          ]
+                        },
+                        {
+                          "title": "Range transformation",
+                          "description": "Returns one or more items or ranges of items in the order specified",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["range"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "One or more zero-based comma-separated ranges: \"start(:end)\", \"start:\" or \":end\".",
+                              "type": "string"
+                            },
+                            "itemwise": {
+                              "$ref": "#/definitions/itemwise",
+                              "default": false
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config",
+                            "itemwise"
+                          ]
+                        },
+                        {
+                          "title": "Match transformation",
+                          "description": "Returns one or more substrings matching a target",
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "title": "Type",
+                              "type": "string",
+                              "enum": ["match"]
+                            },
+                            "config": {
+                              "title": "Configuration",
+                              "description": "The matching target, expressed as either plain string or /regular expression/ (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Match_transformation).",
+                              "type": "string"
+                            },
+                            "itemwise": {
+                              "$ref": "#/definitions/itemwise",
+                              "default": true
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "config",
+                            "itemwise"
+                          ]
                         }
-                      },
-                      "required": [
-                        "type",
-                        "config",
-                        "itemwise"
                       ]
-                    }
+                    }                      
                   }
                 },
                 "required": [
@@ -150,5 +337,12 @@
       "path",
       "fields"
     ]
+  },
+  "definitions": {
+    "itemwise": {
+      "title": "Item-wise",
+      "description": "Whether transformation should be applied to each item of the input independently (true), or to the entire input as a whole (false)",
+      "type": "boolean"
+    }
   }
 }
