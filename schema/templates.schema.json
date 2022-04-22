@@ -2,16 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gitlab.wikimedia.org/diegodlh/w2c-core/-/blob/main/templates.schema.json",
   "title": "Domain translation templates configuration for Web2Cit",
-  "description": "A list of translation templates. See https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#templates.json",
+  "description": "Each translation template defines translation procedures to extract relevant metadata from a specific template webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#templates.json)",
   "type": "array",
   "items": {
     "title": "Translation template",
-    "description": "A translation template defines translation procedures to extract relevant metadata from a specific template webpage",
     "type": "object",
     "properties": {
       "path": {
         "title": "Path",
-        "description": "Path of the webpage used as translation template. Do not include the hostname; just the path beginning with \"/\". You may also include query (?) and fragment (#) components. Duplicate translation templates for the same path will be ignored.",
+        "description": "Path of the webpage used as translation template",
+        "options": { "infoText": "Do not include the hostname; just the path beginning with \"/\". You may also include query (?) and fragment (#) components. Duplicate translation templates for the same path will be ignored." },
         "type": "string"
       },
       "label": {
@@ -21,16 +21,17 @@
       },
       "fields": {
         "title": "Fields",
-        "description": "A list of template fields. Mandatory fields \"itemType\" and \"title\" must be included, or template will be ignored.",
+        "description": "Each template field defines translation procedures to extract metadata belonging to a specific citation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types)",
+        "options": { "infoText": "Mandatory fields \"itemType\" and \"title\" must be included, or template will be ignored." },
         "type": "array",
         "items": {
           "title": "Template field",
-          "description": "A template field defines translation procedures to extract metadata belonging to a specific citation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types)",
           "type": "object",
           "properties": {
             "fieldname": {
               "title": "Field name",
-              "description": "Name of the template field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types). Duplicate template fields with the same field name will be ignored.",
+              "description": "Name of the template field",
+              "options": { "infoText": "Duplicate template fields with the same field name will be ignored." },
               "type": "string",
               "enum": [
                 "itemType",
@@ -46,27 +47,27 @@
             },
             "required": {
               "Title": "Required",
-              "description": "Whether the template field is required or not (mandatory fields \"itemType\" and \"title\" are always required). Given a target webpage, the output of all required fields must be valid for the template to be applicable.",
+              "description": "Whether the template field is required or not",
+              "options": { "infoText": "Given a target webpage, the output of all required fields must be valid for the template to be applicable. Mandatory fields \"itemType\" and \"title\" are always required." },
               "type": "boolean",
               "default": true
             },
             "procedures": {
               "title": "Procedures",
-              "description": "A list of translation procedures",
+              "description": "Each translation procedure defines a series of selection and transformation steps to extract and manipulate relevant metadata",
               "type": "array",
               "items": {
                 "title": "Translation procedure",
-                "description": "A translation procedure defines a series of selection and transformation steps to extract and manipulate relevant metadata",
                 "type": "object",
                 "properties": {
                   "selections": {
                     "title": "Selection",
-                    "description": "A list of selection steps (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs); the combined output of all selection steps is given as input to the first transformation step below",
+                    "description": "Selection steps select and extract individual elements from the target webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs)",
+                    "options": { "infoText": "The combined output of all selection steps is given as input to the first transformation step below." },
                     "default": [],
                     "type": "array",
                     "items": {
                       "title": "Selection step",
-                      "description": "A selection step selects and extracts individual elements from the target webpage",
                       "oneOf": [
                         { 
                           "title": "Citoid selection",
@@ -80,7 +81,8 @@
                             },
                             "config": {
                               "title": "Configuration",
-                              "description": "Any valid Citoid/Zotero base field name; creators (e.g., \"author\") are split into creatorFirst and creatorLast. Use the \"citation\" endpoint of Wikimedia REST API (format \"mediawiki-basefields\") to check what Citoid returns for the target webpage: https://en.wikipedia.org/api/rest_v1/#/Citation/getCitation.",
+                              "description": "Any valid Citoid/Zotero base field name; use Wikimedia REST API (\"citation\" endpoint, \"mediawiki-basefields\" format) to check Citoid response for the target webpage: https://en.wikipedia.org/api/rest_v1/#/Citation/getCitation.",
+                              "options": { "infoText": "Creator fields (e.g., \"author\") are split into creatorFirst and creatorLast fields." },
                               "type": "string"
                             }
                           },
@@ -101,7 +103,8 @@
                             },
                             "config": {
                               "title": "Configuration",
-                              "description": "Any valid XPath expression. Your browser's inspector may help you get one.",
+                              "description": "Any valid XPath expression",
+                              "options": { "infoText": "Your web browser's inspector (shown with F12 in some browsers) may help you get an XPath expression for an HTML node." },
                               "type": "string"
                             }
                           },
@@ -136,11 +139,11 @@
                   },
                   "transformations": {
                     "title": "Transformation",
-                    "description": "A list of transformation steps to be applied one after the other (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs); the output of the last transformation step is the procedure's output",
+                    "description": "Transformation steps transform selected elements (if needed) to return the expected output (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs)",
+                    "options": { "infoText": "Transformation steps are applied one after the other, and the output of the last transformation step is the procedure's output." },
                     "type": "array",
                     "items": {
                       "title": "Transformation step",
-                      "description": "Transformation steps transform selected elements (if needed) to return the expected output",
                       "oneOf": [
                         {
                           "title": "Join transformation",
@@ -274,7 +277,8 @@
                             },
                             "config": {
                               "title": "Configuration",
-                              "description": "One or more zero-based comma-separated ranges: \"start(:end)\", \"start:\" or \":end\".",
+                              "description": "One or more comma-separated ranges: \"start(:end)\", \"start:\" or \":end\".",
+                              "options": { "infoText": "Ranges are zero-based, meaning that the first item is item 0" },
                               "type": "string"
                             },
                             "itemwise": {
@@ -341,7 +345,8 @@
   "definitions": {
     "itemwise": {
       "title": "Item-wise",
-      "description": "Whether transformation should be applied to each item of the input independently (true), or to the entire input as a whole (false)",
+      "description": "Whether transformation should be applied to each item of the input independently",
+      "options": { "infoText": "true: apply transformation to each item of the input independently; false: apply transformation to the entire input as a whole." },
       "type": "boolean"
     }
   }
