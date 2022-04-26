@@ -27,14 +27,14 @@
         "items": {
           "title": "Template field",
           "oneOf": [
-            { "$ref": "#/definitions/fields/itemType" },
-            { "$ref": "#/definitions/fields/title"},
-            { "$ref": "#/definitions/fields/authorLast"},
-            { "$ref": "#/definitions/fields/authorFirst"},
-            { "$ref": "#/definitions/fields/date"},
-            { "$ref": "#/definitions/fields/publishedIn"},
-            { "$ref": "#/definitions/fields/publishedBy"},
-            { "$ref": "#/definitions/fields/control"}
+            { "$ref": "#/definitions/itemType" },
+            { "$ref": "#/definitions/title"},
+            { "$ref": "#/definitions/authorLast"},
+            { "$ref": "#/definitions/authorFirst"},
+            { "$ref": "#/definitions/date"},
+            { "$ref": "#/definitions/publishedIn"},
+            { "$ref": "#/definitions/publishedBy"},
+            { "$ref": "#/definitions/control"}
           ]
         }
       }
@@ -342,223 +342,221 @@
       "options": { "infoText": "true: apply transformation to each item of the input independently; false: apply transformation to the entire input as a whole." },
       "type": "boolean"
     },
-    "fields": {
-      "itemType": {
-        "title": "Item type field (mandatory)",
-        "description": "Type of the cited resource | Valid output: one of the Citoid/Zotero supported types (see https://aurimasv.github.io/z2csl/typeMap.xml)",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["itemType"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+    "itemType": {
+      "title": "Item type field (mandatory)",
+      "description": "Type of the cited resource | Valid output: one of the Citoid/Zotero supported types (see https://aurimasv.github.io/z2csl/typeMap.xml)",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["itemType"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "title": {
-        "title": "Title field (mandatory)",
-        "description": "Title of the cited resource | Valid output: a single non-empty string",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["title"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "title": {
+      "title": "Title field (mandatory)",
+      "description": "Title of the cited resource | Valid output: a single non-empty string",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["title"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "authorLast": {
-        "title": "Author last names field",
-        "description": "Authors' last or full names | Valid output: one or more non-empty strings",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["authorLast"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "authorLast": {
+      "title": "Author last names field",
+      "description": "Authors' last or full names | Valid output: one or more non-empty strings",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["authorLast"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "authorFirst": {
-        "title": "Author first names field",
-        "description": "Authors' first names | Valid output: one or more empty or non-empty strings",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["authorFirst"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "authorFirst": {
+      "title": "Author first names field",
+      "description": "Authors' first names | Valid output: one or more empty or non-empty strings",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["authorFirst"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "date": {
-        "title": "Date field",
-        "description": "Publishing date | Valid output: a single yyyy-mm-dd, yyyy-mm or yyyy value",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["date"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "date": {
+      "title": "Date field",
+      "description": "Publishing date | Valid output: a single yyyy-mm-dd, yyyy-mm or yyyy value",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["date"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "publishedIn": {
-        "title": "Published in field",
-        "description": "Work containing the cited resource | Valid output: a single non-empty string",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["publishedIn"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "publishedIn": {
+      "title": "Published in field",
+      "description": "Work containing the cited resource | Valid output: a single non-empty string",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["publishedIn"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "publishedBy": {
-        "title": "Published by field",
-        "description": "Publisher of the cited resource | Valid output: a single non-empty string",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["publishedBy"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "publishedBy": {
+      "title": "Published by field",
+      "description": "Publisher of the cited resource | Valid output: a single non-empty string",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["publishedBy"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "language": {
-        "title": "Language field",
-        "description": "Publishing language | Valid output: a single xx or xx-xx* language code",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["language"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "language": {
+      "title": "Language field",
+      "description": "Publishing language | Valid output: a single xx or xx-xx* language code",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["language"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
       },
-      "control": {
-        "title": "Control field",
-        "description": "Template applicability control | Valid output: a single non-empty string",
-        "type": "object",
-        "properties": {
-          "fieldname": {
-            "title": "Field name",
-            "type": "string",
-            "enum": ["control"],
-            "options": { "hidden": true }
-          },
-          "required": {
-            "$ref": "#/definitions/required"
-          },
-          "procedures": {
-            "$ref": "#/definitions/procedures"
-          }
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
+    },
+    "control": {
+      "title": "Control field",
+      "description": "Template applicability control | Valid output: a single non-empty string",
+      "type": "object",
+      "properties": {
+        "fieldname": {
+          "title": "Field name",
+          "type": "string",
+          "enum": ["control"],
+          "options": { "hidden": true }
         },
-        "required": [
-          "fieldname",
-          "required",
-          "procedures"
-        ]
-      }
+        "required": {
+          "$ref": "#/definitions/required"
+        },
+        "procedures": {
+          "$ref": "#/definitions/procedures"
+        }
+      },
+      "required": [
+        "fieldname",
+        "required",
+        "procedures"
+      ]
     }
   }
 }
