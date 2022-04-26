@@ -77,7 +77,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["citoid"]
+                      "enum": ["citoid"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -99,7 +100,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["xpath"]
+                      "enum": ["xpath"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -121,7 +123,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["fixed"]
+                      "enum": ["fixed"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -153,7 +156,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["join"]
+                      "enum": ["join"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -179,7 +183,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["split"]
+                      "enum": ["split"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -205,7 +210,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["date"]
+                      "enum": ["date"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -273,7 +279,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["range"]
+                      "enum": ["range"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -300,7 +307,8 @@
                     "type": {
                       "title": "Type",
                       "type": "string",
-                      "enum": ["match"]
+                      "enum": ["match"],
+                      "options": { "hidden": true }
                     },
                     "config": {
                       "title": "Configuration",
@@ -343,7 +351,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["itemType"]
+            "enum": ["itemType"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -366,7 +375,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["title"]
+            "enum": ["title"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -389,7 +399,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["authorLast"]
+            "enum": ["authorLast"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -412,7 +423,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["authorFirst"]
+            "enum": ["authorFirst"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -435,7 +447,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["date"]
+            "enum": ["date"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -458,7 +471,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["publishedIn"]
+            "enum": ["publishedIn"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -481,7 +495,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["publishedBy"]
+            "enum": ["publishedBy"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -504,7 +519,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["language"]
+            "enum": ["language"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
@@ -527,7 +543,8 @@
           "fieldname": {
             "title": "Field name",
             "type": "string",
-            "enum": ["control"]
+            "enum": ["control"],
+            "options": { "hidden": true }
           },
           "required": {
             "$ref": "#/definitions/required"
