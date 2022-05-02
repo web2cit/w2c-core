@@ -1,5 +1,7 @@
 import {
   RequiredFields,
+  BaseTitleFields,
+  NonBaseTitleFields,
   SpecialFields,
   BaseFields,
   NonBaseFields,
@@ -9,11 +11,12 @@ import {
   ZoteroFields,
   SimpleCitoidFields,
 } from "./fieldTypes";
-import { REQUIRED_FIELDS } from "./keyTypes";
+import { REQUIRED_FIELDS, TITLE_FIELDS } from "./keyTypes";
 
 // Citoid citation types
 
 export type MediaWikiCitation = RequiredFields &
+  (BaseTitleFields | NonBaseTitleFields) &
   Partial<
     SpecialFields &
       BaseFields &
@@ -24,9 +27,11 @@ export type MediaWikiCitation = RequiredFields &
   >;
 
 export type MediaWikiBaseFieldCitation = RequiredFields &
+  BaseTitleFields &
   Partial<SpecialFields & BaseFields & BaseCreatorFields & MediaWikiFields>;
 
 export type ZoteroCitation = RequiredFields &
+  (BaseTitleFields | NonBaseTitleFields) &
   Partial<SpecialFields & BaseFields & NonBaseFields & ZoteroFields>;
 
 export type CitoidCitation =
@@ -37,8 +42,10 @@ export type CitoidCitation =
 export function isCitoidCitation(
   citation: unknown
 ): citation is CitoidCitation {
-  return REQUIRED_FIELDS.every(
-    (field) => (citation as CitoidCitation)[field] !== undefined
+  return (
+    REQUIRED_FIELDS.every(
+      (field) => (citation as CitoidCitation)[field] !== undefined
+    ) && TITLE_FIELDS.some((field) => field in (citation as CitoidCitation))
   );
 }
 

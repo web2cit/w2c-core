@@ -5,8 +5,18 @@ import {
 } from "./creatorTypes";
 
 // Required field key type
-export const REQUIRED_FIELDS = ["itemType", "title", "url"] as const;
+export const REQUIRED_FIELDS = ["itemType", "url"] as const;
 export type RequiredField = typeof REQUIRED_FIELDS[number];
+
+// Title field key types
+const BASE_TITLE_FIELDS = ["title"] as const;
+export type BaseTitleField = typeof BASE_TITLE_FIELDS[number];
+const NON_BASE_TITLE_FIELDS = ["caseName", "subject", "nameOfAct"] as const;
+export type NonBaseTitleField = typeof NON_BASE_TITLE_FIELDS[number];
+export const TITLE_FIELDS = [
+  ...BASE_TITLE_FIELDS,
+  ...NON_BASE_TITLE_FIELDS,
+] as const;
 
 // Special field key type
 const SPECIAL_FIELDS = ["tags", "key", "version"] as const;
@@ -141,6 +151,7 @@ export type MediaWikiField = typeof MEDIA_WIKI_FIELDS[number];
 // Simple-citoid field key type
 const SIMPLE_CITOID_NON_CREATOR_FIELDS = [
   ...REQUIRED_FIELDS,
+  ...BASE_TITLE_FIELDS,
   "tags",
   ...BASE_FIELDS,
   ...MEDIA_WIKI_ID_FIELDS,

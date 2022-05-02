@@ -1,4 +1,4 @@
-import { assert, Equals, Implements } from "./utils";
+import { assert, Equals, Implements, OneKey } from "./utils";
 import {
   ItemType,
   Tag,
@@ -8,6 +8,8 @@ import {
 } from "./valueTypes";
 import {
   RequiredField,
+  BaseTitleField,
+  NonBaseTitleField,
   SpecialField,
   BaseField,
   NonBaseField,
@@ -25,11 +27,16 @@ import {
 export interface RequiredFields {
   // required - https://www.mediawiki.org/wiki/Citoid/API#Field_names
   itemType: ItemType;
-  title: string;
   url: string;
 }
 // confirm that RequiredFields has all and only the keys in REQUIRED_FIELDS
 assert<Equals<RequiredField, keyof RequiredFields>>(true);
+
+// Title fields
+export type BaseTitleFields = {
+  [key in BaseTitleField]: string;
+};
+export type NonBaseTitleFields = OneKey<NonBaseTitleField, string>;
 
 // Special fields
 export interface SpecialFields {
@@ -78,7 +85,10 @@ export interface ZoteroFields {
 }
 
 // Simple-citoid fields
-export type SimpleCitoidFields = Record<RequiredField, string | string[]> & {
+export type SimpleCitoidFields = Record<
+  RequiredField | BaseTitleField,
+  string | string[]
+> & {
   itemType: ItemType;
 } & Partial<
     Record<
