@@ -1,7 +1,8 @@
 // node-fetch 3 does not support jest yet
 // https://github.com/node-fetch/node-fetch/issues/1265
 import fetch from "node-fetch";
-import { fetchSimpleCitation, SimpleCitoidCitation } from "../citoid";
+import { fetchSimpleCitation } from "../citoid";
+import { SimpleCitoidCitation } from "../citation/citationTypes";
 import { JSDOM } from "jsdom";
 import { HTTPResponseError } from "../errors";
 

@@ -1,4 +1,4 @@
-import { CitoidCitation, fetchSimpleCitation } from "./citoid";
+import { fetchSimpleCitation } from "./citoid";
 import * as nodeFetch from "node-fetch";
 import { pages } from "./webpage/samplePages";
 

@@ -1,7 +1,8 @@
 import { Webpage } from "../webpage/webpage";
 import { TranslationProcedure } from "./procedure";
 import { FieldName, isItemType, TranslationField } from "../translationField";
-import { MediaWikiBaseFieldCitation, MediaWikiCreator } from "../citoid";
+import { MediaWikiBaseFieldCitation } from "../citation/citationTypes";
+import { MediaWikiCreator } from "../citation/valueTypes";
 import {
   TemplateFieldDefinition,
   TemplateFieldOutput,

@@ -1,4 +1,4 @@
-import { MediaWikiBaseFieldCitation } from "../citoid";
+import { MediaWikiBaseFieldCitation } from "../citation/citationTypes";
 
 export const pages: {
   [url: string]: {

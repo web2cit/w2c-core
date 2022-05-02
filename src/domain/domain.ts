@@ -1,5 +1,8 @@
 import * as config from "../config";
-import { MediaWikiBaseFieldCitation } from "../citoid";
+import {
+  MediaWikiBaseFieldCitation,
+  WebToCitCitation,
+} from "../citation/citationTypes";
 import { FieldName } from "../translationField";
 import { Webpage } from "../webpage/webpage";
 import { outputToCitation } from "../templates/templateField";
@@ -327,8 +330,4 @@ type FieldInfo = {
   output: StepOutput;
   valid: boolean;
   applicable: boolean;
-};
-
-type WebToCitCitation = Omit<MediaWikiBaseFieldCitation, "source"> & {
-  source: Array<"Web2Cit" | "Zotero">;
 };

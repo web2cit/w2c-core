@@ -1,6 +1,6 @@
 import { TranslationStep } from "./step";
 import { Webpage } from "../webpage/webpage";
-import { SimpleCitoidField, isSimpleCitoidField } from "../citoid";
+import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { JSDOM } from "jsdom";
 import { StepOutput, SelectionDefinition } from "../types";
 
