@@ -76,7 +76,7 @@ export class CitoidSelection extends Selection {
       target.cache.citoid
         .getData(false)
         .then((data) => {
-          let selection = data.citation[field];
+          let selection = data.citation.simple[field];
           if (!(selection instanceof Array)) {
             if (selection === undefined) {
               selection = [];

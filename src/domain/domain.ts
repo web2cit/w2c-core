@@ -104,7 +104,7 @@ export class Domain {
 
     let baseCitation: MediaWikiBaseFieldCitation | undefined;
     if (options.fillWithCitoid) {
-      // baseCitation = (await target.cache.citoid.getData()).citation
+      // baseCitation = (await target.cache.citoid.getData()).citation.simple
     }
 
     // compose the final outputs

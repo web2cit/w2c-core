@@ -1,12 +1,7 @@
 import fetch, { Headers } from "node-fetch";
 import { HTTPResponseError } from "./errors";
 import { CITOID_API_ENDPOINT as API_ENDPOINT } from "./config";
-import {
-  CitoidCitation,
-  MediaWikiBaseFieldCitation,
-  SimpleCitoidCitation,
-  isCitoidCitation,
-} from "./citation/citationTypes";
+import { CitoidCitation, isCitoidCitation } from "./citation/citationTypes";
 import { Citation } from "./citation/citation";
 
 // type CitoidRequestFormat = "mediawiki" | "mediawiki-basefields" | "zotero";
@@ -73,17 +68,14 @@ function translateUrl(
   });
 }
 
-export function fetchSimpleCitation(
+export function fetchCitation(
   url: string,
   language?: string
-): Promise<SimpleCitoidCitation> {
+): Promise<Citation> {
   return new Promise((resolve, reject) => {
     translateUrl(url, language)
       .then((citation) => {
-        const simpleCitation = new Citation(
-          citation as MediaWikiBaseFieldCitation
-        ).simple;
-        resolve(simpleCitation);
+        resolve(new Citation(citation));
       })
       .catch((reason) => {
         reject(reason);

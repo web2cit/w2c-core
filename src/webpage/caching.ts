@@ -1,10 +1,10 @@
 // node-fetch 3 does not support jest yet
 // https://github.com/node-fetch/node-fetch/issues/1265
 import fetch from "node-fetch";
-import { fetchSimpleCitation } from "../citoid";
-import { SimpleCitoidCitation } from "../citation/citationTypes";
+import { fetchCitation } from "../citoid";
 import { JSDOM } from "jsdom";
 import { HTTPResponseError } from "../errors";
+import { Citation } from "../citation/citation";
 
 abstract class ResponseCache {
   url: string;
@@ -113,7 +113,7 @@ function cleanDom(window: JSDOM["window"]): Document {
 }
 
 interface CitoidCacheData {
-  citation: SimpleCitoidCitation;
+  citation: Citation;
 }
 
 class CitoidCache extends ResponseCache {
@@ -128,7 +128,7 @@ class CitoidCache extends ResponseCache {
 
   fetchData(): Promise<CitoidCacheData> {
     return new Promise<CitoidCacheData>((resolve, reject) => {
-      fetchSimpleCitation(this.url)
+      fetchCitation(this.url)
         .then((citation) => {
           const data: CitoidCacheData = {
             citation: citation,

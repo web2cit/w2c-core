@@ -1,4 +1,4 @@
-import { fetchSimpleCitation } from "./citoid";
+import { fetchCitation } from "./citoid";
 import * as nodeFetch from "node-fetch";
 import { pages } from "./webpage/samplePages";
 
@@ -16,8 +16,8 @@ describe("Simple Citoid citation", () => {
       sampleUrl,
       JSON.stringify(pages[sampleUrl].citoid)
     );
-    return fetchSimpleCitation(sampleUrl).then((citation) => {
-      expect(citation).toEqual({
+    return fetchCitation(sampleUrl).then((citation) => {
+      expect(citation.simple).toEqual({
         itemType: "webpage",
         title: "Sample article",
         tags: ["first tag", "second tag"],
@@ -34,7 +34,7 @@ describe("Error responses", () => {
 
   it("handles a successful non-JSON response", () => {
     mockNodeFetch.__addCitoidResponse(url, "unexpected response format");
-    return expect(fetchSimpleCitation(url)).rejects.toThrow(
+    return expect(fetchCitation(url)).rejects.toThrow(
       "Unknown Citoid response format"
     );
   });
@@ -42,7 +42,7 @@ describe("Error responses", () => {
   it("handles a successful unknown JSON response", () => {
     const wrongCitation = { invalidKey: "invalidValue" };
     mockNodeFetch.__addCitoidResponse(url, JSON.stringify([wrongCitation]));
-    return expect(fetchSimpleCitation(url)).rejects.toThrow(
+    return expect(fetchCitation(url)).rejects.toThrow(
       "Unknown Citoid response format"
     );
   });
@@ -55,8 +55,8 @@ it("accepts basic Citoid citation with required fields only", async () => {
     url: "https://example.com/",
   };
   mockNodeFetch.__setDefaultResponse(JSON.stringify([basicCitation]));
-  const citation = await fetchSimpleCitation("https://example.com/");
-  expect(citation).toEqual({
+  const citation = await fetchCitation("https://example.com/");
+  expect(citation.simple).toEqual({
     itemType: "journalArticle",
     title: "sample title",
     url: "https://example.com/",
