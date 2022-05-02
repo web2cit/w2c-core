@@ -17,7 +17,7 @@ describe("Simple Citoid citation", () => {
       JSON.stringify(pages[sampleUrl].citoid)
     );
     return fetchSimpleCitation(sampleUrl).then((citation) => {
-      expect(citation).toStrictEqual({
+      expect(citation).toEqual({
         itemType: "webpage",
         title: "Sample article",
         tags: ["first tag", "second tag"],

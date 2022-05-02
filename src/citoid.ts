@@ -7,7 +7,7 @@ import {
   SimpleCitoidCitation,
   isCitoidCitation,
 } from "./citation/citationTypes";
-import { simplifyCitation } from "./citation/citation";
+import { Citation } from "./citation/citation";
 
 // type CitoidRequestFormat = "mediawiki" | "mediawiki-basefields" | "zotero";
 // | 'bibtex'
@@ -80,9 +80,9 @@ export function fetchSimpleCitation(
   return new Promise((resolve, reject) => {
     translateUrl(url, language)
       .then((citation) => {
-        const simpleCitation = simplifyCitation(
+        const simpleCitation = new Citation(
           citation as MediaWikiBaseFieldCitation
-        );
+        ).simple;
         resolve(simpleCitation);
       })
       .catch((reason) => {

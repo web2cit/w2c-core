@@ -43,7 +43,7 @@ describe("Citoid Cache", () => {
     expect(cache.url).toBe(url);
 
     return cache.fetchData().then((data) => {
-      expect(data.citation).toStrictEqual({
+      expect(data.citation).toEqual({
         itemType: "webpage",
         title: "Sample article",
         tags: ["first tag", "second tag"],

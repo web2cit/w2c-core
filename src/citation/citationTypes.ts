@@ -1,10 +1,10 @@
 import {
   RequiredFields,
   BaseTitleFields,
-  NonBaseTitleFields,
+  TitleFields,
   SpecialFields,
-  BaseFields,
-  NonBaseFields,
+  BaseRegularFields,
+  NonBaseRegularFields,
   BaseCreatorFields,
   NonBaseCreatorFields,
   MediaWikiFields,
@@ -16,11 +16,11 @@ import { REQUIRED_FIELDS, TITLE_FIELDS } from "./keyTypes";
 // Citoid citation types
 
 export type MediaWikiCitation = RequiredFields &
-  (BaseTitleFields | NonBaseTitleFields) &
+  TitleFields &
   Partial<
     SpecialFields &
-      BaseFields &
-      NonBaseFields &
+      BaseRegularFields &
+      NonBaseRegularFields &
       BaseCreatorFields &
       NonBaseCreatorFields &
       MediaWikiFields
@@ -28,11 +28,15 @@ export type MediaWikiCitation = RequiredFields &
 
 export type MediaWikiBaseFieldCitation = RequiredFields &
   BaseTitleFields &
-  Partial<SpecialFields & BaseFields & BaseCreatorFields & MediaWikiFields>;
+  Partial<
+    SpecialFields & BaseRegularFields & BaseCreatorFields & MediaWikiFields
+  >;
 
-export type ZoteroCitation = RequiredFields &
-  (BaseTitleFields | NonBaseTitleFields) &
-  Partial<SpecialFields & BaseFields & NonBaseFields & ZoteroFields>;
+type ZoteroCitation = RequiredFields &
+  TitleFields &
+  Partial<
+    SpecialFields & BaseRegularFields & NonBaseRegularFields & ZoteroFields
+  >;
 
 export type CitoidCitation =
   | MediaWikiCitation

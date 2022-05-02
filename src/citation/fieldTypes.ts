@@ -11,8 +11,8 @@ import {
   BaseTitleField,
   NonBaseTitleField,
   SpecialField,
-  BaseField,
-  NonBaseField,
+  BaseRegularField,
+  NonBaseRegularField,
   BaseCreatorField,
   NonBaseCreatorField,
   SplitBaseCreatorField,
@@ -36,7 +36,7 @@ assert<Equals<RequiredField, keyof RequiredFields>>(true);
 export type BaseTitleFields = {
   [key in BaseTitleField]: string;
 };
-export type NonBaseTitleFields = OneKey<NonBaseTitleField, string>;
+export type TitleFields = OneKey<BaseTitleField | NonBaseTitleField, string>;
 
 // Special fields
 export interface SpecialFields {
@@ -47,10 +47,10 @@ export interface SpecialFields {
 assert<Equals<SpecialField, keyof SpecialFields>>(true);
 
 // Base fields
-export type BaseFields = Record<BaseField, string>;
+export type BaseRegularFields = Record<BaseRegularField, string>;
 
 // Non-base fields
-export type NonBaseFields = Record<NonBaseField, string>;
+export type NonBaseRegularFields = Record<NonBaseRegularField, string>;
 
 // Base creator fields
 export type BaseCreatorFields = Record<
@@ -93,7 +93,7 @@ export type SimpleCitoidFields = Record<
 } & Partial<
     Record<
       | Exclude<SpecialField, "key" | "version">
-      | BaseField
+      | BaseRegularField
       | SplitBaseCreatorField
       | Exclude<MediaWikiField, "source">,
       string | string[]

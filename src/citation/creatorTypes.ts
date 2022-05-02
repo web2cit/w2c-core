@@ -1,7 +1,7 @@
 // Creator types
 ////////////////
 
-// Base creator field key type
+// Base creator type
 export const BASE_CREATOR_TYPES = [
   "attorneyAgent",
   "author",
@@ -25,7 +25,7 @@ export const BASE_CREATOR_TYPES = [
 ] as const;
 export type BaseCreatorType = typeof BASE_CREATOR_TYPES[number];
 
-// Non-base creator field key type
+// Non-base creator type
 const NON_BASE_CREATOR_TYPES = [
   "artist",
   "cartographer",
@@ -39,3 +39,13 @@ const NON_BASE_CREATOR_TYPES = [
   "sponsor",
 ] as const;
 export type NonBaseCreatorType = typeof NON_BASE_CREATOR_TYPES[number];
+
+// Creator type
+type CreatorType = BaseCreatorType | NonBaseCreatorType;
+
+export function isCreatorType(type: unknown): type is CreatorType {
+  return (
+    BASE_CREATOR_TYPES.includes(type as BaseCreatorType) ||
+    NON_BASE_CREATOR_TYPES.includes(type as NonBaseCreatorType)
+  );
+}
