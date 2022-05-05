@@ -268,6 +268,7 @@ export class Domain {
       // optional fields...
       // ...for which we never want the baseCitation value
       source: baseCitation ? ["Web2Cit", "Zotero"] : ["Web2Cit"],
+      accessDate: new Date().toISOString().substring(0, 10),
     };
     return citation;
   }
