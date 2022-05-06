@@ -374,6 +374,7 @@
                     },
                     "itemwise": {
                       "$ref": "#/definitions/itemwise",
+                      "options": { "infoText": "default: false (join transformation)" },
                       "default": false
                     }
                   },
@@ -401,6 +402,7 @@
                     },
                     "itemwise": {
                       "$ref": "#/definitions/itemwise",
+                      "options": { "infoText": "default: true (split transformation)" },
                       "default": true
                     }
                   },
@@ -470,6 +472,7 @@
                     },
                     "itemwise": {
                       "$ref": "#/definitions/itemwise",
+                      "options": { "infoText": "default: true (date transformation)" },
                       "default": true
                     }
                   },
@@ -498,6 +501,7 @@
                     },
                     "itemwise": {
                       "$ref": "#/definitions/itemwise",
+                      "options": { "infoText": "default: false (range transformation)" },
                       "default": false
                     }
                   },
@@ -525,6 +529,7 @@
                     },
                     "itemwise": {
                       "$ref": "#/definitions/itemwise",
+                      "options": { "infoText": "default: true (match transformation)" },
                       "default": true
                     }
                   },
@@ -546,8 +551,7 @@
     },
     "itemwise": {
       "title": "Item-wise",
-      "description": "Whether transformation should be applied to each item of the input independently",
-      "options": { "infoText": "true: apply transformation to each item of the input independently; false: apply transformation to the entire input as a whole." },
+      "description": "Whether transformation should be applied to each item of the input independently (true) or to the entire input as a whole (false).",
       "type": "boolean"
     }
   }
