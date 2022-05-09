@@ -496,7 +496,7 @@
                     "config": {
                       "title": "Configuration",
                       "description": "One or more comma-separated ranges: \"start(:end)\", \"start:\" or \":end\".",
-                      "options": { "infoText": "Ranges are zero-based, meaning that the first item is item 0" },
+                      "options": { "infoText": "Ranges use one-based numbering, meaning that the first item is item 1" },
                       "type": "string"
                     },
                     "itemwise": {

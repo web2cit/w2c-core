@@ -108,7 +108,7 @@ export const fallbackTemplate: FallbackTemplateDefinition = {
           "transformations": [
             {
               "type": "range",
-              "config": "0",
+              "config": "1",
               "itemwise": false
             }
           ]

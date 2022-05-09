@@ -142,7 +142,7 @@ export abstract class TranslationField {
           { type: "citoid", config: "code" },
           { type: "citoid", config: "reporter" },
         ],
-        transformations: [{ type: "range", config: "0", itemwise: false }],
+        transformations: [{ type: "range", config: "1", itemwise: false }],
       },
       control: false,
     },

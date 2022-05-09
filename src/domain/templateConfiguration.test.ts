@@ -304,7 +304,7 @@ describe("Configuration revisions", () => {
                 transformations: [
                   {
                     type: "range",
-                    config: "0",
+                    config: "1",
                     itemwise: true,
                   },
                   {
@@ -361,7 +361,7 @@ describe("Configuration revisions", () => {
                 transformations: [
                   {
                     type: "range",
-                    config: "0",
+                    config: "1",
                     itemwise: true,
                   },
                 ],

@@ -124,81 +124,81 @@ describe("Date transformation", () => {
 });
 
 describe("Range transformation", () => {
-  const input = ["zero", "one", "two", "three"];
+  const input = ["one", "two", "three", "four"];
   it("selects single item", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = "1";
-    expect(await transformation.transform(input)).toEqual(["one"]);
-    transformation.config = "1:1";
-    expect(await transformation.transform(input)).toEqual(["one"]);
-    transformation.config = "1,";
-    expect(await transformation.transform(input)).toEqual(["one"]);
+    transformation.config = "2";
+    expect(await transformation.transform(input)).toEqual(["two"]);
+    transformation.config = "2:2";
+    expect(await transformation.transform(input)).toEqual(["two"]);
+    transformation.config = "2,";
+    expect(await transformation.transform(input)).toEqual(["two"]);
   });
   it("selects multiple single items", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = "1,0";
-    expect(await transformation.transform(input)).toEqual(["one", "zero"]);
+    transformation.config = "2,1";
+    expect(await transformation.transform(input)).toEqual(["two", "one"]);
   });
   it("selects single range with start and end", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = "1:2";
-    expect(await transformation.transform(input)).toEqual(["one", "two"]);
+    transformation.config = "2:3";
+    expect(await transformation.transform(input)).toEqual(["two", "three"]);
   });
   it("selects single range without end", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = "1:";
+    transformation.config = "2:";
     expect(await transformation.transform(input)).toEqual([
-      "one",
       "two",
       "three",
+      "four",
     ]);
   });
   it("selects single range without start", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = ":2";
+    transformation.config = ":3";
     expect(await transformation.transform(input)).toEqual([
-      "zero",
       "one",
       "two",
+      "three",
     ]);
   });
   it("selects multiple ranges", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = "1:2,:2, 1:";
+    transformation.config = "2:3,:3, 2:";
     expect(await transformation.transform(input)).toEqual([
-      "one",
       "two",
-      "zero",
-      "one",
-      "two",
+      "three",
       "one",
       "two",
       "three",
+      "two",
+      "three",
+      "four",
     ]);
   });
   it("tolerates too wide ranges", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = "1:1000";
+    transformation.config = "2:1000";
     expect(await transformation.transform(input)).toEqual([
-      "one",
       "two",
       "three",
+      "four",
     ]);
     transformation.config = "100:1000";
     expect(await transformation.transform(input)).toEqual([]);
   });
   it("tolerates impossible ranges", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = "2:1";
+    transformation.config = "3:2";
     expect(await transformation.transform(input)).toEqual([]);
   });
   it("ignores empty range configurations", async () => {
     const transformation = new RangeTransformation();
-    transformation.config = ",1:2,,1";
+    transformation.config = ",2:3,,2";
     expect(await transformation.transform(input)).toEqual([
-      "one",
       "two",
-      "one",
+      "three",
+      "two",
     ]);
     transformation.config = "";
     expect(await transformation.transform(input)).toEqual([]);
@@ -217,6 +217,15 @@ describe("Range transformation", () => {
       TransformationConfigTypeError
     );
     expect(() => (transformation.config = "1:2:3")).toThrow(
+      TransformationConfigTypeError
+    );
+  });
+  it("rejects zero indices", async () => {
+    const transformation = new RangeTransformation();
+    expect(() => (transformation.config = "0")).toThrow(
+      TransformationConfigTypeError
+    );
+    expect(() => (transformation.config = ":0")).toThrow(
       TransformationConfigTypeError
     );
   });

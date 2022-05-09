@@ -26,7 +26,7 @@ it("applies a translation procedure", () => {
     new CitoidSelection("authorFirst"),
   ];
   procedure.transformations = [
-    new RangeTransformation(undefined, "1,2,0"),
+    new RangeTransformation(undefined, "2,3,1"),
     new JoinTransformation(),
   ];
   return procedure.translate(target).then((output) => {
@@ -88,7 +88,7 @@ it("constructor optionally skips invalid translation step definitions", () => {
     transformations: [
       {
         type: "range",
-        config: "0",
+        config: "1",
         itemwise: true,
       },
       {
@@ -115,7 +115,7 @@ it("constructor optionally skips invalid translation step definitions", () => {
     transformations: [
       {
         type: "range",
-        config: "0",
+        config: "1",
         itemwise: true,
       },
     ],

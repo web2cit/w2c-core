@@ -192,7 +192,7 @@ function isDateConfig(config: string): config is DateConfig {
 }
 
 export class RangeTransformation extends Transformation {
-  constructor(itemwise = false, range = "0:") {
+  constructor(itemwise = false, range = "1:") {
     super("range", itemwise);
     this.config = range;
   }
@@ -201,7 +201,11 @@ export class RangeTransformation extends Transformation {
     let ranges = config.replace(/\s/g, "").split(",");
     // ignore empty ranges, i.e., successive commas
     ranges = ranges.filter((range) => range);
-    if (ranges.every((range) => /^(\d+(:(\d+)?)?|:\d+)$/.test(range))) {
+    if (
+      ranges.every((range) =>
+        /^([1-9]\d*(:([1-9]\d*)?)?|:[1-9]\d*)$/.test(range)
+      )
+    ) {
       this._config = ranges.join(",");
     } else {
       throw new TransformationConfigTypeError(this.type, config);
@@ -241,12 +245,12 @@ export class RangeTransformation extends Transformation {
         const [start, end] = rangeString.split(":");
         const range: Range = {
           // see https://github.com/microsoft/TypeScript/issues/41638
-          start: start === "" ? 0 : parseInt(start as string),
+          start: start === "" ? 0 : parseInt(start as string) - 1,
         };
         if (end === undefined) {
           range.end = range.start;
         } else if (end !== "") {
-          range.end = parseInt(end);
+          range.end = parseInt(end) - 1;
         }
         ranges.push(range);
         return ranges;
