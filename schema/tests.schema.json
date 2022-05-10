@@ -24,7 +24,7 @@
           "oneOf": [
             {
               "title": "Item type field",
-              "description": "Type of the cited resource | Valid output: one of the Citoid/Zotero supported types (see https://aurimasv.github.io/z2csl/typeMap.xml)",
+              "description": "Type of the cited resource",
               "type": "object",
               "properties": {
                 "fieldname": {
@@ -38,6 +38,7 @@
                   "maxItems": 1,
                   "items": {
                     "$ref": "#/definitions/value",
+                    "description": "One of the Citoid/Zotero supported types",
                     "enum": [
                       "artwork",
                       "attachment",
@@ -86,7 +87,7 @@
             },
             {
               "title": "Title field",
-              "description": "Title of the cited resource | Valid output: a single non-empty string",
+              "description": "Title of the cited resource",
               "type": "object",
               "properties": {
                 "fieldname": {
@@ -100,8 +101,163 @@
                   "maxItems": 1,
                   "items": {
                     "$ref": "#/definitions/value",
+                    "description": "A non-empty string",
                     "pattern": "^.+$"
-                  }                  
+                  }
+                }
+              },
+              "required": [
+                "fieldname",
+                "goal"
+              ]
+            },
+            {
+              "title": "Author last names field",
+              "description": "Authors' last or full names",
+              "type": "object",
+              "properties": {
+                "fieldname": {
+                  "title": "Field name",
+                  "type": "string",
+                  "enum": ["authorLast"],
+                  "options": { "hidden": true }
+                },
+                "goal": {
+                  "$ref": "#/definitions/goal",
+                  "items": {
+                    "$ref": "#/definitions/value",
+                    "description": "A non-empty string",
+                    "pattern": "^.+$"
+                  }
+                }
+              },
+              "required": [
+                "fieldname",
+                "goal"
+              ]
+            },
+            {
+              "title": "Author first names field",
+              "description": "Authors' first names",
+              "type": "object",
+              "properties": {
+                "fieldname": {
+                  "title": "Field name",
+                  "type": "string",
+                  "enum": ["authorFirst"],
+                  "options": { "hidden": true }
+                },
+                "goal": {
+                  "$ref": "#/definitions/goal",
+                  "items": {
+                    "$ref": "#/definitions/value",
+                    "description": "An empty or non-empty string",
+                    "pattern": "^.*$"
+                  }
+                }
+              },
+              "required": [
+                "fieldname",
+                "goal"
+              ]
+            },
+            {
+              "title": "Date field",
+              "description": "Publishing date",
+              "type": "object",
+              "properties": {
+                "fieldname": {
+                  "title": "Field name",
+                  "type": "string",
+                  "enum": ["date"],
+                  "options": { "hidden": true }
+                },
+                "goal": {
+                  "$ref": "#/definitions/goal",
+                  "maxItems": 1,
+                  "items": {
+                    "$ref": "#/definitions/value",
+                    "description": "A date matching yyyy-mm-dd, yyyy-mm or yyyy formats",
+                    "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"
+                  }
+                }
+              },
+              "required": [
+                "fieldname",
+                "goal"
+              ]
+            },
+            {
+              "title": "Published in field",
+              "description": "Work containing the cited resource",
+              "type": "object",
+              "properties": {
+                "fieldname": {
+                  "title": "Field name",
+                  "type": "string",
+                  "enum": ["publishedIn"],
+                  "options": { "hidden": true }
+                },
+                "goal": {
+                  "$ref": "#/definitions/goal",
+                  "maxItems": 1,
+                  "items": {
+                    "$ref": "#/definitions/value",
+                    "description": "A non-empty string",
+                    "pattern": "^.+$"
+                  }
+                }
+              },
+              "required": [
+                "fieldname",
+                "goal"
+              ]
+            },
+            {
+              "title": "Published by field",
+              "description": "Publisher of the cited resource",
+              "type": "object",
+              "properties": {
+                "fieldname": {
+                  "title": "Field name",
+                  "type": "string",
+                  "enum": ["publishedBy"],
+                  "options": { "hidden": true }
+                },
+                "goal": {
+                  "$ref": "#/definitions/goal",
+                  "maxItems": 1,
+                  "items": {
+                    "$ref": "#/definitions/value",
+                    "description": "A non-empty string",
+                    "pattern": "^.+$"
+                  }
+                }
+              },
+              "required": [
+                "fieldname",
+                "goal"
+              ]
+            },
+            {
+              "title": "Language field",
+              "description": "Publishing language",
+              "type": "object",
+              "properties": {
+                "fieldname": {
+                  "title": "Field name",
+                  "type": "string",
+                  "enum": ["language"],
+                  "options": { "hidden": true }
+                },
+                 "goal": {
+                  "$ref": "#/definitions/goal",
+                  "maxItems": 1,
+                  "items": {
+                    "$ref": "#/definitions/value",
+                    "description": "A language code matching xx or xx-xx* formats",
+                    "pattern": "^[a-zA-Z]{2}(?:-?[a-zA-Z]{2,})*$"
+                  }
                 }
               },
               "required": [
@@ -121,12 +277,12 @@
   "definitions": {
     "goal": {
       "title": "Translation goal",
-      "description": "A list of values representing the expected translation output for a test field. Provide an empty list to explicitly express that no output is expected. Translation fields expecting a single-value output should specify a single-value goal (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types).",
+      "description": "A list of values representing the expected translation output for a test field.",
+      "options": { "infoText": "Provide an empty list to explicitly express that no output is expected." },
       "type": "array"
     },
     "value": {
       "title": "Output value",
-      "description": "An individual value in the expected translation output. Must comply with validation rules for the translation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types).",
       "type": "string"
     }
   }
