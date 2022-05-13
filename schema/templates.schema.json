@@ -293,6 +293,7 @@
                       "description": "Any valid Citoid/Zotero base field name; use Wikimedia REST API (\"citation\" endpoint, \"mediawiki-basefields\" format) to check Citoid response for the target webpage: https://en.wikipedia.org/api/rest_v1/#/Citation/getCitation",
                       "options": { "infoText": "Creator fields (e.g., \"author\") are split into creatorFirst and creatorLast fields." },
                       "type": "string",
+                      "default": "title",
                       "enum": [
                         "abstractNote",
                         "accessDate",
