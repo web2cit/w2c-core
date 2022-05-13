@@ -42,7 +42,20 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Fallback \"Item type\" procedure: select \"itemType\" field from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "itemType"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -66,7 +79,20 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Fallback \"Title\" procedure: select \"title\" field from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "title"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -90,7 +116,20 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Fallback \"Author last names\" procedure: select \"authorLast\" field from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "authorLast"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -114,7 +153,20 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Fallback \"Author first names\" procedure: select \"authorFirst\" field from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "authorFirst"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -138,7 +190,20 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Falback \"Date\" procedure: select \"date\" field from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "date"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -162,7 +227,28 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Fallback \"Published in\" procedure: select any of \"publicationTitle\", \"code\" or \"reporter\" fields from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "publicationTitle"
+                        },
+                        {
+                          "type": "citoid",
+                          "config": "code"
+                        },
+                        {
+                          "type": "citoid",
+                          "config": "reporter"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -186,7 +272,20 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Fallback \"Published by\" procedure: select \"publisher\" field from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "publisher"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -210,7 +309,20 @@
                   "$ref": "#/definitions/required"
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "$ref": "#/definitions/procedures",
+                  "options": { "infoText": "Fallback \"Language\" procedure: select \"language\" field from Citoid response" },
+                  "items": {
+                    "$ref": "#/definitions/procedure",
+                    "default": {
+                      "selections": [
+                        {
+                          "type": "citoid",
+                          "config": "language"
+                        }
+                      ],
+                      "transformations": []
+                    }
+                  }
                 }
               },
               "required": [
@@ -263,395 +375,394 @@
     "procedures": {
       "title": "Procedures",
       "description": "Each translation procedure defines a series of selection and transformation steps to extract and manipulate relevant metadata",
-      "type": "array",
-      "items": {
-        "title": "Translation procedure",
-        "type": "object",
-        "properties": {
-          "selections": {
-            "title": "Selection",
-            "description": "Selection steps select and extract individual elements from the target webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs)",
-            "options": { "infoText": "The combined output of all selection steps is given as input to the first transformation step below." },
-            "default": [],
-            "type": "array",
-            "items": {
-              "title": "Selection step",
-              "oneOf": [
-                {
-                  "title": "Citoid selection",
-                  "description": "Selects a field from the Citoid response for the target webpage",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["citoid"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "Any valid Citoid/Zotero base field name; use Wikimedia REST API (\"citation\" endpoint, \"mediawiki-basefields\" format) to check Citoid response for the target webpage: https://en.wikipedia.org/api/rest_v1/#/Citation/getCitation",
-                      "options": { "infoText": "Creator fields (e.g., \"author\") are split into creatorFirst and creatorLast fields." },
-                      "type": "string",
-                      "default": "title",
-                      "enum": [
-                        "abstractNote",
-                        "accessDate",
-                        "applicationNumber",
-                        "archive",
-                        "archiveLocation",
-                        "artworkSize",
-                        "assignee",
-                        "attorneyAgentFirst",
-                        "attorneyAgentLast",
-                        "authorFirst",
-                        "authorLast",
-                        "bookAuthorFirst",
-                        "bookAuthorLast",
-                        "callNumber",
-                        "castMemberFirst",
-                        "castMemberLast",
-                        "code",
-                        "codeNumber",
-                        "commenterFirst",
-                        "commenterLast",
-                        "committee",
-                        "composerFirst",
-                        "composerLast",
-                        "conferenceName",
-                        "contributorFirst",
-                        "contributorLast",
-                        "cosponsorFirst",
-                        "cosponsorLast",
-                        "counselFirst",
-                        "counselLast",
-                        "country",
-                        "court",
-                        "date",
-                        "DOI",
-                        "edition",
-                        "editorFirst",
-                        "editorLast",
-                        "extra",
-                        "filingDate",
-                        "guestFirst",
-                        "guestLast",
-                        "history",
-                        "interviewerFirst",
-                        "interviewerLast",
-                        "isbn",
-                        "issn",
-                        "issue",
-                        "issuingAuthority",
-                        "itemType",
-                        "journalAbbreviation",
-                        "language",
-                        "legalStatus",
-                        "legislativeBody",
-                        "libraryCatalog",
-                        "medium",
-                        "meetingName",
-                        "number",
-                        "numberOfVolumes",
-                        "numPages",
-                        "oclc",
-                        "pages",
-                        "place",
-                        "PMCID",
-                        "PMID",
-                        "priorityNumbers",
-                        "producerFirst",
-                        "producerLast",
-                        "programmingLanguage",
-                        "publicationTitle",
-                        "publisher",
-                        "recipientFirst",
-                        "recipientLast",
-                        "references",
-                        "reporter",
-                        "reviewedAuthorFirst",
-                        "reviewedAuthorLast",
-                        "rights",
-                        "runningTime",
-                        "scale",
-                        "scriptwriterFirst",
-                        "scriptwriterLast",
-                        "section",
-                        "series",
-                        "seriesEditorFirst",
-                        "seriesEditorLast",
-                        "seriesNumber",
-                        "seriesText",
-                        "seriesTitle",
-                        "session",
-                        "shortTitle",
-                        "system",
-                        "tags",
-                        "title",
-                        "translatorFirst",
-                        "translatorLast",
-                        "type",
-                        "url",
-                        "versionNumber",
-                        "volume",
-                        "wordsByFirst",
-                        "wordsByLast"
+      "type": "array"
+    },
+    "procedure": {
+      "title": "Translation procedure",
+      "type": "object",
+      "properties": {
+        "selections": {
+          "title": "Selection",
+          "description": "Selection steps select and extract individual elements from the target webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs)",
+          "options": { "infoText": "The combined output of all selection steps is given as input to the first transformation step below." },
+          "default": [],
+          "type": "array",
+          "items": {
+            "title": "Selection step",
+            "oneOf": [
+              {
+                "title": "Citoid selection",
+                "description": "Selects a field from the Citoid response for the target webpage",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["citoid"],
+                    "options": { "hidden": true }
+                  },
+                  "config": {
+                    "title": "Configuration",
+                    "description": "Any valid Citoid/Zotero base field name; use Wikimedia REST API (\"citation\" endpoint, \"mediawiki-basefields\" format) to check Citoid response for the target webpage: https://en.wikipedia.org/api/rest_v1/#/Citation/getCitation",
+                    "options": { "infoText": "Creator fields (e.g., \"author\") are split into creatorFirst and creatorLast fields." },
+                    "type": "string",
+                    "enum": [
+                      "abstractNote",
+                      "accessDate",
+                      "applicationNumber",
+                      "archive",
+                      "archiveLocation",
+                      "artworkSize",
+                      "assignee",
+                      "attorneyAgentFirst",
+                      "attorneyAgentLast",
+                      "authorFirst",
+                      "authorLast",
+                      "bookAuthorFirst",
+                      "bookAuthorLast",
+                      "callNumber",
+                      "castMemberFirst",
+                      "castMemberLast",
+                      "code",
+                      "codeNumber",
+                      "commenterFirst",
+                      "commenterLast",
+                      "committee",
+                      "composerFirst",
+                      "composerLast",
+                      "conferenceName",
+                      "contributorFirst",
+                      "contributorLast",
+                      "cosponsorFirst",
+                      "cosponsorLast",
+                      "counselFirst",
+                      "counselLast",
+                      "country",
+                      "court",
+                      "date",
+                      "DOI",
+                      "edition",
+                      "editorFirst",
+                      "editorLast",
+                      "extra",
+                      "filingDate",
+                      "guestFirst",
+                      "guestLast",
+                      "history",
+                      "interviewerFirst",
+                      "interviewerLast",
+                      "isbn",
+                      "issn",
+                      "issue",
+                      "issuingAuthority",
+                      "itemType",
+                      "journalAbbreviation",
+                      "language",
+                      "legalStatus",
+                      "legislativeBody",
+                      "libraryCatalog",
+                      "medium",
+                      "meetingName",
+                      "number",
+                      "numberOfVolumes",
+                      "numPages",
+                      "oclc",
+                      "pages",
+                      "place",
+                      "PMCID",
+                      "PMID",
+                      "priorityNumbers",
+                      "producerFirst",
+                      "producerLast",
+                      "programmingLanguage",
+                      "publicationTitle",
+                      "publisher",
+                      "recipientFirst",
+                      "recipientLast",
+                      "references",
+                      "reporter",
+                      "reviewedAuthorFirst",
+                      "reviewedAuthorLast",
+                      "rights",
+                      "runningTime",
+                      "scale",
+                      "scriptwriterFirst",
+                      "scriptwriterLast",
+                      "section",
+                      "series",
+                      "seriesEditorFirst",
+                      "seriesEditorLast",
+                      "seriesNumber",
+                      "seriesText",
+                      "seriesTitle",
+                      "session",
+                      "shortTitle",
+                      "system",
+                      "tags",
+                      "title",
+                      "translatorFirst",
+                      "translatorLast",
+                      "type",
+                      "url",
+                      "versionNumber",
+                      "volume",
+                      "wordsByFirst",
+                      "wordsByLast"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "config"
+                ]
+              },
+              {
+                "title": "XPath selection",
+                "description": "Selects a node from the target webpage's HTML using XPath",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["xpath"],
+                    "options": { "hidden": true }
+                  },
+                  "config": {
+                    "title": "Configuration",
+                    "description": "Any valid XPath expression",
+                    "options": { "infoText": "Your web browser's inspector (shown with F12 in some browsers) may help you get an XPath expression for an HTML node." },
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "config"
+                ]
+              },
+              {
+                "title": "Fixed selection",
+                "description": "Always returns the same predefined value",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["fixed"],
+                    "options": { "hidden": true }
+                  },
+                  "config": {
+                    "title": "Configuration",
+                    "description": "The predefined value to be returned.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "config"
+                ]
+              }
+            ]
+          }
+        },
+        "transformations": {
+          "title": "Transformation",
+          "description": "Transformation steps transform selected elements (if needed) to return the expected output (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs)",
+          "options": { "infoText": "Transformation steps are applied one after the other, and the output of the last transformation step is the procedure's output." },
+          "type": "array",
+          "items": {
+            "title": "Transformation step",
+            "oneOf": [
+              {
+                "title": "Join transformation",
+                "description": "Joins two or more items in a list into one, using the separator specified",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["join"],
+                    "options": { "hidden": true }
+                  },
+                  "config": {
+                    "title": "Configuration",
+                    "description": "The separator to use.",
+                    "type": "string"
+                  },
+                  "itemwise": {
+                    "$ref": "#/definitions/itemwise",
+                    "options": { "infoText": "default: false (join transformation)" },
+                    "default": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "config",
+                  "itemwise"
+                ]
+              },
+              {
+                "title": "Split transformation",
+                "description": "Splits a string at the separator specified into two or more substrings",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["split"],
+                    "options": { "hidden": true }
+                  },
+                  "config": {
+                    "title": "Configuration",
+                    "description": "The separator to use.",
+                    "type": "string"
+                  },
+                  "itemwise": {
+                    "$ref": "#/definitions/itemwise",
+                    "options": { "infoText": "default: true (split transformation)" },
+                    "default": true
+                  }
+                },
+                "required": [
+                  "type",
+                  "config",
+                  "itemwise"
+                ]
+              },
+              {
+                "title": "Date transformation",
+                "description": "Uses the Sugar.js to try and parse natural language dates into the YYYY-MM-DD format",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["date"],
+                    "options": { "hidden": true }
+                  },
+                  "config": {
+                    "title": "Configuration",
+                    "description": "Any of the currently supported locales",
+                    "type": "string",
+                    "enum": [
+                      "ca",
+                      "da",
+                      "de",
+                      "en",
+                      "es",
+                      "fi",
+                      "fr",
+                      "it",
+                      "ja",
+                      "ko",
+                      "nl",
+                      "no",
+                      "pl",
+                      "pt",
+                      "ru",
+                      "sv",
+                      "zh-CN",
+                      "zh-TW"
+                    ],
+                    "options": {
+                      "enum_titles": [
+                        "Catalan (ca)",
+                        "Danish (da)",
+                        "German (de)",
+                        "English (en)",
+                        "Spanish (es)",
+                        "Finnish (fi)",
+                        "French (fr)",
+                        "Italian (it)",
+                        "Japanese (ja)",
+                        "Korean (ko)",
+                        "Dutch (nl)",
+                        "Norwegian (no)",
+                        "Polish (pl)",
+                        "Portuguese (pt)",
+                        "Russian (ru)",
+                        "Swedish (sv)",
+                        "Chinese (zh-CN)",
+                        "Chinese (zh-TW)"
                       ]
                     }
                   },
-                  "required": [
-                    "type",
-                    "config"
-                  ]
+                  "itemwise": {
+                    "$ref": "#/definitions/itemwise",
+                    "options": { "infoText": "default: true (date transformation)" },
+                    "default": true
+                  }
                 },
-                {
-                  "title": "XPath selection",
-                  "description": "Selects a node from the target webpage's HTML using XPath",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["xpath"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "Any valid XPath expression",
-                      "options": { "infoText": "Your web browser's inspector (shown with F12 in some browsers) may help you get an XPath expression for an HTML node." },
-                      "type": "string"
-                    }
+                "required": [
+                  "type",
+                  "config",
+                  "itemwise"
+                ]
+              },
+              {
+                "title": "Range transformation",
+                "description": "Returns one or more items or ranges of items in the order specified",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["range"],
+                    "options": { "hidden": true }
                   },
-                  "required": [
-                    "type",
-                    "config"
-                  ]
+                  "config": {
+                    "title": "Configuration",
+                    "description": "One or more comma-separated ranges: \"start(:end)\", \"start:\" or \":end\".",
+                    "options": { "infoText": "Ranges use one-based numbering, meaning that the first item is item 1" },
+                    "type": "string"
+                  },
+                  "itemwise": {
+                    "$ref": "#/definitions/itemwise",
+                    "options": { "infoText": "default: false (range transformation)" },
+                    "default": false
+                  }
                 },
-                {
-                  "title": "Fixed selection",
-                  "description": "Always returns the same predefined value",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["fixed"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "The predefined value to be returned.",
-                      "type": "string"
-                    }
+                "required": [
+                  "type",
+                  "config",
+                  "itemwise"
+                ]
+              },
+              {
+                "title": "Match transformation",
+                "description": "Returns one or more substrings matching a target",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["match"],
+                    "options": { "hidden": true }
                   },
-                  "required": [
-                    "type",
-                    "config"
-                  ]
-                }
-              ]
-            }
-          },
-          "transformations": {
-            "title": "Transformation",
-            "description": "Transformation steps transform selected elements (if needed) to return the expected output (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs)",
-            "options": { "infoText": "Transformation steps are applied one after the other, and the output of the last transformation step is the procedure's output." },
-            "type": "array",
-            "items": {
-              "title": "Transformation step",
-              "oneOf": [
-                {
-                  "title": "Join transformation",
-                  "description": "Joins two or more items in a list into one, using the separator specified",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["join"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "The separator to use.",
-                      "type": "string"
-                    },
-                    "itemwise": {
-                      "$ref": "#/definitions/itemwise",
-                      "options": { "infoText": "default: false (join transformation)" },
-                      "default": false
-                    }
+                  "config": {
+                    "title": "Configuration",
+                    "description": "The matching target, expressed as either plain string or /regular expression/ (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Match_transformation).",
+                    "type": "string"
                   },
-                  "required": [
-                    "type",
-                    "config",
-                    "itemwise"
-                  ]
+                  "itemwise": {
+                    "$ref": "#/definitions/itemwise",
+                    "options": { "infoText": "default: true (match transformation)" },
+                    "default": true
+                  }
                 },
-                {
-                  "title": "Split transformation",
-                  "description": "Splits a string at the separator specified into two or more substrings",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["split"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "The separator to use.",
-                      "type": "string"
-                    },
-                    "itemwise": {
-                      "$ref": "#/definitions/itemwise",
-                      "options": { "infoText": "default: true (split transformation)" },
-                      "default": true
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "config",
-                    "itemwise"
-                  ]
-                },
-                {
-                  "title": "Date transformation",
-                  "description": "Uses the Sugar.js to try and parse natural language dates into the YYYY-MM-DD format",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["date"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "Any of the currently supported locales",
-                      "type": "string",
-                      "enum": [
-                        "ca",
-                        "da",
-                        "de",
-                        "en",
-                        "es",
-                        "fi",
-                        "fr",
-                        "it",
-                        "ja",
-                        "ko",
-                        "nl",
-                        "no",
-                        "pl",
-                        "pt",
-                        "ru",
-                        "sv",
-                        "zh-CN",
-                        "zh-TW"
-                      ],
-                      "options": {
-                        "enum_titles": [
-                          "Catalan (ca)",
-                          "Danish (da)",
-                          "German (de)",
-                          "English (en)",
-                          "Spanish (es)",
-                          "Finnish (fi)",
-                          "French (fr)",
-                          "Italian (it)",
-                          "Japanese (ja)",
-                          "Korean (ko)",
-                          "Dutch (nl)",
-                          "Norwegian (no)",
-                          "Polish (pl)",
-                          "Portuguese (pt)",
-                          "Russian (ru)",
-                          "Swedish (sv)",
-                          "Chinese (zh-CN)",
-                          "Chinese (zh-TW)"
-                        ]
-                      }
-                    },
-                    "itemwise": {
-                      "$ref": "#/definitions/itemwise",
-                      "options": { "infoText": "default: true (date transformation)" },
-                      "default": true
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "config",
-                    "itemwise"
-                  ]
-                },
-                {
-                  "title": "Range transformation",
-                  "description": "Returns one or more items or ranges of items in the order specified",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["range"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "One or more comma-separated ranges: \"start(:end)\", \"start:\" or \":end\".",
-                      "options": { "infoText": "Ranges use one-based numbering, meaning that the first item is item 1" },
-                      "type": "string"
-                    },
-                    "itemwise": {
-                      "$ref": "#/definitions/itemwise",
-                      "options": { "infoText": "default: false (range transformation)" },
-                      "default": false
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "config",
-                    "itemwise"
-                  ]
-                },
-                {
-                  "title": "Match transformation",
-                  "description": "Returns one or more substrings matching a target",
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "title": "Type",
-                      "type": "string",
-                      "enum": ["match"],
-                      "options": { "hidden": true }
-                    },
-                    "config": {
-                      "title": "Configuration",
-                      "description": "The matching target, expressed as either plain string or /regular expression/ (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Match_transformation).",
-                      "type": "string"
-                    },
-                    "itemwise": {
-                      "$ref": "#/definitions/itemwise",
-                      "options": { "infoText": "default: true (match transformation)" },
-                      "default": true
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "config",
-                    "itemwise"
-                  ]
-                }
-              ]
-            }                      
+                "required": [
+                  "type",
+                  "config",
+                  "itemwise"
+                ]
+              }
+            ]
           }
-        },
-        "required": [
-          "selections",
-          "transformations"
-        ]
-      }
+        }
+      },
+      "required": [
+        "selections",
+        "transformations"
+      ]
     },
     "itemwise": {
       "title": "Item-wise",
