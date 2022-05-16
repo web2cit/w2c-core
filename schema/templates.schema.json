@@ -11,8 +11,13 @@
       "path": {
         "title": "Path",
         "description": "Path of the webpage used as translation template",
-        "options": { "infoText": "Do not include the hostname; just the path beginning with \"/\". You may also include query (?) and fragment (#) components. Duplicate translation templates for the same path will be ignored." },
-        "type": "string"
+        "options": {
+          "infoText": "Do not include the hostname; just the path beginning with \"/\". You may also include query (?) and fragment (#) components. Duplicate translation templates for the same path will be ignored.",
+          "patternmessage": "Path must start with \"/\""
+        },
+        "type": "string",
+        "default": "/",
+        "pattern": "^\/.*"
       },
       "label": {
         "title": "Label",
