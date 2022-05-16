@@ -21,6 +21,9 @@
         "type": "array",
         "items": {
           "title": "Test field",
+          "options": { "error_messages": {
+            "en": { "error_oneOf": "Invalid translation goal" }
+          }}, 
           "oneOf": [
             {
               "title": "Item type field",
@@ -102,7 +105,10 @@
                   "items": {
                     "$ref": "#/definitions/value",
                     "description": "A non-empty string",
-                    "pattern": "^.+$"
+                    "pattern": "^.+$",
+                    "options": {
+                      "patternmessage": "Value must be a non-emtpy string"
+                    }
                   }
                 }
               },
@@ -127,7 +133,10 @@
                   "items": {
                     "$ref": "#/definitions/value",
                     "description": "A non-empty string",
-                    "pattern": "^.+$"
+                    "pattern": "^.+$",
+                    "options": {
+                      "patternmessage": "Value must be a non-emtpy string"
+                    }
                   }
                 }
               },
@@ -178,7 +187,10 @@
                   "items": {
                     "$ref": "#/definitions/value",
                     "description": "A date matching yyyy-mm-dd, yyyy-mm or yyyy formats",
-                    "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$"
+                    "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$",
+                    "options": {
+                      "patternmessage": "Value must match one of yyyy-mm-dd, yyyy-mm or yyyy formats"
+                    }
                   }
                 }
               },
@@ -204,7 +216,10 @@
                   "items": {
                     "$ref": "#/definitions/value",
                     "description": "A non-empty string",
-                    "pattern": "^.+$"
+                    "pattern": "^.+$",
+                    "options": {
+                      "patternmessage": "Value must be a non-emtpy string"
+                    }
                   }
                 }
               },
@@ -230,7 +245,10 @@
                   "items": {
                     "$ref": "#/definitions/value",
                     "description": "A non-empty string",
-                    "pattern": "^.+$"
+                    "pattern": "^.+$",
+                    "options": {
+                      "patternmessage": "Value must be a non-emtpy string"
+                    }
                   }
                 }
               },
