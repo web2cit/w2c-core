@@ -4,6 +4,7 @@
   "title": "Domain translation templates configuration for Web2Cit",
   "description": "Each translation template defines translation procedures to extract relevant metadata from a specific template webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#templates.json)",
   "type": "array",
+  "format": "tabs-top",
   "items": {
     "title": "Translation template",
     "type": "object",
@@ -27,30 +28,51 @@
       "fields": {
         "title": "Fields",
         "description": "Each template field defines translation procedures to extract metadata belonging to a specific citation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types)",
-        "options": { "infoText": "Mandatory fields \"itemType\" and \"title\" must be included, or template will be ignored. Duplicate template fields with the same field name will be ignored." },
+        "options": {
+          "infoText": "Mandatory fields \"itemType\" and \"title\" must be included, or template will be ignored. Duplicate template fields with the same field name will be ignored.",
+          "disable_array_reorder": true
+        },
         "type": "array",
+        "format": "tabs-top",
         "items": {
           "title": "Template field",
+          "type": "object",
+          "format": "grid-strict",
+          "properties": {
+            "fieldname": {
+              "type": "string",
+              "options": { "hidden": true }
+            },
+            "required": {
+              "$ref": "#/definitions/required",
+              "format": "checkbox",
+              "options": { "grid_columns": 2 }
+            },
+            "procedures": {
+              "$ref": "#/definitions/procedures",
+              "options": {
+                "grid_columns": 10
+              }
+            }
+          },
+          "required": [
+            "fieldname",
+            "required",
+            "procedures"
+          ],
           "oneOf": [
             {
               "title": "Item type field (mandatory)",
               "description": "Type of the cited resource | Valid output: one of the Citoid/Zotero supported types (see https://aurimasv.github.io/z2csl/typeMap.xml)",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["itemType"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["itemType"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Fallback \"Item type\" procedure: select \"itemType\" field from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -63,31 +85,20 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Title field (mandatory)",
               "description": "Title of the cited resource | Valid output: a single non-empty string",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["title"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["title"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Fallback \"Title\" procedure: select \"title\" field from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -100,31 +111,20 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Author last/full names field",
               "description": "Authors' last or full names | Valid output: one or more non-empty strings",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["authorLast"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["authorLast"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Fallback \"Author last names\" procedure: select \"authorLast\" field from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -137,31 +137,20 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Author first names field",
               "description": "Authors' first names | Valid output: one or more empty or non-empty strings",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["authorFirst"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["authorFirst"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Fallback \"Author first names\" procedure: select \"authorFirst\" field from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -174,31 +163,20 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Date field",
               "description": "Publishing date | Valid output: a single yyyy-mm-dd, yyyy-mm or yyyy value",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["date"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["date"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Falback \"Date\" procedure: select \"date\" field from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -211,31 +189,20 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Published in field",
               "description": "Work containing the cited resource | Valid output: a single non-empty string",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["publishedIn"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["publishedIn"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Fallback \"Published in\" procedure: select any of \"publicationTitle\", \"code\" or \"reporter\" fields from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -256,31 +223,20 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Published by field",
               "description": "Publisher of the cited resource | Valid output: a single non-empty string",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["publishedBy"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["publishedBy"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Fallback \"Published by\" procedure: select \"publisher\" field from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -293,31 +249,20 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Language field",
               "description": "Publishing language | Valid output: a single xx or xx-xx* language code",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["language"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
+                  "enum": ["language"]
                 },
                 "procedures": {
-                  "$ref": "#/definitions/procedures",
                   "options": { "infoText": "Fallback \"Language\" procedure: select \"language\" field from Citoid response" },
                   "items": {
-                    "$ref": "#/definitions/procedure",
+                    "additionalProperties": true,
                     "default": {
                       "selections": [
                         {
@@ -330,35 +275,18 @@
                   }
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             },
             {
               "title": "Control field",
               "description": "Template applicability control | Valid output: a single non-empty string",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["control"],
-                  "options": { "hidden": true }
-                },
-                "required": {
-                  "$ref": "#/definitions/required"
-                },
-                "procedures": {
-                  "$ref": "#/definitions/procedures"
+                  "enum": ["control"]
                 }
               },
-              "required": [
-                "fieldname",
-                "required",
-                "procedures"
-              ]
+              "additionalProperties": true
             }
           ]
         }
@@ -380,20 +308,25 @@
     "procedures": {
       "title": "Procedures",
       "description": "Each translation procedure defines a series of selection and transformation steps to extract and manipulate relevant metadata",
-      "type": "array"
+      "type": "array",
+      "format": "tabs-top",
+      "items": {
+        "$ref": "#/definitions/procedure"
+      }
     },
     "procedure": {
       "title": "Translation procedure",
       "type": "object",
+      "format": "categories",
       "properties": {
         "selections": {
           "title": "Selection",
           "description": "Selection steps select and extract individual elements from the target webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs)",
           "options": { "infoText": "The combined output of all selection steps is given as input to the first transformation step below." },
-          "default": [],
           "type": "array",
+          "format": "tabs",
           "items": {
-            "title": "Selection step",
+            "title": "Step",
             "anyOf": [
               {
                 "title": "Citoid selection",
@@ -634,8 +567,9 @@
           "description": "Transformation steps transform selected elements (if needed) to return the expected output (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs)",
           "options": { "infoText": "Transformation steps are applied one after the other, and the output of the last transformation step is the procedure's output." },
           "type": "array",
+          "format": "tabs",
           "items": {
-            "title": "Transformation step",
+            "title": "Step",
             "oneOf": [
               {
                 "title": "Join transformation",
@@ -655,7 +589,7 @@
                   },
                   "itemwise": {
                     "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: false (join transformation)" },
+                    "options": { "infoText": "default: off (join transformation)" },
                     "default": false
                   }
                 },
@@ -683,7 +617,7 @@
                   },
                   "itemwise": {
                     "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: true (split transformation)" },
+                    "options": { "infoText": "default: on (split transformation)" },
                     "default": true
                   }
                 },
@@ -753,7 +687,7 @@
                   },
                   "itemwise": {
                     "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: true (date transformation)" },
+                    "options": { "infoText": "default: on (date transformation)" },
                     "default": true
                   }
                 },
@@ -782,7 +716,7 @@
                   },
                   "itemwise": {
                     "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: false (range transformation)" },
+                    "options": { "infoText": "default: off (range transformation)" },
                     "default": false
                   }
                 },
@@ -810,7 +744,7 @@
                   },
                   "itemwise": {
                     "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: true (match transformation)" },
+                    "options": { "infoText": "default: on (match transformation)" },
                     "default": true
                   }
                 },
@@ -831,8 +765,9 @@
     },
     "itemwise": {
       "title": "Item-wise",
-      "description": "Whether transformation should be applied to each item of the input independently (true) or to the entire input as a whole (false).",
-      "type": "boolean"
+      "description": "Whether transformation should be applied to each item of the input independently (on) or to the entire input as a whole (off).",
+      "type": "boolean",
+      "format": "checkbox"
     }
   }
 }
