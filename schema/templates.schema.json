@@ -394,7 +394,7 @@
           "type": "array",
           "items": {
             "title": "Selection step",
-            "oneOf": [
+            "anyOf": [
               {
                 "title": "Citoid selection",
                 "description": "Selects a field from the Citoid response for the target webpage",
@@ -537,6 +537,66 @@
                     "description": "Any valid XPath v1.0 expression",
                     "options": { "infoText": "Your web browser's inspector (shown with F12 in some browsers) may help you get an XPath expression for an HTML node." },
                     "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "config"
+                ]
+              },
+              {
+                "title": "Fixed selection (Item type field)",
+                "description": "Always returns the same predefined Citoid/Zotero item type",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "title": "Type",
+                    "type": "string",
+                    "enum": ["fixed"],
+                    "options": { "hidden": true }
+                  },
+                  "config": {
+                    "title": "Configuration",
+                    "description": "The predefined Citoid/Zotero item type to be returned.",
+                    "type": "string",
+                    "enum": [
+                      "artwork",
+                      "attachment",
+                      "audioRecording",
+                      "bill",
+                      "blogPost",
+                      "book",
+                      "bookSection",
+                      "case",
+                      "computerProgram",
+                      "conferencePaper",
+                      "dictionaryEntry",
+                      "document",
+                      "email",
+                      "encyclopediaArticle",
+                      "film",
+                      "forumPost",
+                      "hearing",
+                      "instantMessage",
+                      "interview",
+                      "journalArticle",
+                      "letter",
+                      "magazineArticle",
+                      "manuscript",
+                      "map",
+                      "newspaperArticle",
+                      "note",
+                      "patent",
+                      "podcast",
+                      "presentation",
+                      "radioBroadcast",
+                      "report",
+                      "statute",
+                      "thesis",
+                      "tvBroadcast",
+                      "videoRecording",
+                      "webpage"
+                    ]
                   }
                 },
                 "required": [
