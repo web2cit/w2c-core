@@ -545,10 +545,10 @@
                 ]
               },
               {
-                "$ref": "#/definitions/fixedSelection"
+                "$ref": "#/definitions/fixed"
               },
               {
-                "$ref": "#/definitions/fixedSelection",
+                "$ref": "#/definitions/fixed",
                 "title": "Fixed selection (Item type field)",
                 "description": "Always returns the same predefined Citoid/Zotero item type",
                 "properties": {
@@ -802,7 +802,7 @@
         "transformations"
       ]
     },
-    "fixedSelection": {
+    "fixed": {
       "title": "Fixed selection",
       "description": "Always returns the same predefined value",
       "type": "object",
