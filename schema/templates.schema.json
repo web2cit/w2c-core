@@ -394,7 +394,7 @@
           "type": "array",
           "items": {
             "title": "Selection step",
-            "oneOf": [
+            "anyOf": [
               {
                 "title": "Citoid selection",
                 "description": "Selects a field from the Citoid response for the target webpage",
@@ -545,20 +545,53 @@
                 ]
               },
               {
-                "title": "Fixed selection",
-                "description": "Always returns the same predefined value",
-                "type": "object",
+                "$ref": "#/definitions/fixedSelection"
+              },
+              {
+                "$ref": "#/definitions/fixedSelection",
+                "title": "Fixed selection (Item type field)",
+                "description": "Always returns the same predefined Citoid/Zotero item type",
                 "properties": {
-                  "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["fixed"],
-                    "options": { "hidden": true }
-                  },
                   "config": {
-                    "title": "Configuration",
-                    "description": "The predefined value to be returned.",
-                    "type": "string"
+                    "description": "The predefined Citoid/Zotero item type to be returned.",
+                    "enum": [
+                      "artwork",
+                      "attachment",
+                      "audioRecording",
+                      "bill",
+                      "blogPost",
+                      "book",
+                      "bookSection",
+                      "case",
+                      "computerProgram",
+                      "conferencePaper",
+                      "dictionaryEntry",
+                      "document",
+                      "email",
+                      "encyclopediaArticle",
+                      "film",
+                      "forumPost",
+                      "hearing",
+                      "instantMessage",
+                      "interview",
+                      "journalArticle",
+                      "letter",
+                      "magazineArticle",
+                      "manuscript",
+                      "map",
+                      "newspaperArticle",
+                      "note",
+                      "patent",
+                      "podcast",
+                      "presentation",
+                      "radioBroadcast",
+                      "report",
+                      "statute",
+                      "thesis",
+                      "tvBroadcast",
+                      "videoRecording",
+                      "webpage"
+                    ]
                   }
                 },
                 "required": [
@@ -767,6 +800,28 @@
       "required": [
         "selections",
         "transformations"
+      ]
+    },
+    "fixedSelection": {
+      "title": "Fixed selection",
+      "description": "Always returns the same predefined value",
+      "type": "object",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "enum": ["fixed"],
+          "options": { "hidden": true }
+        },
+        "config": {
+          "title": "Configuration",
+          "description": "The predefined value to be returned.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "config"
       ]
     },
     "itemwise": {
