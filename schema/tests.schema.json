@@ -123,7 +123,7 @@
               ]
             },
             {
-              "title": "Author last names field",
+              "title": "Author last/full names field",
               "description": "Authors' last or full names",
               "type": "object",
               "properties": {
