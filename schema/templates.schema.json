@@ -534,7 +534,7 @@
                   },
                   "config": {
                     "title": "Configuration",
-                    "description": "Any valid XPath expression",
+                    "description": "Any valid XPath v1.0 expression",
                     "options": { "infoText": "Your web browser's inspector (shown with F12 in some browsers) may help you get an XPath expression for an HTML node." },
                     "type": "string"
                   }
