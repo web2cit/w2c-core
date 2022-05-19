@@ -4,6 +4,7 @@
   "title": "Domain translation tests configuration for Web2Cit",
   "description": "Each translation test defines translation output goals for a specific test webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#tests.json)",
   "type": "array",
+  "format": "tabs-top",
   "items": {
     "title": "Translation test",
     "type": "object",
@@ -22,30 +23,51 @@
       "fields": {
         "title": "Fields",
         "description": "Each test field specifies a translation output goal for a specific citation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types)",
-        "options": { "infoText": "Duplicate test fields with the same field name will be ignored." },
+        "options": {
+          "infoText": "Duplicate test fields with the same field name will be ignored.",
+          "disable_array_reorder": true
+        },
         "type": "array",
+        "format": "tabs-top",
         "items": {
           "title": "Test field",
           "options": { "error_messages": {
             "en": { "error_oneOf": "Invalid translation goal" }
           }}, 
+          "type": "object",
+          "properties": {
+            "fieldname": {
+              "type": "string",
+              "options": { "hidden": true }
+            },
+            "goal": {
+              "title": "Translation goal",
+              "description": "A list of values representing the expected translation output for a test field.",
+              "options": { "infoText": "Provide an empty list to explicitly express that no output is expected." },
+              "type": "array",
+              "format": "table",
+              "items": {
+                "title": "Output value",
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "fieldname",
+            "goal"
+          ],
           "oneOf": [
             {
               "title": "Item type field",
               "description": "Type of the cited resource",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["itemType"],
-                  "options": { "hidden": true }
+                  "enum": ["itemType"]
                 },
                 "goal": {
-                  "$ref": "#/definitions/goal",
                   "maxItems": 1,
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "One of the Citoid/Zotero supported types",
                     "enum": [
                       "artwork",
@@ -87,28 +109,19 @@
                     ]
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             },
             {
               "title": "Title field",
               "description": "Title of the cited resource",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["title"],
-                  "options": { "hidden": true }
+                  "enum": ["title"]
                 },
                 "goal": {
-                  "$ref": "#/definitions/goal",
                   "maxItems": 1,
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "A non-empty string",
                     "pattern": "^.+$",
                     "options": {
@@ -116,27 +129,18 @@
                     }
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             },
             {
               "title": "Author last/full names field",
               "description": "Authors' last or full names",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["authorLast"],
-                  "options": { "hidden": true }
+                  "enum": ["authorLast"]
                 },
                 "goal": {
-                  "$ref": "#/definitions/goal",
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "A non-empty string",
                     "pattern": "^.+$",
                     "options": {
@@ -144,53 +148,35 @@
                     }
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             },
             {
               "title": "Author first names field",
               "description": "Authors' first names",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["authorFirst"],
-                  "options": { "hidden": true }
+                  "enum": ["authorFirst"]
                 },
                 "goal": {
-                  "$ref": "#/definitions/goal",
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "An empty or non-empty string",
                     "pattern": "^.*$"
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             },
             {
               "title": "Date field",
               "description": "Publishing date",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["date"],
-                  "options": { "hidden": true }
+                  "enum": ["date"]
                 },
                 "goal": {
-                  "$ref": "#/definitions/goal",
                   "maxItems": 1,
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "A date matching yyyy-mm-dd, yyyy-mm or yyyy formats",
                     "pattern": "^\\d{4}(-\\d{2}(-\\d{2})?)?$",
                     "options": {
@@ -198,28 +184,19 @@
                     }
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             },
             {
               "title": "Published in field",
               "description": "Work containing the cited resource",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["publishedIn"],
-                  "options": { "hidden": true }
+                  "enum": ["publishedIn"]
                 },
                 "goal": {
-                  "$ref": "#/definitions/goal",
                   "maxItems": 1,
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "A non-empty string",
                     "pattern": "^.+$",
                     "options": {
@@ -227,28 +204,19 @@
                     }
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             },
             {
               "title": "Published by field",
               "description": "Publisher of the cited resource",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["publishedBy"],
-                  "options": { "hidden": true }
+                  "enum": ["publishedBy"]
                 },
                 "goal": {
-                  "$ref": "#/definitions/goal",
                   "maxItems": 1,
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "A non-empty string",
                     "pattern": "^.+$",
                     "options": {
@@ -256,37 +224,24 @@
                     }
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             },
             {
               "title": "Language field",
               "description": "Publishing language",
-              "type": "object",
               "properties": {
                 "fieldname": {
                   "title": "Field name",
-                  "type": "string",
-                  "enum": ["language"],
-                  "options": { "hidden": true }
+                  "enum": ["language"]
                 },
                  "goal": {
-                  "$ref": "#/definitions/goal",
                   "maxItems": 1,
                   "items": {
-                    "$ref": "#/definitions/value",
                     "description": "A language code matching xx or xx-xx* formats",
                     "pattern": "^[a-zA-Z]{2}(?:-?[a-zA-Z]{2,})*$"
                   }
                 }
-              },
-              "required": [
-                "fieldname",
-                "goal"
-              ]
+              }
             }
           ]
         }
@@ -296,17 +251,4 @@
       "path",
       "fields"
     ]
-  },
-  "definitions": {
-    "goal": {
-      "title": "Translation goal",
-      "description": "A list of values representing the expected translation output for a test field.",
-      "options": { "infoText": "Provide an empty list to explicitly express that no output is expected." },
-      "type": "array"
-    },
-    "value": {
-      "title": "Output value",
-      "type": "string"
-    }
-  }
-}
+  }}

@@ -4,8 +4,9 @@
   "title": "Domain URL path patterns configuration for Web2Cit",
   "description": "A list of URL path patterns",
   "type": "array",
+  "format": "tabs",
   "items": {
-    "title": "URL path pattern",
+    "title": "Path pattern",
     "description": "A URL path pattern defines a translation subgroup within a domain",
     "type": "object",
     "properties": {
