@@ -40,13 +40,19 @@
           "format": "grid-strict",
           "properties": {
             "fieldname": {
+              "title": "Field name",
               "type": "string",
               "options": { "hidden": true }
             },
             "required": {
-              "$ref": "#/definitions/required",
-              "format": "checkbox",
-              "options": { "grid_columns": 2 }
+              "Title": "Required",
+              "description": "Whether the template field is required or not",
+              "options": {
+                "infoText": "Given a target webpage, the output of all required fields must be valid for the template to be applicable. Mandatory fields \"itemType\" and \"title\" are always required.",
+                "options": { "grid_columns": 2 }
+              },
+              "type": "boolean",
+              "default": true
             },
             "procedures": {
               "$ref": "#/definitions/procedures",
@@ -66,8 +72,10 @@
               "description": "Type of the cited resource | Valid output: one of the Citoid/Zotero supported types (see https://aurimasv.github.io/z2csl/typeMap.xml)",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["itemType"]
+                },
+                "required": {
+                  "readOnly": true
                 },
                 "procedures": {
                   "options": { "infoText": "Fallback \"Item type\" procedure: select \"itemType\" field from Citoid response" },
@@ -92,8 +100,10 @@
               "description": "Title of the cited resource | Valid output: a single non-empty string",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["title"]
+                },
+                "required": {
+                  "readOnly": true
                 },
                 "procedures": {
                   "options": { "infoText": "Fallback \"Title\" procedure: select \"title\" field from Citoid response" },
@@ -118,7 +128,6 @@
               "description": "Authors' last or full names | Valid output: one or more non-empty strings",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["authorLast"]
                 },
                 "procedures": {
@@ -144,7 +153,6 @@
               "description": "Authors' first names | Valid output: one or more empty or non-empty strings",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["authorFirst"]
                 },
                 "procedures": {
@@ -170,7 +178,6 @@
               "description": "Publishing date | Valid output: a single yyyy-mm-dd, yyyy-mm or yyyy value",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["date"]
                 },
                 "procedures": {
@@ -196,7 +203,6 @@
               "description": "Work containing the cited resource | Valid output: a single non-empty string",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["publishedIn"]
                 },
                 "procedures": {
@@ -230,7 +236,6 @@
               "description": "Publisher of the cited resource | Valid output: a single non-empty string",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["publishedBy"]
                 },
                 "procedures": {
@@ -256,7 +261,6 @@
               "description": "Publishing language | Valid output: a single xx or xx-xx* language code",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["language"]
                 },
                 "procedures": {
@@ -282,7 +286,6 @@
               "description": "Template applicability control | Valid output: a single non-empty string",
               "properties": {
                 "fieldname": {
-                  "title": "Field name",
                   "enum": ["control"]
                 }
               },
@@ -298,13 +301,6 @@
     ]
   },
   "definitions": {
-    "required": {
-      "Title": "Required",
-      "description": "Whether the template field is required or not",
-      "options": { "infoText": "Given a target webpage, the output of all required fields must be valid for the template to be applicable. Mandatory fields \"itemType\" and \"title\" are always required." },
-      "type": "boolean",
-      "default": true
-    },
     "procedures": {
       "title": "Procedures",
       "description": "Each translation procedure defines a series of selection and transformation steps to extract and manipulate relevant metadata",
@@ -327,23 +323,33 @@
           "format": "tabs",
           "items": {
             "title": "Step",
+            "type": "object",
+            "properties": {
+              "type": {
+                "title": "Type",
+                "type": "string",
+                "options": { "hidden": true }
+              },
+              "config": {
+                "title": "Configuration",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "config"
+            ],
             "anyOf": [
               {
                 "title": "Citoid selection",
                 "description": "Selects a field from the Citoid response for the target webpage",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["citoid"],
-                    "options": { "hidden": true }
+                    "enum": ["citoid"]
                   },
                   "config": {
-                    "title": "Configuration",
                     "description": "Any valid Citoid/Zotero base field name; use Wikimedia REST API (\"citation\" endpoint, \"mediawiki-basefields\" format) to check Citoid response for the target webpage: https://en.wikipedia.org/api/rest_v1/#/Citation/getCitation",
                     "options": { "infoText": "Creator fields (e.g., \"author\") are split into creatorFirst and creatorLast fields." },
-                    "type": "string",
                     "enum": [
                       "abstractNote",
                       "accessDate",
@@ -448,50 +454,30 @@
                       "wordsByLast"
                     ]
                   }
-                },
-                "required": [
-                  "type",
-                  "config"
-                ]
+                }
               },
               {
                 "title": "XPath selection",
                 "description": "Selects a node from the target webpage's HTML using XPath",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["xpath"],
-                    "options": { "hidden": true }
+                    "enum": ["xpath"]
                   },
                   "config": {
-                    "title": "Configuration",
                     "description": "Any valid XPath v1.0 expression",
-                    "options": { "infoText": "Your web browser's inspector (shown with F12 in some browsers) may help you get an XPath expression for an HTML node." },
-                    "type": "string"
+                    "options": { "infoText": "Your web browser's inspector (shown with F12 in some browsers) may help you get an XPath expression for an HTML node." }
                   }
-                },
-                "required": [
-                  "type",
-                  "config"
-                ]
+                }
               },
               {
                 "title": "Fixed selection (Item type field)",
                 "description": "Always returns the same predefined Citoid/Zotero item type",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["fixed"],
-                    "options": { "hidden": true }
+                    "enum": ["fixed"]
                   },
                   "config": {
-                    "title": "Configuration",
                     "description": "The predefined Citoid/Zotero item type to be returned.",
-                    "type": "string",
                     "enum": [
                       "artwork",
                       "attachment",
@@ -531,11 +517,7 @@
                       "webpage"
                     ]
                   }
-                },
-                "required": [
-                  "type",
-                  "config"
-                ]
+                }
               },
               {
                 "title": "Fixed selection",
@@ -570,78 +552,70 @@
           "format": "tabs",
           "items": {
             "title": "Step",
+            "type": "object",
+            "properties": {
+              "type": {
+                "title": "Type",
+                "type": "string",
+                "options": { "hidden": true }
+              },
+              "config": {
+                "title": "Configuration",
+                "type": "string"
+              },
+              "itemwise": {
+                "title": "Item-wise",
+                "description": "Whether transformation should be applied to each item of the input independently (true) or to the entire input as a whole (false).",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "type",
+              "config",
+              "itemwise"
+            ],
             "oneOf": [
               {
                 "title": "Join transformation",
                 "description": "Joins two or more items in a list into one, using the separator specified",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["join"],
-                    "options": { "hidden": true }
+                    "enum": ["join"]
                   },
                   "config": {
-                    "title": "Configuration",
-                    "description": "The separator to use.",
-                    "type": "string"
+                    "description": "The separator to use."
                   },
                   "itemwise": {
-                    "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: off (join transformation)" },
+                    "options": { "infoText": "default: false (join transformation)" },
                     "default": false
                   }
-                },
-                "required": [
-                  "type",
-                  "config",
-                  "itemwise"
-                ]
+                }
               },
               {
                 "title": "Split transformation",
                 "description": "Splits a string at the separator specified into two or more substrings",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["split"],
-                    "options": { "hidden": true }
+                    "enum": ["split"]
                   },
                   "config": {
-                    "title": "Configuration",
-                    "description": "The separator to use.",
-                    "type": "string"
+                    "description": "The separator to use."
                   },
                   "itemwise": {
-                    "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: on (split transformation)" },
+                    "options": { "infoText": "default: true (split transformation)" },
                     "default": true
                   }
-                },
-                "required": [
-                  "type",
-                  "config",
-                  "itemwise"
-                ]
+                }
               },
               {
                 "title": "Date transformation",
                 "description": "Uses the Sugar.js to try and parse natural language dates into the YYYY-MM-DD format",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["date"],
-                    "options": { "hidden": true }
+                    "enum": ["date"]
                   },
                   "config": {
-                    "title": "Configuration",
                     "description": "Any of the currently supported locales",
-                    "type": "string",
                     "enum": [
                       "ca",
                       "da",
@@ -686,73 +660,43 @@
                     }
                   },
                   "itemwise": {
-                    "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: on (date transformation)" },
+                    "options": { "infoText": "default: true (date transformation)" },
                     "default": true
                   }
-                },
-                "required": [
-                  "type",
-                  "config",
-                  "itemwise"
-                ]
+                }
               },
               {
                 "title": "Range transformation",
                 "description": "Returns one or more items or ranges of items in the order specified",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["range"],
-                    "options": { "hidden": true }
+                    "enum": ["range"]
                   },
                   "config": {
-                    "title": "Configuration",
                     "description": "One or more comma-separated ranges: \"start(:end)\", \"start:\" or \":end\".",
-                    "options": { "infoText": "Ranges use one-based numbering, meaning that the first item is item 1" },
-                    "type": "string"
+                    "options": { "infoText": "Ranges use one-based numbering, meaning that the first item is item 1" }
                   },
                   "itemwise": {
-                    "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: off (range transformation)" },
+                    "options": { "infoText": "default: false (range transformation)" },
                     "default": false
                   }
-                },
-                "required": [
-                  "type",
-                  "config",
-                  "itemwise"
-                ]
+                }
               },
               {
                 "title": "Match transformation",
                 "description": "Returns one or more substrings matching a target",
-                "type": "object",
                 "properties": {
                   "type": {
-                    "title": "Type",
-                    "type": "string",
-                    "enum": ["match"],
-                    "options": { "hidden": true }
+                    "enum": ["match"]
                   },
                   "config": {
-                    "title": "Configuration",
-                    "description": "The matching target, expressed as either plain string or /regular expression/ (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Match_transformation).",
-                    "type": "string"
+                    "description": "The matching target, expressed as either plain string or /regular expression/ (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Match_transformation)."
                   },
                   "itemwise": {
-                    "$ref": "#/definitions/itemwise",
-                    "options": { "infoText": "default: on (match transformation)" },
+                    "options": { "infoText": "default: true (match transformation)" },
                     "default": true
                   }
-                },
-                "required": [
-                  "type",
-                  "config",
-                  "itemwise"
-                ]
+                }
               }
             ]
           }
@@ -762,12 +706,6 @@
         "selections",
         "transformations"
       ]
-    },
-    "itemwise": {
-      "title": "Item-wise",
-      "description": "Whether transformation should be applied to each item of the input independently (on) or to the entire input as a whole (off).",
-      "type": "boolean",
-      "format": "checkbox"
     }
   }
 }
