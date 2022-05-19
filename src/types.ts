@@ -196,3 +196,18 @@ export type ProcedureOutput = {
 };
 
 export type StepOutput = string[];
+
+interface XPathException extends Error {
+  code: number;
+}
+export function isXPathException(error: unknown): error is XPathException {
+  if (
+    error instanceof Error &&
+    error.name === "XPathException" &&
+    "code" in (error as XPathException)
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}

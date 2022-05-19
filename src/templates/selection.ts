@@ -2,8 +2,7 @@ import { TranslationStep } from "./step";
 import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { JSDOM } from "jsdom";
-import { StepOutput, SelectionDefinition } from "../types";
-
+import { StepOutput, SelectionDefinition, isXPathException } from "../types";
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
 
@@ -117,6 +116,8 @@ export class XPathSelection extends Selection {
   set config(expression: string) {
     try {
       const window = new JSDOM().window;
+      // This is not failing on invalid XPath v1.0 expressions
+      // see https://github.com/jsdom/jsdom/issues/3371
       this._parsedXPath = window.document.createExpression(expression);
       this._config = expression;
       window.close();
@@ -160,21 +161,30 @@ export class XPathSelection extends Selection {
               }
               thisNode = result.iterateNext();
             }
-          } catch {
-            const result = parsedXPath.evaluate(
-              data.doc,
-              this.window.XPathResult.ANY_TYPE
-            );
-            switch (result.resultType) {
-              case this.window.XPathResult.NUMBER_TYPE:
-                selection.push(result.numberValue.toString());
-                break;
-              case this.window.XPathResult.STRING_TYPE:
-                selection.push(result.stringValue);
-                break;
-              case this.window.XPathResult.BOOLEAN_TYPE:
-                selection.push(result.booleanValue.toString().trim());
-                break;
+          } catch (error) {
+            if (
+              isXPathException(error) &&
+              error.code === 51 // INVALID_EXPRESSION_ERR
+            ) {
+              // document.createExpression() not failing on invalid expressions
+              // see above; https://github.com/jsdom/jsdom/issues/3371
+              selection.push();
+            } else {
+              const result = parsedXPath.evaluate(
+                data.doc,
+                this.window.XPathResult.ANY_TYPE
+              );
+              switch (result.resultType) {
+                case this.window.XPathResult.NUMBER_TYPE:
+                  selection.push(result.numberValue.toString());
+                  break;
+                case this.window.XPathResult.STRING_TYPE:
+                  selection.push(result.stringValue);
+                  break;
+                case this.window.XPathResult.BOOLEAN_TYPE:
+                  selection.push(result.booleanValue.toString().trim());
+                  break;
+              }
             }
           }
           resolve(selection);
