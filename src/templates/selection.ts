@@ -3,7 +3,8 @@ import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { JSDOM } from "jsdom";
 import { StepOutput, SelectionDefinition } from "../types";
-import { JSONPath } from "jsonpath-plus";
+import jp from "jsonpath";
+import log from "loglevel";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -237,9 +238,12 @@ export class JsonLdSelection extends Selection {
 
   set config(path: JsonLdSelection["_config"]) {
     try {
-      const pathArray = JSONPath.toPathArray(path);
-      const pathString = JSONPath.toPathString(pathArray);
-      this._config = path;
+      const parsedPath = jp.parse(path);
+      const stringPath = jp.stringify(parsedPath);
+      // improve validation
+      // const pathArray = JSONPath.toPathArray(path);
+      // const pathString = JSONPath.toPathString(pathArray);
+      // this._config = path;
       // if (pathString === path) {
       //   this._config = path;
       // } else {
@@ -258,24 +262,42 @@ export class JsonLdSelection extends Selection {
       target.cache.http
         .getData(false)
         .then((data) => {
-          const jsonld: ReturnType<JSON["parse"]>[] = [];
+          let jsonld: ReturnType<JSON["parse"]>[] = [];
           Array.from(
             data.doc.querySelectorAll('script[type="application/ld+json"')
-          ).forEach((script) => {
+          ).forEach((script, index) => {
             const content = script.innerHTML;
             try {
               const json = JSON.parse(content);
-              // fixme: do not push an array, concatenate instead
-              jsonld.push(json);
+              jsonld = jsonld.concat(json);
             } catch {
-              // could not json-parse script content
+              log.warn(`Could not parse JSON-LD object #${index + 1}`);
             }
           });
+
           // make sure we get an array of strings
-          const selection: StepOutput = JSONPath({
-            path: this._config,
-            json: jsonld,
-          });
+          // using dchester's jsonpath, because of security concerns with
+          // brettz9's jsonpath-plus
+          // See https://github.com/JSONPath-Plus/JSONPath/issues/60
+
+          // still! it says here that jsonpath's use of static-eval
+          // may not be secure enough! https://github.com/devnullprod/jsonpath-sandbox#readme
+
+          // maybe jsonpath-plus with eval disabled, although disabling
+          // functions altogether, may still be the best way to go?
+
+          // reconsider using JSON pointers?
+
+          // jsonpath-plus had interesting additions, such as:
+          // * grabbing the parent
+          // * grabbing property names
+          // * type selectors
+          // * convert between path and pointers
+          const result = jp.query(jsonld, this._config);
+          // const selection: StepOutput = JSONPath({
+          //   path: this._config,
+          //   json: jsonld,
+          // });
           resolve(selection);
         })
         .catch((reason) => {
