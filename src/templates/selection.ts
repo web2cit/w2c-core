@@ -3,6 +3,7 @@ import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { JSDOM } from "jsdom";
 import { StepOutput, SelectionDefinition } from "../types";
+import { JSONPath } from "jsonpath-plus";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -196,6 +197,96 @@ function isHTMLElement(node: Node): node is HTMLElement {
 }
 function isAttr(node: Node): node is Attr {
   return (node as Attr).value !== undefined;
+}
+
+// todo: we will need something to check this online!
+// https://jsonpathfinder.com/
+// https://www.jsonquerytool.com/
+// https://codebeautify.org/jsonpath-tester#
+// https://jsonpath.com/
+// bookmarklet:
+// function concatAndCopy() {
+//   let jsonld = [];
+//   Array.from(
+//     document.querySelectorAll('script[type="application/ld+json"')
+//   ).forEach((script) => {
+//     const content = script.innerHTML;
+//     try {
+//       const json = JSON.parse(content);
+//       jsonld = jsonld.concat(json);
+//     } catch {
+//       console.log("failed to parse");
+//     }
+//   });
+//   navigator.clipboard.writeText(JSON.stringify(jsonld, undefined, 2)).then(() => {
+//     alert("JSON-LD copied to clipboard!")
+//   });
+// };
+// concatAndCopy();
+export class JsonLdSelection extends Selection {
+  readonly type: SelectionType = "json-ld";
+  protected _config = "";
+  constructor(path?: JsonLdSelection["_config"]) {
+    super();
+    if (path) this.config = path;
+  }
+
+  get config(): JsonLdSelection["_config"] {
+    return this._config;
+  }
+
+  set config(path: JsonLdSelection["_config"]) {
+    try {
+      const pathArray = JSONPath.toPathArray(path);
+      const pathString = JSONPath.toPathString(pathArray);
+      this._config = path;
+      // if (pathString === path) {
+      //   this._config = path;
+      // } else {
+      //   throw new Error();
+      // }
+    } catch {
+      throw new SelectionConfigTypeError(this.type, path);
+    }
+  }
+
+  select(target: Webpage): Promise<StepOutput> {
+    if (this._config === "") {
+      throw new UndefinedSelectionConfigError();
+    }
+    return new Promise((resolve, reject) => {
+      target.cache.http
+        .getData(false)
+        .then((data) => {
+          const jsonld: ReturnType<JSON["parse"]>[] = [];
+          Array.from(
+            data.doc.querySelectorAll('script[type="application/ld+json"')
+          ).forEach((script) => {
+            const content = script.innerHTML;
+            try {
+              const json = JSON.parse(content);
+              // fixme: do not push an array, concatenate instead
+              jsonld.push(json);
+            } catch {
+              // could not json-parse script content
+            }
+          });
+          // make sure we get an array of strings
+          const selection: StepOutput = JSONPath({
+            path: this._config,
+            json: jsonld,
+          });
+          resolve(selection);
+        })
+        .catch((reason) => {
+          reject(reason);
+        });
+    });
+  }
+
+  suggest(target: Webpage, query: string): Promise<JsonLdSelection["_config"]> {
+    return Promise.resolve("");
+  }
 }
 
 export class FixedSelection extends Selection {
