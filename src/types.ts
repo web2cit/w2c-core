@@ -159,9 +159,51 @@ export function isPatternDefinition(
 
 // Test definitions
 
-// export type TestConfiguration = TestDefinition[];
+export type TestConfiguration = TestDefinition[];
 
-// export type TestDefinition = {};
+export type TestDefinition = {
+  path: string;
+  fields: TestFieldDefinition[];
+};
+
+export function isTestDefinition(
+  definition: unknown
+): definition is TestDefinition {
+  const { path, fields } = definition as TestDefinition;
+  if (
+    path !== undefined &&
+    typeof path === "string" &&
+    fields !== undefined &&
+    Array.isArray(fields) &&
+    fields.every((field) => isTestFieldDefinition(field))
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+export type TestFieldDefinition = {
+  fieldname: FieldName;
+  goal: StepOutput;
+};
+
+function isTestFieldDefinition(
+  definition: unknown
+): definition is TestFieldDefinition {
+  const { fieldname, goal } = definition as TestFieldDefinition;
+  if (
+    fieldname !== undefined &&
+    isFieldName(fieldname) &&
+    goal !== undefined &&
+    Array.isArray(goal) &&
+    goal.every((value) => typeof value === "string")
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 // Outputs
 
@@ -196,3 +238,13 @@ export type ProcedureOutput = {
 };
 
 export type StepOutput = string[];
+
+// Test outputs
+export type TestOutput = {
+  fields: TestFieldOutput[];
+};
+
+type TestFieldOutput = {
+  fieldname: FieldName;
+  score: number;
+};
