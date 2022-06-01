@@ -336,4 +336,11 @@ describe("Match transformation", () => {
       transformation.config = "/+/";
     }).toThrow();
   });
+
+  it("matches special regex characters literally in non-regex config", async () => {
+    const transformation = new MatchTransformation();
+    transformation.config = ".+";
+    const input = ["abc.+123"];
+    expect(await transformation.transform(input)).toEqual([".+"]);
+  });
 });

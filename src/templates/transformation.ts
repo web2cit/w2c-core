@@ -275,8 +275,14 @@ export class MatchTransformation extends Transformation {
     let regex, flags;
     const match = config.match(/^\/(?<regex>.*)\/(?<flags>[a-z]+)?$/);
     if (match === null) {
+      // escape special regex characters
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+      const escaped = config.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&" // $& means the whole matched string
+      );
       // string matching defaults to global matching
-      this._target = new RegExp(config, "g");
+      this._target = new RegExp(escaped, "g");
       this._config = config;
     } else {
       ({ regex, flags } = match.groups ?? {});
