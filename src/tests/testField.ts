@@ -47,7 +47,11 @@ export class TestField extends TranslationField {
       );
     }
 
-    // todo: reject empty output if mandatory field
+    if (this.params.forceRequired && output.length === 0) {
+      throw new Error(
+        `Unexpected empty output for mandatory field "${this.name}"`
+      );
+    }
 
     let score: number;
 
@@ -111,6 +115,69 @@ export class TestField extends TranslationField {
       goal: this.goal,
     };
   }
+}
+
+export function getDiffScore(
+  source: Array<string | undefined>,
+  target: Array<string | undefined>,
+  // todo: default compareFn may be a simple levenshtein distance function
+  compareFn: (value1: string, value2: string) => number,
+  strategy: "ordered" | "unordered" | "mixed" = "mixed"
+): number {
+  const maxLength = Math.max(source.length, target.length);
+  let orderedScore = 0;
+  let unorderedScore = 0;
+
+  if (strategy === "ordered" || strategy === "mixed") {
+    for (let i = 0; i < maxLength; i++) {
+      const sourceValue = source[i];
+      const targetValue = target[i];
+      if (sourceValue === undefined || targetValue === undefined) {
+        orderedScore += 0;
+      } else {
+        orderedScore += compareFn(sourceValue, targetValue) / maxLength;
+      }
+    }
+  }
+
+  if (strategy === "unordered" || strategy === "mixed") {
+    const indices = [...Array(maxLength).keys()];
+    const indexPermutations = permute(indices);
+    for (const indexPermutation of indexPermutations) {
+      const targetPermutation = indexPermutation.map((i) => target[i]);
+      const score = getDiffScore(
+        source,
+        targetPermutation,
+        compareFn,
+        "ordered"
+      );
+      unorderedScore = Math.max(unorderedScore, score);
+    }
+  }
+  let score = orderedScore + unorderedScore;
+  if (strategy === "mixed") score = score / 2;
+  return score;
+}
+
+// https://medium.com/weekly-webtips/step-by-step-guide-to-array-permutation-using-recursion-in-javascript-4e76188b88ff
+function permute<T>(input: T[]): T[][] {
+  const result = [];
+  if (input.length === 0) return [];
+  if (input.length === 1) return [input];
+
+  for (let i = 0; i < input.length; i++) {
+    // copy input array
+    const remainingItems = [...input];
+    // splice changes the remainingItems array
+    const currentItemArray = remainingItems.splice(i, 1);
+
+    const remainingItemPermutations = permute(remainingItems);
+    for (const remainingItemPermutation of remainingItemPermutations) {
+      const permutation = currentItemArray.concat(remainingItemPermutation);
+      result.push(permutation);
+    }
+  }
+  return result;
 }
 
 class FieldnameMismatch extends Error {
