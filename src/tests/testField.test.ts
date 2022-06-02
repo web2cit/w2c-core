@@ -38,6 +38,15 @@ describe("Test field instatiation", () => {
       });
     }).toThrow("not a valid goal value");
   });
+
+  it("fails on empty goal for mandatory fields", () => {
+    expect(() => {
+      new TestField({
+        fieldname: "title", // a mandatory field,
+        goal: [],
+      });
+    }).toThrow("Invalid empty goal");
+  });
 });
 
 describe("Test field testing", () => {

@@ -18,6 +18,10 @@ export class TestField extends TranslationField {
     // note that it is not the same as missing mandatory field
     // that's ok because it means it hasn't been declared
 
+    if (this.params.forceRequired && goal.length === 0) {
+      throw new Error(`Invalid empty goal for mandatory field "${fieldname}"`);
+    }
+
     if (!this.params.array && goal.length > 1) {
       log.warn(
         `Ignoring additional goal values for single-valued ${fieldname} field`
