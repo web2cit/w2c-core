@@ -1,63 +1,40 @@
-// We don't need a Webpage object because we will just compare template outputs
-// vs translation tests.
-// Alternatively, we could make the translate logic live inside a test object.
-// But no. What we may do instead is have the webpage object know how to translate
-// and test itself. But I'm not sure why we would want that now.
-
-// We don't need to know what domain the test belongs to, then. In the template, we
-// need to know the domain because there are steps that need to download the target
-// or its Citoid response. Not here.
-
-// test method input:
-// * path
-// * fields
-// ** fieldname
-// ** output
-
-// loosely based on template.ts
-
 import { FieldName } from "../translationField";
 import { TestField } from "./testField";
 import log from "loglevel";
-import { TestDefinition, TestOutput, TemplateOutput } from "../types";
+import {
+  TestDefinition,
+  TestOutput,
+  StepOutput,
+  TestFieldDefinition,
+} from "../types";
 
+// loosely based on template.ts
 export class TranslationTest {
   readonly path: string;
   private _fields: Array<TestField> = [];
-  protected constructor(test: TestDefinition) {
+  constructor(test: TestDefinition) {
     this.path = test.path;
-    if (test.fields) {
-      test.fields.forEach((definition) => {
-        let field;
-        try {
-          field = new TestField(definition);
-        } catch (e) {
-          const fieldname = definition.fieldname ?? "untitled";
+    test.fields.forEach((definition) => {
+      try {
+        this.addField(definition);
+      } catch (e) {
+        if (e instanceof DuplicateFieldError) {
+          log.info(`Skipping duplicate field "${e.fieldname}"`);
+        } else {
           log.warn(
-            `Failed to parse "${fieldname}" test field definition: ${e}`
+            `Failed to parse "${definition.fieldname}" test field definition: ${e}`
           );
         }
-        if (field !== undefined) {
-          try {
-            this.addField(field);
-          } catch (e) {
-            if (e instanceof DuplicateFieldError) {
-              log.info(`Skipping duplicate field "${field.name}"`);
-            } else {
-              log.info(``);
-              throw e;
-            }
-          }
-        }
-      });
-    }
+      }
+    });
   }
 
   get fields(): ReadonlyArray<TestField> {
     return Object.freeze([...this._fields]);
   }
 
-  addField(newField: TestField) {
+  addField(definition: TestFieldDefinition) {
+    const newField = new TestField(definition);
     if (this._fields.some((field) => field.name === newField.name)) {
       throw new DuplicateFieldError(newField.name);
     } else {
@@ -65,52 +42,62 @@ export class TranslationTest {
     }
   }
 
-  removeField(name: FieldName, order?: number) {
+  removeField(name: FieldName) {
     const indices = this._fields.reduce((indices: number[], field, index) => {
       if (field.name === name) indices.push(index);
       return indices;
     }, []);
-    const index = indices[order === undefined ? indices.length - 1 : order];
-    if (index !== undefined) this._fields.splice(index, 1);
+    if (indices.length === 0) {
+      log.info(`Could not remove test field "${name}": not found`);
+    } else {
+      indices.forEach((index) => {
+        this._fields.splice(index, 1);
+      });
+    }
   }
 
-  // ```
-  // Will we blindly compare translation template output vs translation test goals
-  // without making sure they both belong to the same domain?
-  // ```;
-
-  // we don't need all properties of the TemplateOutput
-  // normalize output interfaces: T302431
-  test(translation: TemplateOutput): TestOutput {
-    // do we need to make sure that domain matches?
-
+  test(translation: {
+    path: string;
+    fields: {
+      name: FieldName;
+      output: StepOutput;
+      valid: boolean;
+    }[];
+  }): TestOutput {
     // make sure that paths match
-    if (translation.target.path !== this.path) {
-      throw new PathMismatch(translation.target.path, this.path);
+    if (translation.path !== this.path) {
+      throw new PathMismatch(translation.path, this.path);
     }
 
-    const output: TestOutput = {
+    const testOutput: TestOutput = {
       fields: [],
     };
 
     for (const testField of this._fields) {
       const fieldname = testField.name;
-      const outputFields = translation.outputs.filter(
-        (outputField) => outputField.fieldname === fieldname
+      const outputFields = translation.fields.filter(
+        (field) => field.name === fieldname
       );
       if (outputFields.length > 1) {
         throw new Error(
-          `Unexpected multiple template outputs for field ${fieldname}`
+          `Unexpected multiple template outputs for field "${fieldname}"`
         );
       }
       const outputField = outputFields[0];
-      output.fields.push({
+
+      let fieldOutput: StepOutput;
+      if (outputField && outputField.valid) {
+        fieldOutput = outputField.output;
+      } else {
+        // treat undefined output as empty output
+        fieldOutput = [];
+      }
+      testOutput.fields.push({
         fieldname,
-        score: 0, //testField.test(outputField)
+        score: testField.test(fieldname, fieldOutput),
       });
     }
-
-    return output;
+    return testOutput;
   }
 
   toJSON(): TestDefinition {
@@ -122,9 +109,11 @@ export class TranslationTest {
 }
 
 class DuplicateFieldError extends Error {
+  fieldname: string;
   constructor(fieldname: string) {
     super(`Field "${fieldname}" already exists in test`);
     this.name = "Duplicate field error";
+    this.fieldname = fieldname;
   }
 }
 
