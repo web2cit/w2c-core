@@ -14,11 +14,9 @@ export class TestField extends TranslationField {
       throw new Error(`Translation field ${this.name} is a control field!`);
     }
 
-    // todo: reject empty output for mandatory fields
-    // note that it is not the same as missing mandatory field
-    // that's ok because it means it hasn't been declared
-
     if (this.params.forceRequired && goal.length === 0) {
+      // note that empty goal for mandatory field is not the same as
+      // missing mandatory field; missing mandatory field is OK
       throw new Error(`Invalid empty goal for mandatory field "${fieldname}"`);
     }
 
@@ -81,7 +79,6 @@ export class TestField extends TranslationField {
 function getDiffScore(
   source: Array<string | undefined>,
   target: Array<string | undefined>,
-  // todo: default compareFn may be a simple levenshtein distance function
   compareFn: (value1: string, value2: string) => number = stringCompare,
   strategy?: "ordered" | "unordered" | "mixed"
 ): number {
