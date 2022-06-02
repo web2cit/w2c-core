@@ -1,7 +1,7 @@
 import { FieldName, TranslationField } from "../translationField";
 import { StepOutput, TestFieldDefinition } from "../types";
 import log from "loglevel";
-import { diff_match_patch } from "diff-match-patch";
+import levenshtein from "fastest-levenshtein";
 
 export class TestField extends TranslationField {
   readonly goal: StepOutput;
@@ -53,60 +53,17 @@ export class TestField extends TranslationField {
       );
     }
 
-    let score: number;
-
-    // todo: set diff strategy at the translation field config level
-    // consider having different diff strategies:
-    // * ordered list
-    // * unordered list
-    // * dates (boolean-compare components)
-    // * boolean (webpage is not newspaperArticle)
-    // * distance
-
-    // combine them
-    // ordered/unordered
-    // add gaps/don't add
-    // boolean/distance
-
-    // in the meantime, doing some hard-coding below
+    // todo: consider stating how to get diff score
+    // at the translation field level (i.e., translationField.ts)
+    let compareFn;
     if (fieldname === "itemType") {
-      if (this.params.array) {
-        throw new Error(
-          'Unexpected multiple-value config for field "itemType"'
-        );
-      }
-      score = output[0] === this.goal[0] ? 1 : 0;
+      compareFn = boolCompare;
     } else if (fieldname === "date") {
-      if (this.params.array) {
-        throw new Error(
-          'Unexpected multiple-value config for field "itemType"'
-        );
-      }
-      if (output[0] === this.goal[0]) {
-        score = 1;
-      } else {
-        const outputDateArray = (output[0] ?? "").split("-");
-        const goalDateArray = (this.goal[0] ?? "").split("-");
-        const maxLength = Math.max(
-          outputDateArray.length,
-          goalDateArray.length
-        );
-        score = 0;
-        for (let i = 0; i < maxLength; i++) {
-          score += +(outputDateArray[i] === goalDateArray[i]) / maxLength;
-        }
-      }
+      compareFn = dateCompare;
     } else {
-      const dmp = new diff_match_patch();
-      // should ["one", "two", "three"] vs ["one", "four", "three"]
-      // have higher score than vs ["one", "three"]?
-      const outputString = output.join();
-      const goalString = output.join();
-      const diff = dmp.diff_main(outputString, goalString);
-      const distance = dmp.diff_levenshtein(diff);
-      score = distance / Math.max(outputString.length, goalString.length);
+      compareFn = stringCompare;
     }
-    return score;
+    return getDiffScore(output, this.goal, compareFn);
   }
 
   toJSON(): TestFieldDefinition {
@@ -117,26 +74,46 @@ export class TestField extends TranslationField {
   }
 }
 
-export function getDiffScore(
+function getDiffScore(
   source: Array<string | undefined>,
   target: Array<string | undefined>,
   // todo: default compareFn may be a simple levenshtein distance function
-  compareFn: (value1: string, value2: string) => number,
-  strategy: "ordered" | "unordered" | "mixed" = "mixed"
+  compareFn: (value1: string, value2: string) => number = stringCompare,
+  strategy?: "ordered" | "unordered" | "mixed"
 ): number {
   const maxLength = Math.max(source.length, target.length);
+
+  if (maxLength === 0) {
+    // empty arrays match perfectly
+    return 1;
+  }
+
+  // set default strategy
+  if (strategy === undefined) {
+    if (maxLength > 1) {
+      strategy = "mixed";
+    } else {
+      // do not process same score twice if longest array is 0 or 1 items long
+      strategy = "ordered";
+    }
+  }
   let orderedScore = 0;
   let unorderedScore = 0;
 
   if (strategy === "ordered" || strategy === "mixed") {
     for (let i = 0; i < maxLength; i++) {
+      let score;
       const sourceValue = source[i];
       const targetValue = target[i];
-      if (sourceValue === undefined || targetValue === undefined) {
-        orderedScore += 0;
+      if (sourceValue === targetValue) {
+        // covers the case where both values are undefined
+        score = 1;
+      } else if (sourceValue === undefined || targetValue === undefined) {
+        score = 0;
       } else {
-        orderedScore += compareFn(sourceValue, targetValue) / maxLength;
+        score = compareFn(sourceValue, targetValue);
       }
+      orderedScore += score / maxLength;
     }
   }
 
@@ -178,6 +155,28 @@ function permute<T>(input: T[]): T[][] {
     }
   }
   return result;
+}
+
+function boolCompare(value1: string, value2: string): number {
+  const score = value1 === value2 ? 1 : 0;
+  return score;
+}
+
+function dateCompare(value1: string, value2: string): number {
+  const dateArr1 = value1.split("-");
+  const dateArr2 = value2.split("-");
+  const maxLength = Math.max(dateArr1.length, dateArr2.length);
+  let score = 0;
+  for (let i = 0; i < maxLength; i++) {
+    score += +(dateArr1[i] === dateArr2[i]) / maxLength;
+  }
+  return score;
+}
+
+function stringCompare(value1: string, value2: string): number {
+  const distance = levenshtein.distance(value1, value2);
+  const score = 1 - distance / Math.max(value1.length, value2.length);
+  return score;
 }
 
 class FieldnameMismatch extends Error {
