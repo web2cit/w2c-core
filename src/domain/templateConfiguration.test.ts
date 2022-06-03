@@ -400,3 +400,22 @@ describe("Configuration revisions", () => {
     expect(configuration.get().length).toBe(0);
   });
 });
+
+describe("Configuration object to JSON", () => {
+  it("returns json from configuration initialized with templates", () => {
+    const templates = [applicableTemplate];
+    const configuration = new TemplateConfiguration(
+      domain,
+      [],
+      undefined,
+      templates
+    );
+    expect(configuration.toJSON()).toEqual(templates);
+  });
+
+  it("returns json from configuration with templates added", () => {
+    const configuration = new TemplateConfiguration(domain, [], undefined);
+    configuration.add(applicableTemplate);
+    expect(configuration.toJSON()).toEqual([applicableTemplate]);
+  });
+});

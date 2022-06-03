@@ -89,7 +89,8 @@ export class TestConfiguration extends DomainConfiguration<
   }
 
   loadConfiguration(tests: TestDefinition[]): void {
-    this.tests = [];
+    // wipe array without removing reference to this.values
+    this.tests.length = 0;
     tests.forEach((definition) => {
       try {
         this.add(definition);

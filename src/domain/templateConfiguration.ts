@@ -160,7 +160,9 @@ export class TemplateConfiguration extends DomainConfiguration<
   loadConfiguration(templates: TemplateDefinition[]): void {
     // fixme?: wiping previous translation templates erases template caches
     // see T302239
-    this.templates = [];
+
+    // wipe array without removing reference to this.values
+    this.templates.length = 0;
     templates.forEach((definition) => {
       try {
         this.add(definition);

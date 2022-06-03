@@ -31,6 +31,20 @@ it("successfully instantiates test configuration", () => {
   expect(config.toJSON()).toEqual(testDefinitions);
 });
 
+describe("Configuration object to JSON", () => {
+  it("returns json from configuration initialized with tests", () => {
+    const config = new TestConfiguration(domain, testDefinitions);
+    expect(config.toJSON()).toEqual(testDefinitions);
+  });
+
+  it("returns json from configuration with tests added", () => {
+    const config = new TestConfiguration(domain);
+    const definition = testDefinitions[0];
+    config.add(definition);
+    expect(config.toJSON()).toEqual([definition]);
+  });
+});
+
 it("gets all test paths", () => {
   const config = new TestConfiguration(domain, testDefinitions);
   const paths = config.paths;
