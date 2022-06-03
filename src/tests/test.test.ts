@@ -127,4 +127,126 @@ describe("Test field removal", () => {
   });
 });
 
-// describe("Translation test testing", () => {});
+describe("Translation test testing", () => {
+  const test = new TranslationTest({
+    path: "/some/path",
+    fields: [
+      {
+        fieldname: "itemType",
+        goal: ["newspaperArticle"],
+      },
+      {
+        fieldname: "authorFirst",
+        goal: ["first author"],
+      },
+    ],
+  });
+
+  it("rejects translation for different path", () => {
+    expect(() => {
+      test.test({
+        path: "/some/other/path",
+        fields: [],
+      });
+    }).toThrow("paths do not match");
+  });
+
+  describe("Impossible translations", () => {
+    it("rejects translation with multiple values for single-value fields", () => {
+      expect(() => {
+        test.test({
+          path: "/some/path",
+          fields: [
+            {
+              name: "itemType", // single-value field
+              output: ["newspaperArticle", "webpage"],
+              valid: true,
+            },
+          ],
+        });
+      }).toThrow("Unexpected multiple output values");
+    });
+  });
+
+  it("successfully tests translation output", () => {
+    const result = test.test({
+      path: "/some/path",
+      fields: [
+        {
+          name: "itemType",
+          output: ["newspaperArticle"],
+          valid: true,
+        },
+        {
+          name: "authorFirst",
+          output: ["first"],
+          valid: true,
+        },
+      ],
+    });
+    expect(result.fields.length).toBe(2);
+    expect(result.fields[0].score).toBe(1);
+    expect(result.fields[1].score).toBeLessThan(1);
+  });
+
+  it("treats undefined field outputs as empty", () => {
+    const result = test.test({
+      path: "/some/path",
+      fields: [
+        {
+          name: "itemType",
+          output: ["newspaperArticle"],
+          valid: true,
+        },
+      ],
+    });
+    expect(result.fields.length).toBe(2);
+    expect(result.fields[0].score).toBe(1);
+    expect(result.fields[1].score).toBe(0);
+  });
+
+  it("treats invalid field outputs as empty", () => {
+    const result = test.test({
+      path: "/some/path",
+      fields: [
+        {
+          name: "itemType",
+          output: ["newspaperArticle"],
+          valid: true,
+        },
+        {
+          name: "authorFirst",
+          output: ["first author"],
+          valid: false,
+        },
+      ],
+    });
+    expect(result.fields.length).toBe(2);
+    expect(result.fields[0].score).toBe(1);
+    expect(result.fields[1].score).toBe(0);
+  });
+
+  it("ignores field outputs without corresponding goal", () => {
+    const result = test.test({
+      path: "/some/path",
+      fields: [
+        {
+          name: "itemType",
+          output: ["newspaperArticle"],
+          valid: true,
+        },
+        {
+          name: "authorFirst",
+          output: ["first author"],
+          valid: true,
+        },
+        {
+          name: "authorLast",
+          output: [],
+          valid: true,
+        },
+      ],
+    });
+    expect(result.fields.length).toBe(2);
+  });
+});

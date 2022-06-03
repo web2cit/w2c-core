@@ -80,7 +80,7 @@ export class TranslationTest {
       );
       if (outputFields.length > 1) {
         throw new Error(
-          `Unexpected multiple template outputs for field "${fieldname}"`
+          `Unexpected multiple output values for field "${fieldname}"`
         );
       }
       const outputField = outputFields[0];
