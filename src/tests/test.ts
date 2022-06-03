@@ -12,6 +12,8 @@ import {
 export class TranslationTest {
   readonly path: string;
   private _fields: Array<TestField> = [];
+  // translation template constructor has a "strict" option to fail on
+  // problematic fields (vs simply ignoring them)
   constructor(test: TestDefinition) {
     this.path = test.path;
     test.fields.forEach((definition) => {

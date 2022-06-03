@@ -64,7 +64,7 @@ export abstract class DomainConfiguration<
     index: number
   ): ConfigurationType;
 
-  abstract move(id: string, newIndex: number): void;
+  move?(id: string, newIndex: number): void;
 
   abstract remove(id: string): void;
 
@@ -78,6 +78,11 @@ export abstract class DomainConfiguration<
     return this.storage.root + this.storage.path + this.storage.filename;
   }
 
+  /**
+   * Fetch the corresponding configuration revisions from the remote storage.
+   * @returns {RevisionMetadata[]} An array of revisions, including revision ID
+   *     and timestamp.
+   */
   private async fetchRevisionIds(): Promise<RevisionMetadata[]> {
     const api = new RevisionsApi(this.mediawiki.instance);
     const revisions = await api.fetchRevisions(this.title, false);
@@ -89,6 +94,13 @@ export abstract class DomainConfiguration<
     });
   }
 
+  /**
+   * Fetch revision content
+   * @param {number} [revid] - The ID of the revision to fetch. If undefined,
+   *     fetches the latest revision.
+   * @returns {ContentRevision|undefined} A revision metadata, including its
+   *     content. Undefined if no matching revision found.
+   */
   private async fetchRevision(
     revid?: RevisionMetadata["revid"]
   ): Promise<ContentRevision | undefined> {
@@ -105,6 +117,11 @@ export abstract class DomainConfiguration<
     return revision;
   }
 
+  /**
+   * fetchRevisionIds wrapper
+   * @param refresh=false - Whether to re-fetch the IDs
+   * @returns A promise that resolves to an array of revision metadata objects.
+   */
   getRevisionIds(refresh = false): Promise<RevisionMetadata[]> {
     if (this.revisions === undefined || refresh) {
       this.revisions = this.fetchRevisionIds();
@@ -112,6 +129,13 @@ export abstract class DomainConfiguration<
     return this.revisions;
   }
 
+  /**
+   * fetchRevision wrapper
+   * @param {number} revid - The ID of the revision to get
+   * @param {boolean} [refresh=false] - Whether to re-fetch revision content
+   * @returns A promise that resolves to a revision metadata object including
+   *     revision content, or to undefined.
+   */
   getRevision(
     revid: RevisionMetadata["revid"],
     refresh = false
@@ -124,6 +148,10 @@ export abstract class DomainConfiguration<
     return revisionPromise;
   }
 
+  /**
+   * fetchRevision wrapper that gets metadata for the latest revision
+   * @returns A promise that resolves to the latest revision metadata
+   */
   getLatestRevision(): Promise<ContentRevision | undefined> {
     return this.fetchRevision().then((revision) => {
       if (revision !== undefined) {
@@ -134,6 +162,10 @@ export abstract class DomainConfiguration<
     });
   }
 
+  /**
+   * Loads a revision's content as domain configuration
+   * @param {ContentRevision} revision - The revision to load
+   */
   loadRevision(revision: ContentRevision): void {
     if (revision.content === undefined) {
       throw new ContentRevisionError(
