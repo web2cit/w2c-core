@@ -2,6 +2,7 @@ import { TranslationTest } from "../tests/test";
 import { DomainConfiguration } from "./domainConfiguration";
 import log from "loglevel";
 import { TemplateOutput, TestDefinition, TestOutput } from "../types";
+import { TestConfigurationDomainMismatch } from "../errors";
 
 export class TestConfiguration extends DomainConfiguration<
   TranslationTest,
@@ -106,6 +107,12 @@ export class TestConfiguration extends DomainConfiguration<
   }
 
   score(translation: TemplateOutput): TestOutput {
+    if (translation.target.domain !== this.domain) {
+      throw new TestConfigurationDomainMismatch(
+        translation.target.domain,
+        this.domain
+      );
+    }
     let test = this.get(translation.target.path)[0];
     // let test = this.tests.filter(
     //   (test) => test.path === translation.target.path
@@ -131,7 +138,7 @@ export class TestConfiguration extends DomainConfiguration<
 
 class DuplicateTestPathError extends Error {
   constructor(path: string) {
-    super(`There is a test for path ${path} already`);
+    super(`There is a test for path "${path}" already`);
     this.name = "Duplicate test path error";
   }
 }

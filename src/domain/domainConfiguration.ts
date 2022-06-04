@@ -68,6 +68,9 @@ export abstract class DomainConfiguration<
 
   abstract remove(id: string): void;
 
+  // it would make sense that this method be static
+  // but typescript doesn't seem to support abstract static members
+  // see https://github.com/microsoft/TypeScript/issues/34516
   abstract parse(content: string): ConfigurationDefinitionType[];
 
   abstract loadConfiguration(
