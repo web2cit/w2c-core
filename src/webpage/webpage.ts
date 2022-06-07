@@ -34,4 +34,32 @@ class Webpage {
   }
 }
 
-export { Webpage };
+class WebpageFactory {
+  private webpages: Map<string, Webpage> = new Map();
+  readonly domain: string;
+
+  constructor(domain: string) {
+    // do we want to make sure the domain is valid?
+    this.domain = domain;
+  }
+
+  getWebpage(path: string): Webpage {
+    let webpage = this.webpages.get(path);
+    if (webpage === undefined) {
+      // this may fail if the user provided an invalid path string
+      webpage = new Webpage("https://" + this.domain + path);
+      this.webpages.set(path, webpage);
+    }
+    return webpage;
+  }
+
+  // exceptionally, we may want to import webpages from outside
+  setWebpage(path: string, webpage: Webpage) {
+    if (this.webpages.has(path)) {
+      throw new Error(`We already have a webpage object for path "${path}"`);
+    }
+    this.webpages.set(path, webpage);
+  }
+}
+
+export { Webpage, WebpageFactory };

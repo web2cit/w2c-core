@@ -4,10 +4,11 @@ import {
   WebToCitCitation,
 } from "../citation/citationTypes";
 import { FieldName } from "../translationField";
-import { Webpage } from "../webpage/webpage";
+import { Webpage, WebpageFactory } from "../webpage/webpage";
 import { outputToCitation } from "../templates/templateField";
 import { TemplateConfiguration } from "./templateConfiguration";
 import { PatternConfiguration } from "./patternConfiguration";
+import { TestConfiguration } from "./testConfiguration";
 import {
   PatternDefinition,
   FallbackTemplateDefinition,
@@ -17,6 +18,8 @@ import {
   TransformationDefinition,
   TemplateFieldOutput,
   SelectionDefinition,
+  TestDefinition,
+  TestOutput,
 } from "../types";
 import { isDomainName } from "../utils";
 import { DomainNameError } from "../errors";
@@ -24,20 +27,26 @@ import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTempl
 
 export class Domain {
   readonly domain: string;
+  private webpages: WebpageFactory;
   templates: TemplateConfiguration;
   patterns: PatternConfiguration;
-  // tests: TestConfiguration;
+  tests: TestConfiguration;
+
   constructor(
     domain: string,
     {
       templates,
       patterns,
+      tests,
       fallbackTemplate = fallbackTemplateDefinition,
       catchallPattern = true,
       forceRequiredFields = config.forceRequiredFields,
-    }: {
+    }: // consider accepting alternative storage settings T306553
+    // and pass them along to the configuration object constructors
+    {
       templates?: Array<TemplateDefinition>;
       patterns?: Array<PatternDefinition>;
+      tests?: Array<TestDefinition>;
       fallbackTemplate?: FallbackTemplateDefinition;
       catchallPattern?: boolean;
       forceRequiredFields?: FieldName[];
@@ -48,6 +57,12 @@ export class Domain {
     } else {
       throw new DomainNameError(domain);
     }
+    // fixes T302589: Consider creating new Webpage objects via the Domain object
+    // todo: make sure we replace "new Webpage" calls elsewhere
+    // fixes: T302239
+    // How does this idea interact with the idea of having webpage objects know
+    // how to translate/test themselves?
+    this.webpages = new WebpageFactory(domain);
     this.templates = new TemplateConfiguration(
       domain,
       forceRequiredFields,
@@ -55,13 +70,30 @@ export class Domain {
       templates
     );
     this.patterns = new PatternConfiguration(domain, patterns, catchallPattern);
+    this.tests = new TestConfiguration(domain, tests);
   }
 
+  // instantiate domain object from URL
+  static fromURL(url: string) {
+    // this may fail
+    const webpage = new Webpage(url);
+    const domain = new Domain(webpage.domain);
+    domain.webpages.setWebpage(webpage.path, webpage);
+    return domain;
+  }
+
+  // fetchAndLoadConfig() - T306555
+  // run the getLatestRevision methods of each configuration object,
+  // and then the loadRevision method to load the revision obtained (if not undefined)
+  // in parallel for templates, patterns and tests
+
   async translate(
-    target: Webpage,
+    paths: string | string[],
     options: {
+      // why would I want to disable this?
       templateFieldInfo?: boolean; // returns the fieldoutput array or not, rename array?
       allTemplates?: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
+      // disabling this makes sense if one wants a simpler array
       onlyApplicable?: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
       fillWithCitoid?: boolean; // replace all invalid fields with citoid response
       forceTemplatePaths?: string[];
@@ -72,82 +104,109 @@ export class Domain {
       onlyApplicable: true,
       fillWithCitoid: false,
     }
-  ): Promise<TranslationOutput> {
-    let pattern: string | undefined; // remains undefined if forceTemplatePaths
-    let templatePaths: string[];
+  ): Promise<TranslationOutput[]> {
+    if (!Array.isArray(paths)) paths = [paths];
 
-    if (options.forceTemplatePaths === undefined) {
-      // determine what pattern the target belongs to
-      pattern =
-        options.forcePattern ??
-        this.patterns.sortPaths(target.path).keys().next().value;
-      if (pattern !== undefined) {
-        // get all template paths for that pattern
-        templatePaths = this.patterns.sortPaths(this.templates.paths, pattern);
-      } else {
-        templatePaths = [];
-      }
+    let targetsByPattern: Map<string | undefined, string[]>;
+    if (options.forceTemplatePaths !== undefined) {
+      targetsByPattern = new Map([[undefined, paths]]);
+    } else if (options.forcePattern !== undefined) {
+      targetsByPattern = new Map([[options.forcePattern, paths]]);
     } else {
-      templatePaths = options.forceTemplatePaths;
+      targetsByPattern = this.patterns.sortPaths(paths);
     }
 
-    // translate target with templates for paths returned above
-    const templateOutputs = await this.templates.translateWith(
-      target,
-      templatePaths,
-      {
-        tryAllTemplates: options.allTemplates,
-        useFallback: options.forceTemplatePaths === undefined,
-        onlyApplicable: options.onlyApplicable,
+    const targetOutputs: Promise<TranslationOutput>[] = [];
+
+    for (const [patternPath, targetPaths] of Array.from(targetsByPattern)) {
+      if (targetPaths.length === 0) continue;
+      let templatePaths: string[];
+      if (patternPath === undefined) {
+        if (options.forceTemplatePaths === undefined) {
+          throw new Error(
+            "Unexpected undefined pattern path " +
+              'with undefined "forceTemplatePaths" option'
+          );
+        }
+        templatePaths = options.forceTemplatePaths;
+      } else {
+        templatePaths = this.patterns.sortPaths(
+          this.templates.paths,
+          patternPath
+        );
       }
-    );
 
-    let baseCitation: MediaWikiBaseFieldCitation | undefined;
-    if (options.fillWithCitoid) {
-      // baseCitation = (await target.cache.citoid.getData()).citation.simple
+      for (const targetPath of targetPaths) {
+        const target = this.webpages.getWebpage(targetPath);
+
+        let baseCitation: MediaWikiBaseFieldCitation | undefined;
+        if (options.fillWithCitoid) {
+          // baseCitation = (await target.cache.citoid.getData()).citation.simple
+        }
+
+        const targetOutputPromise = this.templates
+          .translateWith(target, templatePaths, {
+            tryAllTemplates: options.allTemplates,
+            useFallback: options.forceTemplatePaths === undefined,
+            onlyApplicable: options.onlyApplicable,
+          })
+          .then((templateOutputs) => {
+            // compose the final outputs
+            const outputs: Translation[] = templateOutputs.map(
+              (templateOutput) => {
+                const scores = this.tests.score(templateOutput);
+                return this.composeOutput(
+                  templateOutput,
+                  options.templateFieldInfo,
+                  baseCitation,
+                  scores
+                );
+              }
+            );
+
+            const translationOutput: TranslationOutput = {
+              domain: {
+                name: this.domain,
+                definitions: {
+                  patterns: {
+                    revid: this.patterns.currentRevid,
+                  },
+                  templates: {
+                    revid: this.templates.currentRevid,
+                  },
+                },
+              },
+              target: {
+                path: target.path,
+                caches: {
+                  http:
+                    target.cache.http.timestamp !== undefined
+                      ? { timestamp: target.cache.http.timestamp }
+                      : undefined,
+                  citoid:
+                    target.cache.citoid.timestamp !== undefined
+                      ? { timestamp: target.cache.citoid.timestamp }
+                      : undefined,
+                },
+              },
+              translation: {
+                pattern: patternPath,
+                outputs: outputs,
+              },
+            };
+
+            return translationOutput;
+          });
+
+        targetOutputs.push(targetOutputPromise);
+      }
     }
 
-    // compose the final outputs
-    const outputs: Translation[] = templateOutputs.map((templateOutput) => {
-      return this.composeOutput(
-        templateOutput,
-        options.templateFieldInfo,
-        baseCitation
-      );
-    });
-
-    return {
-      domain: {
-        name: this.domain,
-        definitions: {
-          patterns: {
-            revid: this.patterns.currentRevid,
-          },
-          templates: {
-            revid: this.templates.currentRevid,
-          },
-        },
-      },
-      target: {
-        path: target.path,
-        caches: {
-          http:
-            target.cache.http.timestamp !== undefined
-              ? { timestamp: target.cache.http.timestamp }
-              : undefined,
-          citoid:
-            target.cache.citoid.timestamp !== undefined
-              ? { timestamp: target.cache.citoid.timestamp }
-              : undefined,
-        },
-      },
-      translation: {
-        pattern: pattern,
-        outputs: outputs,
-      },
-    };
+    return Promise.all(targetOutputs);
   }
 
+  // todo: consider making this a static function,
+  // or moving it out from the class entirely
   /**
    * Compose a final translation from a template output
    * @param templateOutput
@@ -158,7 +217,8 @@ export class Domain {
   private composeOutput(
     templateOutput: TemplateOutput,
     templateFieldInfo = false,
-    baseCitation?: MediaWikiBaseFieldCitation
+    baseCitation?: MediaWikiBaseFieldCitation,
+    scores?: TestOutput
   ): Translation {
     // create citoid citations from output
     let citation;
@@ -226,6 +286,7 @@ export class Domain {
 
     const translation: Translation = {
       citation: citation,
+      // scores: scores
       timestamp: templateOutput.timestamp,
       template: {
         path: templateOutput.template.path,
@@ -236,6 +297,8 @@ export class Domain {
     return translation;
   }
 
+  // todo: consider making this a static function,
+  // or moving it out from the class entirely
   private makeCitation(
     fieldOutputs: TemplateFieldOutput[],
     url: string,
@@ -314,6 +377,7 @@ type Translation = {
   };
   citation: WebToCitCitation | undefined;
   timestamp: string;
+  scores?: TestOutput;
 };
 
 type FieldInfo = {
