@@ -1,4 +1,6 @@
+import { isDomainName } from "../utils";
 import { HttpCache, CitoidCache } from "./caching";
+import { DomainNameError } from "../errors";
 
 class Webpage {
   domain: string;
@@ -39,7 +41,9 @@ class WebpageFactory {
   readonly domain: string;
 
   constructor(domain: string) {
-    // do we want to make sure the domain is valid?
+    if (!isDomainName(domain)) {
+      throw new DomainNameError(domain);
+    }
     this.domain = domain;
   }
 

@@ -24,6 +24,7 @@ import {
 import { isDomainName } from "../utils";
 import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
+import log from "loglevel";
 
 export class Domain {
   readonly domain: string;
@@ -41,8 +42,7 @@ export class Domain {
       fallbackTemplate = fallbackTemplateDefinition,
       catchallPattern = true,
       forceRequiredFields = config.forceRequiredFields,
-    }: // consider accepting alternative storage settings T306553
-    // and pass them along to the configuration object constructors
+    }: // todo T306553: consider accepting alternative storage settings
     {
       templates?: Array<TemplateDefinition>;
       patterns?: Array<PatternDefinition>;
@@ -57,11 +57,9 @@ export class Domain {
     } else {
       throw new DomainNameError(domain);
     }
-    // fixes T302589: Consider creating new Webpage objects via the Domain object
-    // todo: make sure we replace "new Webpage" calls elsewhere
-    // fixes: T302239
-    // How does this idea interact with the idea of having webpage objects know
-    // how to translate/test themselves?
+
+    // T302589: Create new Webpage objects via the Domain object
+    // T302239: Create new Webpage objects through a method that maintains a cache
     this.webpages = new WebpageFactory(domain);
     this.templates = new TemplateConfiguration(
       domain,
@@ -73,19 +71,30 @@ export class Domain {
     this.tests = new TestConfiguration(domain, tests);
   }
 
-  // instantiate domain object from URL
-  static fromURL(url: string) {
-    // this may fail
-    const webpage = new Webpage(url);
-    const domain = new Domain(webpage.domain);
-    domain.webpages.setWebpage(webpage.path, webpage);
-    return domain;
-  }
+  // // instantiate domain object from URL
+  // // we may need this if we want to follow redirects before instantiating
+  // // the domain object (see T304773)
+  // static fromURL(url: string) {
+  //   // this may fail
+  //   const webpage = new Webpage(url);
+  //   const domain = new Domain(webpage.domain);
+  //   domain.webpages.setWebpage(webpage.path, webpage);
+  //   return domain;
+  // }
 
-  // fetchAndLoadConfig() - T306555
-  // run the getLatestRevision methods of each configuration object,
-  // and then the loadRevision method to load the revision obtained (if not undefined)
-  // in parallel for templates, patterns and tests
+  // T306555: Add a "fetchAndLoadConfig" method to the "Domain" objects
+  async fetchAndLoadConfigs(): Promise<void> {
+    const outcomes = await Promise.allSettled([
+      this.templates.fetchAndLoad(),
+      this.patterns.fetchAndLoad(),
+      this.tests.fetchAndLoad(),
+    ]);
+    for (const outcome of outcomes) {
+      if (outcome.status === "rejected") {
+        log.warn(outcome.reason);
+      }
+    }
+  }
 
   translate(
     paths: string | string[],

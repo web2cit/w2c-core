@@ -194,6 +194,21 @@ export abstract class DomainConfiguration<
     this.currentRevid = revision.revid;
   }
 
+  fetchAndLoad(): Promise<void> {
+    return this.getLatestRevision().then((revision) => {
+      if (revision !== undefined) {
+        try {
+          this.loadRevision(revision);
+        } catch (error) {
+          throw new Error(
+            `Could not load ${this.storage.filename} ` +
+              `revision id ${revision.revid}: ${error}`
+          );
+        }
+      }
+    });
+  }
+
   toJSON(): ConfigurationDefinitionType[] {
     return this.values.map((value) => value.toJSON());
   }
