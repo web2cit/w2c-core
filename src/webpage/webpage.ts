@@ -58,7 +58,14 @@ class WebpageFactory {
   }
 
   // exceptionally, we may want to import webpages from outside
-  setWebpage(path: string, webpage: Webpage) {
+  setWebpage(webpage: Webpage) {
+    if (this.domain !== webpage.domain) {
+      throw new Error(
+        `Webpage domain "${webpage.domain}" does not match ` +
+          `webpage factory domain "${this.domain}`
+      );
+    }
+    const path = webpage.path;
     if (this.webpages.has(path)) {
       throw new Error(`We already have a webpage object for path "${path}"`);
     }

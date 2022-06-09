@@ -78,7 +78,7 @@ export class Domain {
   //   // this may fail
   //   const webpage = new Webpage(url);
   //   const domain = new Domain(webpage.domain);
-  //   domain.webpages.setWebpage(webpage.path, webpage);
+  //   domain.webpages.setWebpage(webpage);
   //   return domain;
   // }
 
