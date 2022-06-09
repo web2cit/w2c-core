@@ -26,32 +26,39 @@ import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 import log from "loglevel";
 
+type DomainOptions = {
+  templates?: Array<TemplateDefinition>;
+  patterns?: Array<PatternDefinition>;
+  tests?: Array<TestDefinition>;
+  fallbackTemplate?: FallbackTemplateDefinition;
+  catchallPattern?: boolean;
+  forceRequiredFields?: FieldName[];
+  // todo T306553: consider accepting alternative storage settings
+};
+
 export class Domain {
   readonly domain: string;
-  private webpages: WebpageFactory;
+  readonly webpages: WebpageFactory;
   templates: TemplateConfiguration;
   patterns: PatternConfiguration;
   tests: TestConfiguration;
 
   constructor(
     domain: string,
-    {
+    options: DomainOptions = {
+      fallbackTemplate: fallbackTemplateDefinition,
+      catchallPattern: true,
+      forceRequiredFields: config.forceRequiredFields,
+    }
+  ) {
+    const {
       templates,
       patterns,
       tests,
-      fallbackTemplate = fallbackTemplateDefinition,
-      catchallPattern = true,
-      forceRequiredFields = config.forceRequiredFields,
-    }: // todo T306553: consider accepting alternative storage settings
-    {
-      templates?: Array<TemplateDefinition>;
-      patterns?: Array<PatternDefinition>;
-      tests?: Array<TestDefinition>;
-      fallbackTemplate?: FallbackTemplateDefinition;
-      catchallPattern?: boolean;
-      forceRequiredFields?: FieldName[];
-    } = {}
-  ) {
+      fallbackTemplate,
+      catchallPattern,
+      forceRequiredFields,
+    } = options;
     if (isDomainName(domain)) {
       this.domain = domain;
     } else {
@@ -71,18 +78,19 @@ export class Domain {
     this.tests = new TestConfiguration(domain, tests);
   }
 
-  // // instantiate domain object from URL
-  // // we may need this if we want to follow redirects before instantiating
-  // // the domain object (see T304773)
-  // static fromURL(url: string) {
-  //   // this may fail
-  //   const webpage = new Webpage(url);
-  //   const domain = new Domain(webpage.domain);
-  //   domain.webpages.setWebpage(webpage);
-  //   return domain;
-  // }
+  // instantiate domain object from URL
+  // we may need this if we want to follow redirects before instantiating
+  // the domain object (see T304773)
+  static fromURL(url: string, options?: DomainOptions) {
+    // this may fail
+    const webpage = new Webpage(url);
+    const domain = new Domain(webpage.domain, options);
+    domain.webpages.setWebpage(webpage);
+    return domain;
+  }
 
   // T306555: Add a "fetchAndLoadConfig" method to the "Domain" objects
+  // todo: pending test
   async fetchAndLoadConfigs(): Promise<void> {
     const outcomes = await Promise.allSettled([
       this.templates.fetchAndLoad(),
@@ -123,9 +131,11 @@ export class Domain {
       targetsByPattern = this.patterns.sortPaths(paths);
     }
 
-    // iterate through target paths and queue promises of target outputs into
-    // an array
-    const targetOutputPromises: Promise<TranslationOutput>[] = [];
+    const templatesByTarget: Map<
+      string,
+      { templatePaths: string[]; patternPath: string | undefined }
+    > = new Map();
+
     for (const [patternPath, targetPaths] of Array.from(targetsByPattern)) {
       if (targetPaths.length === 0) continue;
       let templatePaths: string[];
@@ -147,7 +157,20 @@ export class Domain {
       }
 
       for (const targetPath of targetPaths) {
+        templatesByTarget.set(targetPath, {
+          templatePaths,
+          patternPath,
+        });
+      }
+    }
+
+    // iterate through target paths, in the order in which they were given,
+    // and queue promises of target outputs into an array
+    const targetOutputPromises: Promise<TranslationOutput>[] = paths.map(
+      (targetPath) => {
         const target = this.webpages.getWebpage(targetPath);
+        const { templatePaths, patternPath } =
+          templatesByTarget.get(targetPath)!;
 
         if (options.fillWithCitoid) {
           // prepare the Citoid cache
@@ -174,12 +197,11 @@ export class Domain {
             }
 
             const translationResults = templateOutputs.map((templateOutput) => {
-              // todo: give the option to disable scoring translation output
               const scores = this.tests.score(templateOutput);
               const enrichedOutput = makeTranslationResult(
                 templateOutput,
-                baseCitation,
-                scores
+                scores,
+                baseCitation
               );
               return enrichedOutput;
             });
@@ -222,9 +244,9 @@ export class Domain {
           }
         );
 
-        targetOutputPromises.push(targetOutputPromise);
+        return targetOutputPromise;
       }
-    }
+    );
 
     return Promise.all(targetOutputPromises);
   }
@@ -239,8 +261,8 @@ export class Domain {
  */
 function makeTranslationResult(
   templateOutput: TemplateOutput,
-  baseCitation?: MediaWikiBaseFieldCitation,
-  scores?: TestOutput
+  scores: TestOutput,
+  baseCitation?: MediaWikiBaseFieldCitation
 ): TranslationResult {
   // create citoid citations from output
   let citation;
@@ -389,7 +411,7 @@ type TranslationResult = {
   };
   citation: WebToCitCitation | undefined;
   timestamp: string;
-  scores?: TestOutput;
+  scores: TestOutput;
 };
 
 type FieldInfo = {

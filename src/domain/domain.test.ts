@@ -1,5 +1,33 @@
+import { TemplateDefinition } from "../types";
 import { Webpage } from "../webpage/webpage";
 import { Domain } from "./domain";
+
+const template: TemplateDefinition = {
+  path: "/template1",
+  label: "applicable",
+  fields: [
+    {
+      fieldname: "itemType",
+      required: true,
+      procedures: [
+        {
+          selections: [{ type: "fixed", config: "newspaperArticle" }],
+          transformations: [],
+        },
+      ],
+    },
+    {
+      fieldname: "title",
+      required: true,
+      procedures: [
+        {
+          selections: [{ type: "fixed", config: "title abc" }],
+          transformations: [],
+        },
+      ],
+    },
+  ],
+};
 
 describe("Domain class", () => {
   test("domain property is initialized", () => {
@@ -36,32 +64,7 @@ it("does not make citatations for non-applicable template outputs", async () => 
           },
         ],
       },
-      {
-        path: "/template1",
-        label: "applicable",
-        fields: [
-          {
-            fieldname: "itemType",
-            required: true,
-            procedures: [
-              {
-                selections: [{ type: "fixed", config: "webpage" }],
-                transformations: [],
-              },
-            ],
-          },
-          {
-            fieldname: "title",
-            required: true,
-            procedures: [
-              {
-                selections: [{ type: "fixed", config: "title" }],
-                transformations: [],
-              },
-            ],
-          },
-        ],
-      },
+      template,
     ],
   });
   const translationOutput = await domain.translate("/target", {
@@ -73,4 +76,79 @@ it("does not make citatations for non-applicable template outputs", async () => 
   expect(templateOutputs[0].citation).toBeUndefined();
   expect(templateOutputs[1].template.applicable).toBe(true);
   expect(templateOutputs[1].citation).toBeDefined();
+});
+
+it("creates Domain object from URL", () => {
+  const domain = Domain.fromURL("https://example.com/some/path");
+  expect(domain.domain).toBe("example.com");
+});
+
+it("includes translation score in translation outputs", async () => {
+  const domain = new Domain("example.com", {
+    templates: [template],
+    tests: [
+      {
+        path: "/target/path",
+        fields: [
+          {
+            fieldname: "itemType",
+            goal: ["newspaperArticle"],
+          },
+          {
+            fieldname: "title",
+            goal: ["title xyz"],
+          },
+        ],
+      },
+    ],
+  });
+  const results = await domain.translate("/target/path");
+  const result = results[0];
+  const output = result.translation.outputs[0];
+  expect(output.scores.fields).toEqual([
+    {
+      fieldname: "itemType",
+      score: 1,
+    },
+    {
+      fieldname: "title",
+      score: 1 - 3 / 9, // "title abc" vs "title xyz"
+    },
+  ]);
+});
+
+describe("Multiple-target translation", () => {
+  it("translates targets matching the same url path pattern", async () => {
+    const domain = new Domain("example.com", {
+      templates: [template],
+    });
+    const results = await domain.translate([
+      "/target/path",
+      "/other/target/path",
+    ]);
+    expect(results.length).toBe(2);
+    expect(
+      results[0].translation.pattern === results[1].translation.pattern
+    ).toBe(true);
+  });
+
+  it("translates targets matching different url path patterns", async () => {
+    const domain = new Domain("example.com", {
+      templates: [template],
+      patterns: [
+        {
+          pattern: "/target/*",
+        },
+      ],
+    });
+    const results = await domain.translate([
+      "/target/path",
+      "/other/target/path",
+    ]);
+    expect(results.length).toBe(2);
+    expect(results[0].translation.pattern).toBe("/target/*");
+    expect(results[1].translation.pattern).toBe(
+      domain.patterns.catchall?.pattern
+    );
+  });
 });
