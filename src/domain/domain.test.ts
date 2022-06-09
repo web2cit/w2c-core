@@ -64,11 +64,10 @@ it("does not make citatations for non-applicable template outputs", async () => 
       },
     ],
   });
-  const target = new Webpage("https://example.com/target");
-  const translationOutput = await domain.translate(target, {
+  const translationOutput = await domain.translate("/target", {
     onlyApplicable: false,
   });
-  const templateOutputs = translationOutput.translation.outputs;
+  const templateOutputs = translationOutput[0].translation.outputs;
   expect(templateOutputs.length).toBe(2);
   expect(templateOutputs[0].template.applicable).toBe(false);
   expect(templateOutputs[0].citation).toBeUndefined();
