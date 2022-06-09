@@ -117,7 +117,7 @@ export class Domain {
       onlyApplicable: true,
       fillWithCitoid: false,
     }
-  ): Promise<TranslationOutput[]> {
+  ): Promise<TargetOutput[]> {
     if (!Array.isArray(paths)) paths = [paths];
 
     let targetsByPattern: Map<string | undefined, string[]>;
@@ -166,7 +166,7 @@ export class Domain {
 
     // iterate through target paths, in the order in which they were given,
     // and queue promises of target outputs into an array
-    const targetOutputPromises: Promise<TranslationOutput>[] = paths.map(
+    const targetOutputPromises: Promise<TargetOutput>[] = paths.map(
       (targetPath) => {
         const target = this.webpages.getWebpage(targetPath);
         const { templatePaths, patternPath } =
@@ -206,7 +206,7 @@ export class Domain {
               return enrichedOutput;
             });
 
-            const targetOutput: TranslationOutput = {
+            const targetOutput: TargetOutput = {
               domain: {
                 name: this.domain,
                 definitions: {
@@ -370,7 +370,7 @@ function makeCitation(
 }
 
 // todo: consider extending into the more-specific output types
-export type TranslationOutput = {
+export type TargetOutput = {
   domain: {
     name: string;
     definitions: {
