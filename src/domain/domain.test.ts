@@ -1,5 +1,4 @@
 import { TemplateDefinition } from "../types";
-import { Webpage } from "../webpage/webpage";
 import { Domain } from "./domain";
 
 const template: TemplateDefinition = {
