@@ -1,4 +1,4 @@
-import { TemplateDefinition } from "../types";
+import { TemplateDefinition, TestDefinition } from "../types";
 import { Domain } from "./domain";
 
 const template: TemplateDefinition = {
@@ -149,5 +149,43 @@ describe("Multiple-target translation", () => {
     expect(results[1].translation.pattern).toBe(
       domain.patterns.catchall?.pattern
     );
+  });
+
+  it("translates all paths in template and test configurations", async () => {
+    const domain = new Domain("example.com", {
+      templates: [template],
+      tests: [
+        {
+          path: "/target/path",
+          fields: [
+            {
+              fieldname: "itemType",
+              goal: ["webpage"],
+            },
+          ],
+        },
+      ],
+    });
+    const results = await domain.translateAll();
+    expect(results.length).toBe(2);
+  });
+
+  it("does not translate path both in template and test config twice", async () => {
+    const domain = new Domain("example.com", {
+      templates: [template],
+      tests: [
+        {
+          path: template.path,
+          fields: [
+            {
+              fieldname: "itemType",
+              goal: ["webpage"],
+            },
+          ],
+        },
+      ],
+    });
+    const results = await domain.translateAll();
+    expect(results.length).toBe(1);
   });
 });

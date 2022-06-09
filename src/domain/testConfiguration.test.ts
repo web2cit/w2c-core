@@ -47,11 +47,19 @@ describe("Configuration object to JSON", () => {
   });
 });
 
-it("gets all test paths", () => {
+describe("Get test paths", () => {
   const config = new TestConfiguration(domain, testDefinitions);
-  const paths = config.paths;
-  expect(paths.length).toBe(3);
-  expect(paths).toEqual(testDefinitions.map((def) => def.path));
+  it("gets all test paths", () => {
+    const paths = config.paths;
+    expect(paths.length).toBe(3);
+    expect(paths).toEqual(testDefinitions.map((def) => def.path));
+  });
+
+  it("gets paths for non-empty tests", () => {
+    const nonEmptyPaths = config.nonEmptyPaths;
+    expect(nonEmptyPaths.length).toBe(1);
+    expect(nonEmptyPaths[0]).toBe("/some/path");
+  });
 });
 
 describe("Test array manipulation", () => {

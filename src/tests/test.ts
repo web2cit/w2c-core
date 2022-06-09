@@ -16,6 +16,8 @@ export class TranslationTest {
   // problematic fields (vs simply ignoring them)
   constructor(test: TestDefinition) {
     this.path = test.path;
+    // we may reject creating translation tests with an empty array of fields
+    // but what shall we do if user later removes all fields using removeField?
     test.fields.forEach((definition) => {
       try {
         this.addField(definition);

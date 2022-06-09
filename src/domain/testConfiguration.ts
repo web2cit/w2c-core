@@ -19,6 +19,11 @@ export class TestConfiguration extends DomainConfiguration<
     return this.tests.map((test) => test.path);
   }
 
+  get nonEmptyPaths(): string[] {
+    const nonEmptyTests = this.tests.filter((test) => test.fields.length > 0);
+    return nonEmptyTests.map((test) => test.path);
+  }
+
   get(paths?: string | string[]): TranslationTest[] {
     let tests: TranslationTest[];
     if (paths === undefined) {

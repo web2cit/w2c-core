@@ -26,16 +26,6 @@ import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 import log from "loglevel";
 
-type DomainOptions = {
-  templates?: Array<TemplateDefinition>;
-  patterns?: Array<PatternDefinition>;
-  tests?: Array<TestDefinition>;
-  fallbackTemplate?: FallbackTemplateDefinition;
-  catchallPattern?: boolean;
-  forceRequiredFields?: FieldName[];
-  // todo T306553: consider accepting alternative storage settings
-};
-
 export class Domain {
   readonly domain: string;
   readonly webpages: WebpageFactory;
@@ -104,15 +94,17 @@ export class Domain {
     }
   }
 
+  // translates all paths in template and test configurations
+  translateAll(options?: TranslateOptions) {
+    const paths = Array.from(
+      new Set([...this.templates.paths, ...this.tests.nonEmptyPaths])
+    );
+    return this.translate(paths, options);
+  }
+
   translate(
     paths: string | string[],
-    options: {
-      allTemplates?: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
-      onlyApplicable?: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
-      fillWithCitoid?: boolean; // replace all invalid fields with citoid response
-      forceTemplatePaths?: string[];
-      forcePattern?: string; // make as if target matched this pattern; ignored if forceTemplates
-    } = {
+    options: TranslateOptions = {
       allTemplates: false,
       onlyApplicable: true,
       fillWithCitoid: false,
@@ -368,6 +360,24 @@ function makeCitation(
   };
   return citation;
 }
+
+type DomainOptions = {
+  templates?: Array<TemplateDefinition>;
+  patterns?: Array<PatternDefinition>;
+  tests?: Array<TestDefinition>;
+  fallbackTemplate?: FallbackTemplateDefinition;
+  catchallPattern?: boolean;
+  forceRequiredFields?: FieldName[];
+  // todo T306553: consider accepting alternative storage settings
+};
+
+type TranslateOptions = {
+  allTemplates?: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
+  onlyApplicable?: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
+  fillWithCitoid?: boolean; // replace all invalid fields with citoid response
+  forceTemplatePaths?: string[];
+  forcePattern?: string; // make as if target matched this pattern; ignored if forceTemplates
+};
 
 // todo: consider extending into the more-specific output types
 export type TargetOutput = {
