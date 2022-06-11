@@ -170,6 +170,40 @@ export class Domain {
           // target.cache.citoid.getData();
         }
 
+        const targetOutput: TargetOutput = {
+          domain: {
+            name: this.domain,
+            definitions: {
+              patterns: {
+                revid: this.patterns.currentRevid,
+              },
+              templates: {
+                revid: this.templates.currentRevid,
+              },
+              tests: {
+                revid: this.tests.currentRevid,
+              },
+            },
+          },
+          target: {
+            path: target.path,
+            caches: {
+              http:
+                target.cache.http.timestamp !== undefined
+                  ? { timestamp: target.cache.http.timestamp }
+                  : undefined,
+              citoid:
+                target.cache.citoid.timestamp !== undefined
+                  ? { timestamp: target.cache.citoid.timestamp }
+                  : undefined,
+            },
+          },
+          translation: {
+            pattern: patternPath,
+            outputs: [],
+          },
+        };
+
         const templateOutputsPromise = this.templates.translateWith(
           target,
           templatePaths,
@@ -182,8 +216,8 @@ export class Domain {
           }
         );
 
-        const targetOutputPromise = templateOutputsPromise.then(
-          (templateOutputs) => {
+        const targetOutputPromise = templateOutputsPromise
+          .then((templateOutputs) => {
             let baseCitation: MediaWikiBaseFieldCitation | undefined;
             if (options.fillWithCitoid) {
               // baseCitation = (await target.cache.citoid.getData()).citation.simple
@@ -199,43 +233,17 @@ export class Domain {
               return enrichedOutput;
             });
 
-            const targetOutput: TargetOutput = {
-              domain: {
-                name: this.domain,
-                definitions: {
-                  patterns: {
-                    revid: this.patterns.currentRevid,
-                  },
-                  templates: {
-                    revid: this.templates.currentRevid,
-                  },
-                  tests: {
-                    revid: this.tests.currentRevid,
-                  },
-                },
-              },
-              target: {
-                path: target.path,
-                caches: {
-                  http:
-                    target.cache.http.timestamp !== undefined
-                      ? { timestamp: target.cache.http.timestamp }
-                      : undefined,
-                  citoid:
-                    target.cache.citoid.timestamp !== undefined
-                      ? { timestamp: target.cache.citoid.timestamp }
-                      : undefined,
-                },
-              },
-              translation: {
-                pattern: patternPath,
-                outputs: translationResults,
-              },
-            };
-
+            targetOutput.translation.outputs.push(...translationResults);
             return targetOutput;
-          }
-        );
+          })
+          .catch((reason) => {
+            if (reason instanceof Error) {
+              targetOutput.translation.error = reason;
+            } else {
+              targetOutput.translation.error = new Error(reason);
+            }
+            return targetOutput;
+          });
 
         return targetOutputPromise;
       }
@@ -411,6 +419,7 @@ export type TargetOutput = {
   translation: {
     outputs: TranslationResult[];
     pattern?: string; // undefined if forced templates
+    error?: Error;
   };
 };
 

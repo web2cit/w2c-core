@@ -1,5 +1,6 @@
-import { TemplateDefinition, TestDefinition } from "../types";
+import { TemplateDefinition } from "../types";
 import { Domain } from "./domain";
+import { TemplateConfiguration } from "./templateConfiguration";
 
 const template: TemplateDefinition = {
   path: "/template1",
@@ -190,4 +191,20 @@ describe("Get template and test paths", () => {
     const paths = await domain.getPaths();
     expect(paths.length).toBe(1);
   });
+});
+
+it("upon translation failure, returns target output including the error", async () => {
+  const error = new Error("some error");
+  jest
+    .spyOn(TemplateConfiguration.prototype, "translateWith")
+    .mockImplementation(() => {
+      return Promise.reject(error);
+    });
+  const domain = new Domain("example.com", {
+    templates: [template],
+  });
+  const results = await domain.translate("/some/path");
+  const result = results[0];
+  expect(result.translation.outputs.length).toBe(0);
+  expect(result.translation.error).toBe(error);
 });
