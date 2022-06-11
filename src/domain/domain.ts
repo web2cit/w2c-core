@@ -81,12 +81,13 @@ export class Domain {
 
   // T306555: Add a "fetchAndLoadConfig" method to the "Domain" objects
   // todo: pending test
-  async fetchAndLoadConfigs(): Promise<void> {
-    const outcomes = await Promise.allSettled([
+  async fetchAndLoadConfigs(tests = true): Promise<void> {
+    const promises = [
       this.templates.fetchAndLoad(),
       this.patterns.fetchAndLoad(),
-      this.tests.fetchAndLoad(),
-    ]);
+    ];
+    if (tests) promises.push(this.tests.fetchAndLoad());
+    const outcomes = await Promise.allSettled(promises);
     for (const outcome of outcomes) {
       if (outcome.status === "rejected") {
         log.warn(outcome.reason);
