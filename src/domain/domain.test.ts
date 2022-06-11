@@ -150,8 +150,10 @@ describe("Multiple-target translation", () => {
       domain.patterns.catchall?.pattern
     );
   });
+});
 
-  it("translates all paths in template and test configurations", async () => {
+describe("Get template and test paths", () => {
+  it("gets all paths in template and test configurations", async () => {
     const domain = new Domain("example.com", {
       templates: [template],
       tests: [
@@ -166,11 +168,11 @@ describe("Multiple-target translation", () => {
         },
       ],
     });
-    const results = await domain.translateAll();
-    expect(results.length).toBe(2);
+    const paths = await domain.getPaths();
+    expect(paths.length).toBe(2);
   });
 
-  it("does not translate path both in template and test config twice", async () => {
+  it("does not get path both in template and test config twice", async () => {
     const domain = new Domain("example.com", {
       templates: [template],
       tests: [
@@ -185,7 +187,7 @@ describe("Multiple-target translation", () => {
         },
       ],
     });
-    const results = await domain.translateAll();
-    expect(results.length).toBe(1);
+    const paths = await domain.getPaths();
+    expect(paths.length).toBe(1);
   });
 });

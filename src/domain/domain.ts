@@ -94,12 +94,12 @@ export class Domain {
     }
   }
 
-  // translates all paths in template and test configurations
-  translateAll(options?: TranslateOptions) {
+  // get all paths in template and test configurations
+  getPaths(): string[] {
     const paths = Array.from(
       new Set([...this.templates.paths, ...this.tests.nonEmptyPaths])
     );
-    return this.translate(paths, options);
+    return paths;
   }
 
   translate(
