@@ -99,6 +99,7 @@ export class TranslationTest {
       testOutput.fields.push({
         fieldname,
         score: testField.test(fieldname, fieldOutput),
+        goal: testField.goal,
       });
     }
     return testOutput;

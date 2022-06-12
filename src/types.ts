@@ -247,4 +247,5 @@ export type TestOutput = {
 type TestFieldOutput = {
   fieldname: FieldName;
   score: number;
+  goal: StepOutput;
 };

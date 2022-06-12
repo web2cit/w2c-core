@@ -109,10 +109,12 @@ it("includes translation score in translation outputs", async () => {
     {
       fieldname: "itemType",
       score: 1,
+      goal: ["newspaperArticle"],
     },
     {
       fieldname: "title",
-      score: 1 - 3 / 9, // "title abc" vs "title xyz"
+      score: 1 - 3 / 9, // "title abc" vs "title xyz",
+      goal: ["title xyz"],
     },
   ]);
 });
