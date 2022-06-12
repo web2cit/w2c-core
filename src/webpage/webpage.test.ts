@@ -58,4 +58,11 @@ describe("Webpage factory", () => {
       factory.setWebpage(webpage);
     }).toThrow("We already have a webpage object for path");
   });
+
+  it("rejects paths without leading slash", () => {
+    const factory = new WebpageFactory("example.com");
+    expect(() => {
+      factory.getWebpage("some/path");
+    }).toThrow();
+  });
 });
