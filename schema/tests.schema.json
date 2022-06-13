@@ -68,7 +68,7 @@
                 },
                 "goal": {
                   "minItems": 1,
-                  "options": { "infoText": null },
+                  "options": { "infoText": "" },
                   "maxItems": 1,
                   "items": {
                     "description": "One of the Citoid/Zotero supported types",
@@ -124,7 +124,7 @@
                 },
                 "goal": {
                   "minItems": 1,
-                  "options": { "infoText": null },
+                  "options": { "infoText": "" },
                   "maxItems": 1,
                   "items": {
                     "description": "A non-empty string",
