@@ -1,3 +1,4 @@
+import { PatternDefinition } from "../types";
 import { PatternConfiguration } from "./patternConfiguration";
 
 const config = new PatternConfiguration(
@@ -85,4 +86,15 @@ describe("Multiple paths without target pattern", () => {
       ])
     );
   });
+});
+
+it("returns json from configuration object", () => {
+  const patterns: PatternDefinition[] = [
+    {
+      label: "some label",
+      pattern: "/some/pattern/*",
+    },
+  ];
+  const config = new PatternConfiguration("example.com", patterns);
+  expect(config.toJSON()).toEqual(patterns);
 });

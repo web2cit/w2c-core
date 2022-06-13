@@ -1,4 +1,6 @@
+import { isDomainName } from "../utils";
 import { HttpCache, CitoidCache } from "./caching";
+import { DomainNameError } from "../errors";
 
 class Webpage {
   domain: string;
@@ -34,4 +36,44 @@ class Webpage {
   }
 }
 
-export { Webpage };
+class WebpageFactory {
+  private webpages: Map<string, Webpage> = new Map();
+  readonly domain: string;
+
+  constructor(domain: string) {
+    if (!isDomainName(domain)) {
+      throw new DomainNameError(domain);
+    }
+    this.domain = domain;
+  }
+
+  getWebpage(path: string): Webpage {
+    if (path[0] !== "/") {
+      throw new Error('Path must begin with "/"');
+    }
+    let webpage = this.webpages.get(path);
+    if (webpage === undefined) {
+      // this may fail if the user provided an invalid path string
+      webpage = new Webpage("https://" + this.domain + path);
+      this.webpages.set(path, webpage);
+    }
+    return webpage;
+  }
+
+  // exceptionally, we may want to import webpages from outside
+  setWebpage(webpage: Webpage) {
+    if (this.domain !== webpage.domain) {
+      throw new Error(
+        `Webpage domain "${webpage.domain}" does not match ` +
+          `webpage factory domain "${this.domain}`
+      );
+    }
+    const path = webpage.path;
+    if (this.webpages.has(path)) {
+      throw new Error(`We already have a webpage object for path "${path}"`);
+    }
+    this.webpages.set(path, webpage);
+  }
+}
+
+export { Webpage, WebpageFactory };

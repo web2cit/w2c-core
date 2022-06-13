@@ -16,3 +16,14 @@ export class DomainNameError extends Error {
     super(`"${domain}" is not a valid domain name`);
   }
 }
+
+export class TestConfigurationDomainMismatch extends Error {
+  constructor(translationDomain: string, configDomain: string) {
+    super(
+      `Cannot score translation output from domain "${translationDomain}" ` +
+        `with test configuration for domain "${configDomain}: ` +
+        `domains do not match`
+    );
+    this.name = "Test configuration domain mismatch";
+  }
+}
