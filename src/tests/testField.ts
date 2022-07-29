@@ -92,7 +92,11 @@ function getDiffScore(
   // set default strategy
   if (strategy === undefined) {
     if (maxLength > 1) {
-      strategy = "mixed";
+      // disable unordered comparison until we find a more efficient unordered
+      // array vs array method
+      // https://phabricator.wikimedia.org/T314198
+      // strategy = "mixed";
+      strategy = "ordered";
     } else {
       // do not process same score twice if longest array is 0 or 1 items long
       strategy = "ordered";

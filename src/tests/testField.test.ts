@@ -190,10 +190,16 @@ describe("Test field testing", () => {
 
       it("compares to partial-matching multiple output", () => {
         expect(field.test("authorFirst", ["abc", "def"])).toBe(
-          (0.5 + 0.5) / 2 // average ordered + unordered score
+          // temporarily disable unordered array comparison
+          // https://phabricator.wikimedia.org/T314198
+          // alternatively, consider testing getDiffScore directly instead
+          // (0.5 + 0.5) / 2 // average ordered + unordered score
+          0.5
         );
         expect(field.test("authorFirst", ["def", "abc"])).toBe(
-          (0 + 0.5) / 2 // average ordered + unordered score
+          // temporarily disable unordered array comparison
+          // (0 + 0.5) / 2 // average ordered + unordered score
+          0
         );
       });
     });
@@ -208,32 +214,36 @@ describe("Test field testing", () => {
       it("compares to partial-matching shorter output", () => {
         const output = ["abc name", "ghi name"];
         expect(field.test("authorFirst", output)).toBe(
-          ((1 - 5 / 8 + 0 + 0) / 3 + // ordered score
-            (1 - 5 / 8 + 1 - 5 / 8 + 0) / 3) / // unordered score
-            2
+          +(1 - 5 / 8 + 0 + 0) / 3 // ordered score
+          // temporarily disable unordered array comparison
+          //  + (1 - 5 / 8 + 1 - 5 / 8 + 0) / 3 // unordered score
+          // ) / 2
         );
       });
 
       it("compares to same-length output, with some full matches", () => {
         expect(field.test("authorFirst", ["abc", "ghi", "jkl"])).toBe(
-          ((1 + 0 + 0) / 3 + // ordered
-            (1 + 1 + 0) / 3) / // unordered
-            2
+          +(1 + 0 + 0) / 3 // ordered
+          // temporarily disable unordered array comparison
+          //   + (1 + 1 + 0) / 3 // unordered
+          // ) / 2
         );
 
         expect(field.test("authorFirst", ["ghi", "jkl", "mno"])).toBe(
-          ((0 + 0 + 0) / 3 + // ordered
-            (1 + 0 + 0) / 3) / // unordered
-            2
+          +(0 + 0 + 0) / 3 // ordered
+          // temporarily disable unordered array comparison
+          //   + (1 + 0 + 0) / 3 // unordered
+          // ) / 2
         );
       });
 
       it("compares to same-length output, with some partial matches", () => {
         const output = ["abc name", "ghi name", "jkl name"];
         expect(field.test("authorFirst", output)).toBe(
-          ((1 - 5 / 8 + 0 + 0) / 3 + // ordered score
-            (1 - 5 / 8 + 1 - 5 / 8 + 0) / 3) / // unordered score
-            2
+          +(1 - 5 / 8 + 0 + 0) / 3 // ordered score
+          // temporarily disable unordered array comparison
+          //   + (1 - 5 / 8 + 1 - 5 / 8 + 0) / 3 // unordered score
+          // ) / 2
         );
       });
     });
