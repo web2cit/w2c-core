@@ -33,14 +33,12 @@ export class Domain {
   patterns: PatternConfiguration;
   tests: TestConfiguration;
 
-  constructor(
-    domain: string,
-    options: DomainOptions = {
-      fallbackTemplate: fallbackTemplateDefinition,
-      catchallPattern: true,
-      forceRequiredFields: config.forceRequiredFields,
-    }
-  ) {
+  constructor(domain: string, options: DomainOptions = {}) {
+    // set default values
+    options.fallbackTemplate ??= fallbackTemplateDefinition;
+    options.catchallPattern ??= true;
+    options.forceRequiredFields ??= config.forceRequiredFields;
+
     const {
       templates,
       patterns,
@@ -109,12 +107,13 @@ export class Domain {
 
   translate(
     paths: string | string[],
-    options: TranslateOptions = {
-      allTemplates: false,
-      onlyApplicable: true,
-      fillWithCitoid: false,
-    }
+    options: TranslateOptions = {}
   ): Promise<TargetOutput[]> {
+    // set default values
+    options.allTemplates ??= false;
+    options.onlyApplicable ??= true;
+    options.fillWithCitoid ??= false;
+
     if (!Array.isArray(paths)) paths = [paths];
 
     let targetsByPattern: Map<string | undefined, string[]>;
