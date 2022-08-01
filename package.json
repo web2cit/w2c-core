@@ -15,7 +15,7 @@
     "build:watch": "npm run version && tsc -w",
     "format": "prettier --write src",
     "lint": "eslint",
-    "version": "genversion --es6 --semi src/version.ts"
+    "version": "genversion --es6 --double --semi src/version.ts"
   },
   "keywords": [
     "wikipedia",
