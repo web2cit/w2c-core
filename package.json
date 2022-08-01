@@ -1,6 +1,6 @@
 {
   "name": "web2cit",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Core components for the Web2Cit translation ecosystem",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,7 @@
     "build:watch": "npm run version && tsc -w",
     "format": "prettier --write src",
     "lint": "eslint",
-    "version": "genversion --es6 src/version.ts"
+    "version": "genversion --es6 --semi src/version.ts"
   },
   "keywords": [
     "wikipedia",
@@ -32,7 +32,7 @@
     "url": "https://gitlab.wikimedia.org/diegodlh/w2c-core.git"
   },
   "bugs": {
-    "url": "https://phabricator.wikimedia.org/project/profile/5670/"
+    "url": "https://phabricator.wikimedia.org/tag/w2c-core/"
   },
   "homepage": "https://meta.wikimedia.org/wiki/Web2Cit",
   "engines": {

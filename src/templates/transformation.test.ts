@@ -115,12 +115,13 @@ describe("Date transformation", () => {
       "not a date",
     ]);
   });
-  it("parses dates without a day", async () => {
-    const transformation = new DateTransformation();
-    expect(await transformation.transform(["January 2022"])).toEqual([
-      "2022-01",
-    ]);
-  });
+  // // https://phabricator.wikimedia.org/T309706
+  // it("parses dates without a day", async () => {
+  //   const transformation = new DateTransformation();
+  //   expect(await transformation.transform(["January 2022"])).toEqual([
+  //     "2022-01",
+  //   ]);
+  // });
 });
 
 describe("Range transformation", () => {
