@@ -1,4 +1,5 @@
-import fetch, { Response } from "node-fetch";
+import { Response } from "node-fetch";
+import { fetchWrapper } from "../utils";
 import log from "loglevel";
 import { HTTPResponseError } from "../errors";
 
@@ -77,7 +78,7 @@ class RevisionsApi {
 
       let response: Response;
       try {
-        response = await fetch(url);
+        response = await fetchWrapper.fetch(url);
         if (!response.ok) {
           throw new HTTPResponseError(url, response);
         }

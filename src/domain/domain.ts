@@ -21,7 +21,7 @@ import {
   TestDefinition,
   TestOutput,
 } from "../types";
-import { isDomainName } from "../utils";
+import { isDomainName, fetchWrapper } from "../utils";
 import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 import log from "loglevel";
@@ -66,6 +66,10 @@ export class Domain {
     );
     this.patterns = new PatternConfiguration(domain, patterns, catchallPattern);
     this.tests = new TestConfiguration(domain, tests);
+
+    fetchWrapper.userAgent = options.userAgentPrefix
+      ? options.userAgentPrefix + " " + config.USER_AGENT
+      : config.USER_AGENT;
   }
 
   // instantiate domain object from URL
@@ -378,6 +382,7 @@ type DomainOptions = {
   catchallPattern?: boolean;
   forceRequiredFields?: FieldName[];
   // todo T306553: consider accepting alternative storage settings
+  userAgentPrefix?: string;
 };
 
 type TranslateOptions = {

@@ -1,3 +1,5 @@
+import fetch, { Headers } from "node-fetch";
+
 /**
  * Return whether the host name provided is a valid fully qualified domain name
  * https://en.wikipedia.org/wiki/Fully_qualified_domain_name
@@ -23,3 +25,23 @@ export function isDomainName(hostname: string): boolean {
 
   return true;
 }
+
+// wrap the fetch function to enable defining some global settings, such as
+// user-agent header
+class FetchWrapper {
+  userAgent?: string;
+  // headers: Headers;
+
+  fetch(
+    ...[url, init = {}]: Parameters<typeof fetch>
+  ): ReturnType<typeof fetch> {
+    const headers = new Headers(init.headers);
+    if (!headers.has("User-Agent") && this.userAgent) {
+      headers.set("User-Agent", this.userAgent);
+    }
+    init.headers = headers;
+    return fetch(url, init);
+  }
+}
+
+export const fetchWrapper = new FetchWrapper();

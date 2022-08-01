@@ -1,6 +1,6 @@
 // node-fetch 3 does not support jest yet
 // https://github.com/node-fetch/node-fetch/issues/1265
-import fetch from "node-fetch";
+import { fetchWrapper } from "../utils";
 import { fetchCitation } from "../citoid";
 import { JSDOM } from "jsdom";
 import { HTTPResponseError } from "../errors";
@@ -57,7 +57,8 @@ class HttpCache extends ResponseCache {
     this._refreshing = true;
     return new Promise<HttpCacheData>((resolve, reject) => {
       // alternatively use JSDOM.fromURL();
-      fetch(this.url)
+      fetchWrapper
+        .fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
             const body = await response.text();
