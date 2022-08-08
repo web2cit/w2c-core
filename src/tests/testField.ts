@@ -1,7 +1,7 @@
 import { FieldName, TranslationField } from "../translationField";
 import { StepOutput, TestFieldDefinition } from "../types";
 import log from "loglevel";
-import levenshtein from "fastest-levenshtein";
+import * as levenshtein from "fastest-levenshtein";
 
 export class TestField extends TranslationField {
   readonly goal: StepOutput;
