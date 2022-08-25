@@ -109,21 +109,22 @@ export class Domain {
 
   translate(
     paths: string | string[],
-    options: TranslateOptions = {}
+    {
+      allTemplates = false,
+      onlyApplicable = true,
+      fillWithCitoid = false,
+      forceTemplatePaths,
+      forcePattern,
+    }: TranslateOptions = {}
   ): Promise<TargetOutput[]> {
-    // set default values
-    options.allTemplates ??= false;
-    options.onlyApplicable ??= true;
-    options.fillWithCitoid ??= false;
-
     if (!Array.isArray(paths)) paths = [paths];
 
     let targetsByPattern: Map<string | undefined, string[]>;
-    if (options.forceTemplatePaths !== undefined) {
+    if (forceTemplatePaths !== undefined) {
       // if translation templates have been forced, pattern group makes no sense
       targetsByPattern = new Map([[undefined, paths]]);
-    } else if (options.forcePattern !== undefined) {
-      targetsByPattern = new Map([[options.forcePattern, paths]]);
+    } else if (forcePattern !== undefined) {
+      targetsByPattern = new Map([[forcePattern, paths]]);
     } else {
       // sort target paths into url path pattern groups
       targetsByPattern = this.patterns.sortPaths(paths);
@@ -138,13 +139,13 @@ export class Domain {
       if (targetPaths.length === 0) continue;
       let templatePaths: string[];
       if (patternPath === undefined) {
-        if (options.forceTemplatePaths === undefined) {
+        if (forceTemplatePaths === undefined) {
           throw new Error(
             "Unexpected undefined pattern path " +
               'with undefined "forceTemplatePaths" option'
           );
         }
-        templatePaths = options.forceTemplatePaths;
+        templatePaths = forceTemplatePaths;
       } else {
         // retrieve translation templates that belong to the same url path
         // pattern group
@@ -170,7 +171,7 @@ export class Domain {
         const { templatePaths, patternPath } =
           templatesByTarget.get(targetPath)!;
 
-        if (options.fillWithCitoid) {
+        if (fillWithCitoid) {
           // prepare the Citoid cache
           // target.cache.citoid.getData();
         }
@@ -213,18 +214,18 @@ export class Domain {
           target,
           templatePaths,
           {
-            tryAllTemplates: options.allTemplates,
+            tryAllTemplates: allTemplates,
             // do not use fallback template if translation templates have been
             // forced
-            useFallback: options.forceTemplatePaths === undefined,
-            onlyApplicable: options.onlyApplicable,
+            useFallback: forceTemplatePaths === undefined,
+            onlyApplicable: onlyApplicable,
           }
         );
 
         const targetOutputPromise = templateOutputsPromise
           .then((templateOutputs) => {
             let baseCitation: MediaWikiBaseFieldCitation | undefined;
-            if (options.fillWithCitoid) {
+            if (fillWithCitoid) {
               // baseCitation = (await target.cache.citoid.getData()).citation.simple
             }
 
