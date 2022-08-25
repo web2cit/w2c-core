@@ -26,6 +26,14 @@ import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 import log from "loglevel";
 
+declare global {
+  // eslint-disable-next-line no-var
+  var windowContext: Pick<
+    typeof window,
+    "document" | "DOMParser" | "XPathResult"
+  >;
+}
+
 export class Domain {
   readonly domain: string;
   readonly webpages: WebpageFactory;
@@ -35,6 +43,7 @@ export class Domain {
 
   constructor(
     domain: string,
+    windowContext: typeof global.windowContext,
     {
       templates,
       patterns,
@@ -70,15 +79,22 @@ export class Domain {
 
     const origin = "https://" + domain;
     fetchWrapper.customFetchByOrigin.set(origin, originFetch);
+
+    // the global window variable may not be available in non-browser contexts
+    globalThis.windowContext = windowContext;
   }
 
   // instantiate domain object from URL
   // we may need this if we want to follow redirects before instantiating
   // the domain object (see T304773)
-  static fromURL(url: string, options?: DomainOptions) {
+  static fromURL(
+    url: string,
+    windowContext: typeof global.windowContext,
+    options?: DomainOptions
+  ) {
     // this may fail
     const webpage = new Webpage(url);
-    const domain = new Domain(webpage.domain, options);
+    const domain = new Domain(webpage.domain, windowContext, options);
     domain.webpages.setWebpage(webpage);
     return domain;
   }

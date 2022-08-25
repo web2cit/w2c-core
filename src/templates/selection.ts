@@ -1,7 +1,6 @@
 import { TranslationStep } from "./step";
 import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
-import { JSDOM } from "jsdom";
 import { StepOutput, SelectionDefinition } from "../types";
 
 export abstract class Selection extends TranslationStep {
@@ -104,7 +103,6 @@ export class XPathSelection extends Selection {
   readonly type: SelectionType = "xpath";
   protected _config = "";
   private _parsedXPath: XPathExpression | undefined;
-  private readonly window = new JSDOM().window;
   constructor(expression?: XPathSelection["_config"]) {
     super();
     if (expression) this.config = expression;
@@ -116,10 +114,8 @@ export class XPathSelection extends Selection {
 
   set config(expression: string) {
     try {
-      const window = new JSDOM().window;
-      this._parsedXPath = window.document.createExpression(expression);
+      this._parsedXPath = windowContext.document.createExpression(expression);
       this._config = expression;
-      window.close();
     } catch {
       throw new SelectionConfigTypeError(this.type, expression);
     }
@@ -138,7 +134,7 @@ export class XPathSelection extends Selection {
           try {
             const result = parsedXPath.evaluate(
               data.doc,
-              this.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE
+              windowContext.XPathResult.ORDERED_NODE_ITERATOR_TYPE
             );
             let thisNode = result.iterateNext();
             while (thisNode) {
@@ -163,16 +159,16 @@ export class XPathSelection extends Selection {
           } catch {
             const result = parsedXPath.evaluate(
               data.doc,
-              this.window.XPathResult.ANY_TYPE
+              windowContext.XPathResult.ANY_TYPE
             );
             switch (result.resultType) {
-              case this.window.XPathResult.NUMBER_TYPE:
+              case windowContext.XPathResult.NUMBER_TYPE:
                 selection.push(result.numberValue.toString());
                 break;
-              case this.window.XPathResult.STRING_TYPE:
+              case windowContext.XPathResult.STRING_TYPE:
                 selection.push(result.stringValue);
                 break;
-              case this.window.XPathResult.BOOLEAN_TYPE:
+              case windowContext.XPathResult.BOOLEAN_TYPE:
                 selection.push(result.booleanValue.toString().trim());
                 break;
             }
