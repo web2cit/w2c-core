@@ -33,20 +33,19 @@ export class Domain {
   patterns: PatternConfiguration;
   tests: TestConfiguration;
 
-  constructor(domain: string, options: DomainOptions = {}) {
-    // set default values
-    options.fallbackTemplate ??= fallbackTemplateDefinition;
-    options.catchallPattern ??= true;
-    options.forceRequiredFields ??= config.forceRequiredFields;
-
-    const {
+  constructor(
+    domain: string,
+    {
       templates,
       patterns,
       tests,
-      fallbackTemplate,
-      catchallPattern,
-      forceRequiredFields,
-    } = options;
+      fallbackTemplate = fallbackTemplateDefinition,
+      catchallPattern = true,
+      forceRequiredFields = config.forceRequiredFields,
+      userAgentPrefix,
+      originFetch,
+    }: DomainOptions = {}
+  ) {
     if (isDomainName(domain)) {
       this.domain = domain;
     } else {
@@ -65,9 +64,12 @@ export class Domain {
     this.patterns = new PatternConfiguration(domain, patterns, catchallPattern);
     this.tests = new TestConfiguration(domain, tests);
 
-    fetchWrapper.userAgent = options.userAgentPrefix
-      ? options.userAgentPrefix + " " + config.USER_AGENT
+    fetchWrapper.userAgent = userAgentPrefix
+      ? userAgentPrefix + " " + config.USER_AGENT
       : config.USER_AGENT;
+
+    const origin = "https://" + domain;
+    fetchWrapper.customFetchByOrigin.set(origin, originFetch);
   }
 
   // instantiate domain object from URL
@@ -382,6 +384,8 @@ type DomainOptions = {
   forceRequiredFields?: FieldName[];
   // todo T306553: consider accepting alternative storage settings
   userAgentPrefix?: string;
+  // custom fetch function to use for domain's same-origin requests
+  originFetch?: typeof fetch;
 };
 
 type TranslateOptions = {
