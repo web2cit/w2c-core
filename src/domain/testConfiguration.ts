@@ -39,11 +39,20 @@ export class TestConfiguration extends DomainConfiguration<
   // todo: do we want a method to edit a test
   // to make sure that the currentRevid is set to undefined upon changes?
 
-  add(definition: TestDefinition): TranslationTest {
+  add(definition: TestDefinition, index?: number): TranslationTest {
     // may the test constructor make changes to the path?
     const newTest = new TranslationTest(definition);
     if (this.tests.some((test) => test.path === newTest.path)) {
       throw new DuplicateTestPathError(definition.path);
+    } else {
+      if (index !== undefined) {
+        // although test order should not matter, it may be useful to support
+        // inserting a new test in a specific location for cases where tests
+        // need to be updated
+        this.tests.splice(index, 0, newTest);
+      } else {
+        this.tests.push(newTest);
+      }
     }
     this.tests.push(newTest);
     this.currentRevid = undefined;
