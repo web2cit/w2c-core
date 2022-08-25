@@ -1,5 +1,5 @@
 import minimatch from "minimatch";
-import { normalize } from "path";
+import normalize from "path-normalize";
 import { PatternDefinition } from "../types";
 
 export class PathPattern {
