@@ -60,6 +60,9 @@ class RevisionsApi {
       rvcontinue: undefined,
       formatversion: "2",
       format: "json",
+      // For anonymous requests, origin * allows requests from anywhere
+      // https://www.mediawiki.org/wiki/Manual:CORS#Description
+      origin: "*",
     };
 
     do {
