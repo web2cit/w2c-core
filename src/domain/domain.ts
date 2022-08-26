@@ -51,6 +51,7 @@ export class Domain {
       fallbackTemplate = fallbackTemplateDefinition,
       catchallPattern = true,
       forceRequiredFields = config.forceRequiredFields,
+      userAgentHeaderName,
       userAgentPrefix,
       originFetch,
     }: DomainOptions = {}
@@ -73,6 +74,9 @@ export class Domain {
     this.patterns = new PatternConfiguration(domain, patterns, catchallPattern);
     this.tests = new TestConfiguration(domain, tests);
 
+    if (userAgentHeaderName) {
+      fetchWrapper.userAgentHeaderName = userAgentHeaderName;
+    }
     fetchWrapper.userAgent = userAgentPrefix
       ? userAgentPrefix + " " + config.USER_AGENT
       : config.USER_AGENT;
@@ -400,6 +404,7 @@ type DomainOptions = {
   catchallPattern?: boolean;
   forceRequiredFields?: FieldName[];
   // todo T306553: consider accepting alternative storage settings
+  userAgentHeaderName?: string;
   userAgentPrefix?: string;
   // custom fetch function to use for domain's same-origin requests
   originFetch?: typeof fetch;
