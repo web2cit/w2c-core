@@ -60,7 +60,7 @@
   "dependencies": {
     "fastest-levenshtein": "^1.0.12",
     "loglevel": "^1.8.0",
-    "minimatch": "^5.0.0",
+    "minimatch": "^5.1.0",
     "node-fetch": "^2.6.6",
     "path-normalize": "^6.0.6",
     "sugar": "^2.0.6"
