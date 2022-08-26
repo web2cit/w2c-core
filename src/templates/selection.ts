@@ -102,7 +102,7 @@ export class CitoidSelection extends Selection {
 export class XPathSelection extends Selection {
   readonly type: SelectionType = "xpath";
   protected _config = "";
-  private _parsedXPath: XPathExpression | undefined;
+  // private _parsedXPath: XPathExpression | undefined;
   constructor(expression?: XPathSelection["_config"]) {
     super();
     if (expression) this.config = expression;
@@ -114,7 +114,10 @@ export class XPathSelection extends Selection {
 
   set config(expression: string) {
     try {
-      this._parsedXPath = windowContext.document.createExpression(expression);
+      // do not save pre-parsed xpath as it won't be good to evaluate against
+      // another document in Firefox (see T316370)
+      // this._parsedXPath = windowContext.document.createExpression(expression);
+      windowContext.document.createExpression(expression);
       this._config = expression;
     } catch {
       throw new SelectionConfigTypeError(this.type, expression);
@@ -122,15 +125,19 @@ export class XPathSelection extends Selection {
   }
 
   select(target: Webpage): Promise<StepOutput> {
-    if (this._parsedXPath === undefined) {
+    if (this._config === "") {
       throw new UndefinedSelectionConfigError();
     }
-    const parsedXPath = this._parsedXPath;
+    // const parsedXPath = this._parsedXPath;
+    const expression = this._config;
     return new Promise((resolve, reject) => {
       target.cache.http
         .getData(false)
         .then((data) => {
           const selection: StepOutput = [];
+          // parse xpath on the fly (instead of using pre-parsed xpath) to
+          // ensure compatibilty with Firefox (see T316370)
+          const parsedXPath = data.doc.createExpression(expression);
           try {
             const result = parsedXPath.evaluate(
               data.doc,
