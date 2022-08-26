@@ -9,6 +9,7 @@ import {
 import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../webpage/samplePages";
+import { JSDOM } from "jsdom";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
@@ -19,6 +20,12 @@ beforeEach(() => {
 
 describe("XPath selection", () => {
   const sampleUrl = "https://example.com/article1";
+
+  beforeAll(() => {
+    // xpath selection relies on there being a windowContext global object,
+    // set up by the Domain constructor
+    globalThis.windowContext = new JSDOM().window;
+  });
 
   beforeEach(() => {
     mockNodeFetch.__addResponse(sampleUrl, pages[sampleUrl].html);

@@ -1,3 +1,4 @@
+import { JSDOM } from "jsdom";
 import { TemplateDefinition } from "../types";
 import { Domain } from "./domain";
 import { TemplateConfiguration } from "./templateConfiguration";
@@ -29,14 +30,16 @@ const template: TemplateDefinition = {
   ],
 };
 
+const window = new JSDOM().window;
+
 describe("Domain class", () => {
   test("domain property is initialized", () => {
-    expect(new Domain("example.com").domain).toBe("example.com");
+    expect(new Domain("example.com", window).domain).toBe("example.com");
   });
 });
 
 it("does not make citatations for non-applicable template outputs", async () => {
-  const domain = new Domain("example.com", {
+  const domain = new Domain("example.com", window, {
     templates: [
       {
         path: "/template2",
@@ -79,12 +82,12 @@ it("does not make citatations for non-applicable template outputs", async () => 
 });
 
 it("creates Domain object from URL", () => {
-  const domain = Domain.fromURL("https://example.com/some/path");
+  const domain = Domain.fromURL("https://example.com/some/path", window);
   expect(domain.domain).toBe("example.com");
 });
 
 it("includes translation score in translation outputs", async () => {
-  const domain = new Domain("example.com", {
+  const domain = new Domain("example.com", window, {
     templates: [template],
     tests: [
       {
@@ -121,7 +124,7 @@ it("includes translation score in translation outputs", async () => {
 
 describe("Multiple-target translation", () => {
   it("translates targets matching the same url path pattern", async () => {
-    const domain = new Domain("example.com", {
+    const domain = new Domain("example.com", window, {
       templates: [template],
     });
     const results = await domain.translate([
@@ -135,7 +138,7 @@ describe("Multiple-target translation", () => {
   });
 
   it("translates targets matching different url path patterns", async () => {
-    const domain = new Domain("example.com", {
+    const domain = new Domain("example.com", window, {
       templates: [template],
       patterns: [
         {
@@ -157,7 +160,7 @@ describe("Multiple-target translation", () => {
 
 describe("Get template and test paths", () => {
   it("gets all paths in template and test configurations", async () => {
-    const domain = new Domain("example.com", {
+    const domain = new Domain("example.com", window, {
       templates: [template],
       tests: [
         {
@@ -176,7 +179,7 @@ describe("Get template and test paths", () => {
   });
 
   it("does not get path both in template and test config twice", async () => {
-    const domain = new Domain("example.com", {
+    const domain = new Domain("example.com", window, {
       templates: [template],
       tests: [
         {
@@ -202,7 +205,7 @@ it("upon translation failure, returns target output including the error", async 
     .mockImplementation(() => {
       return Promise.reject(error);
     });
-  const domain = new Domain("example.com", {
+  const domain = new Domain("example.com", window, {
     templates: [template],
   });
   const results = await domain.translate("/some/path");
