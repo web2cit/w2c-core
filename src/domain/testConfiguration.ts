@@ -54,7 +54,6 @@ export class TestConfiguration extends DomainConfiguration<
         this.tests.push(newTest);
       }
     }
-    this.tests.push(newTest);
     this.currentRevid = undefined;
     return newTest;
   }
