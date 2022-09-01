@@ -89,6 +89,14 @@ describe("XPath selection", () => {
       selection.config = "||";
     }).toThrow(SelectionConfigTypeError);
   });
+
+  test("rejects XPath v3.1 expression (T308666)", () => {
+    const selection = new XPathSelection();
+    const expression = './/*[contains-token(@class, "byline__name")]//a';
+    expect(() => {
+      selection.config = expression;
+    }).toThrow(SelectionConfigTypeError);
+  });
 });
 
 describe("Citoid selection", () => {

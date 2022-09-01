@@ -117,7 +117,17 @@ export class XPathSelection extends Selection {
       // do not save pre-parsed xpath as it won't be good to evaluate against
       // another document in Firefox (see T316370)
       // this._parsedXPath = windowContext.document.createExpression(expression);
-      windowContext.document.createExpression(expression);
+      const parsedXPath = windowContext.document.createExpression(expression);
+      // to workaround #T308666, try parsed expression on the document with
+      // which it was created before confirming config validity
+      // todo: reassess if https://github.com/jsdom/jsdom/issues/3371 is fixed
+      parsedXPath.evaluate(
+        windowContext.document,
+        // @types/jsdom says that the type parameter is optional,
+        // but jsdom seems to be failing without it
+        // see https://github.com/jsdom/jsdom/issues/3422
+        windowContext.XPathResult.ANY_TYPE
+      );
       this._config = expression;
     } catch {
       throw new SelectionConfigTypeError(this.type, expression);
