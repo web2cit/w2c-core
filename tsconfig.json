@@ -12,7 +12,20 @@
 
     /* Language and Environment */
     "target": "es2019",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
-    "lib": ["es2019", "es2020.promise", "es2020.bigint", "es2020.string"],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
+    "lib": [                                             /* Specify a set of bundled library declaration files that describe the target runtime environment. */
+      "es2019",
+      "es2020.promise",
+      "es2020.bigint",
+      "es2020.string",
+      // fixme (T316883): w2c-core should work both on server and browser
+      // environments. Hence, including the dom libraries would be undesired
+      // On the other hand, we need to reference some dom types, because since
+      // v2 a windowContext object must be passed to the Domain object
+      // constructor
+      // However, apparently dom library can't be imported explicitly
+      // https://stackoverflow.com/questions/59061266/can-i-import-dom-types-explicitly
+      "dom"
+    ],
     // "jsx": "preserve",                                /* Specify what JSX code is generated. */
     // "experimentalDecorators": true,                   /* Enable experimental support for TC39 stage 2 draft decorators. */
     // "emitDecoratorMetadata": true,                    /* Emit design-type metadata for decorated declarations in source files. */
