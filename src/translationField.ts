@@ -82,7 +82,7 @@ export class TranslationField {
     itemType: {
       array: false,
       forceRequired: true,
-      pattern: new RegExp(`^${ITEM_TYPES.join("|")}$`),
+      pattern: new RegExp(`^(${ITEM_TYPES.join("|")})$`),
       defaultProcedure: {
         selections: [{ type: "citoid", config: "itemType" }],
         transformations: [],
