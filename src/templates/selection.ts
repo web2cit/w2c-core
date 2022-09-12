@@ -51,7 +51,7 @@ export class CitoidSelection extends Selection {
   protected _config: SimpleCitoidField | "" = "";
   constructor(field?: CitoidSelection["_config"]) {
     super();
-    if (field) this.config = field;
+    if (field !== undefined) this.config = field;
   }
 
   get config(): CitoidSelection["_config"] {
@@ -105,7 +105,7 @@ export class XPathSelection extends Selection {
   // private _parsedXPath: XPathExpression | undefined;
   constructor(expression?: XPathSelection["_config"]) {
     super();
-    if (expression) this.config = expression;
+    if (expression !== undefined) this.config = expression;
   }
 
   get config(): XPathSelection["_config"] {
@@ -216,7 +216,7 @@ export class FixedSelection extends Selection {
   protected _config = "";
   constructor(value?: string) {
     super();
-    if (value) this.config = value;
+    if (value !== undefined) this.config = value;
   }
 
   get config(): string {

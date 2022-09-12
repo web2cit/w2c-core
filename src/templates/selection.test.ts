@@ -97,6 +97,12 @@ describe("XPath selection", () => {
       selection.config = expression;
     }).toThrow(SelectionConfigTypeError);
   });
+
+  test("constructor rejects empty-string configuration value", () => {
+    expect(() => {
+      new XPathSelection("");
+    }).toThrow(SelectionConfigTypeError);
+  });
 });
 
 describe("Citoid selection", () => {
@@ -130,6 +136,12 @@ describe("Citoid selection", () => {
   test("select invalid fields", async () => {
     expect(() => {
       selection.config = "invalidField";
+    }).toThrow(SelectionConfigTypeError);
+  });
+
+  test("constructor rejects empty-string configuration", async () => {
+    expect(() => {
+      new CitoidSelection("");
     }).toThrow(SelectionConfigTypeError);
   });
 });
