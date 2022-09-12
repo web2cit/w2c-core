@@ -36,7 +36,7 @@ describe("Test field instatiation", () => {
         fieldname: "authorLast",
         goal: ["non-empty string", ""],
       });
-    }).toThrow("not a valid goal value");
+    }).toThrow("Invalid goal");
   });
 
   it("fails on empty goal for mandatory fields", () => {
@@ -45,7 +45,7 @@ describe("Test field instatiation", () => {
         fieldname: "title", // a mandatory field,
         goal: [],
       });
-    }).toThrow("Invalid empty goal");
+    }).toThrow("Invalid goal");
   });
 });
 
@@ -72,10 +72,9 @@ describe("Test field testing", () => {
       }).toThrow("multiple output values");
     });
 
-    it("rejects empty output for mandatory fields", () => {
-      expect(() => {
-        field.test("itemType", []);
-      }).toThrow("empty output for mandatory field");
+    // T311519: do not fail on empty output for mandatory field
+    it("does not reject empty output for mandatory fields", () => {
+      expect(field.test("itemType", [])).toBe(0);
     });
   });
 

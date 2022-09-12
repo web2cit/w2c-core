@@ -93,7 +93,7 @@ export class TranslationTest {
       if (outputField && outputField.valid) {
         fieldOutput = outputField.output;
       } else {
-        // treat undefined output as empty output
+        // treat undefined or invalid output as empty output
         fieldOutput = [];
       }
       testOutput.fields.push({

@@ -14,26 +14,29 @@ export class TestField extends TranslationField {
       throw new Error(`Translation field ${this.name} is a control field!`);
     }
 
-    if (this.params.forceRequired && goal.length === 0) {
-      // note that empty goal for mandatory field is not the same as
-      // missing mandatory field; missing mandatory field is OK
-      throw new Error(`Invalid empty goal for mandatory field "${fieldname}"`);
-    }
-
     if (!this.params.array && goal.length > 1) {
       log.warn(
         `Ignoring additional goal values for single-valued ${fieldname} field`
       );
       goal = [goal[0]!];
     }
-    goal.forEach((value) => {
-      if (!this.pattern.test(value)) {
-        throw new Error(
-          `"${value}" is not a valid goal value for field "${fieldname}"`
-        );
-      }
-    });
-    this.goal = goal;
+
+    const valid = this.validate(
+      goal,
+      // note that empty goal for mandatory field is not the same as
+      // missing mandatory field; missing mandatory field is OK
+      !this.params.forceRequired
+    );
+    if (valid) {
+      this.goal = goal;
+    } else {
+      const stringifiedGoal = `[${goal
+        .map((value) => `"${value}"`)
+        .join(", ")}]`;
+      throw new Error(
+        `Invalid goal ${stringifiedGoal} for field "${fieldname}"`
+      );
+    }
   }
 
   // we may need methods to add/move/remove goal values later on
@@ -49,11 +52,16 @@ export class TestField extends TranslationField {
       );
     }
 
-    if (this.params.forceRequired && output.length === 0) {
-      throw new Error(
-        `Unexpected empty output for mandatory field "${this.name}"`
-      );
-    }
+    // Commenting out the check below to fix T311519:
+    // Mandatory template fields may return invalid empty outputs. These will
+    // already cause the template to be marked as non-applicable. That should be
+    // enough and we probably do not want to fail on them here, causing a
+    // translation-wide error.
+    // if (this.params.forceRequired && output.length === 0) {
+    //   throw new Error(
+    //     `Unexpected empty output for mandatory field "${this.name}"`
+    //   );
+    // }
 
     // todo: consider stating how to get diff score
     // at the translation field level (i.e., translationField.ts)

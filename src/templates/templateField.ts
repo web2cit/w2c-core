@@ -109,12 +109,6 @@ export class TemplateField extends TranslationField {
       procedures: this.procedures.map((procedure) => procedure.toJSON()),
     };
   }
-
-  private validate(output: TemplateFieldOutput["output"]): boolean {
-    const valid =
-      output.length > 0 && output.every((value) => this.pattern.test(value));
-    return valid;
-  }
 }
 
 export function outputToCitation(
