@@ -36,7 +36,7 @@ describe("Test field instatiation", () => {
         fieldname: "authorLast",
         goal: ["non-empty string", ""],
       });
-    }).toThrow("not a valid goal value");
+    }).toThrow("Invalid goal");
   });
 
   it("fails on empty goal for mandatory fields", () => {
@@ -45,7 +45,7 @@ describe("Test field instatiation", () => {
         fieldname: "title", // a mandatory field,
         goal: [],
       });
-    }).toThrow("Invalid empty goal");
+    }).toThrow("Invalid goal");
   });
 });
 

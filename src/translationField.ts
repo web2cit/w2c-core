@@ -1,4 +1,4 @@
-import { ProcedureDefinition } from "./types";
+import { ProcedureDefinition, StepOutput } from "./types";
 const FIELD_NAMES = [
   "itemType",
   "title",
@@ -77,7 +77,7 @@ export function isItemType(itemType: string): itemType is ItemType {
   return ITEM_TYPES.includes(itemType as ItemType);
 }
 
-export abstract class TranslationField {
+export class TranslationField {
   private static params: Record<FieldName, FieldParameters> = {
     itemType: {
       array: false,
@@ -191,5 +191,12 @@ export abstract class TranslationField {
     this.name = name;
     this.isArray = this.params.array;
     this.pattern = this.params.pattern;
+  }
+
+  validate(output: StepOutput, allowEmpty = false): boolean {
+    const valid =
+      (output.length > 0 || allowEmpty) &&
+      output.every((value) => this.pattern.test(value));
+    return valid;
   }
 }
