@@ -52,11 +52,16 @@ export class TestField extends TranslationField {
       );
     }
 
-    if (this.params.forceRequired && output.length === 0) {
-      throw new Error(
-        `Unexpected empty output for mandatory field "${this.name}"`
-      );
-    }
+    // Commenting out the check below to fix T311519:
+    // Mandatory template fields may return invalid empty outputs. These will
+    // already cause the template to be marked as non-applicable. That should be
+    // enough and we probably do not want to fail on them here, causing a
+    // translation-wide error.
+    // if (this.params.forceRequired && output.length === 0) {
+    //   throw new Error(
+    //     `Unexpected empty output for mandatory field "${this.name}"`
+    //   );
+    // }
 
     // todo: consider stating how to get diff score
     // at the translation field level (i.e., translationField.ts)

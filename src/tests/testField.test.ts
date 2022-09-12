@@ -72,10 +72,9 @@ describe("Test field testing", () => {
       }).toThrow("multiple output values");
     });
 
-    it("rejects empty output for mandatory fields", () => {
-      expect(() => {
-        field.test("itemType", []);
-      }).toThrow("empty output for mandatory field");
+    // T311519: do not fail on empty output for mandatory field
+    it("does not reject empty output for mandatory fields", () => {
+      expect(field.test("itemType", [])).toBe(0);
     });
   });
 
