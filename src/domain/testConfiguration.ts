@@ -3,6 +3,7 @@ import { DomainConfiguration } from "./domainConfiguration";
 import log from "loglevel";
 import { TemplateOutput, TestDefinition, TestOutput } from "../types";
 import { TestConfigurationDomainMismatch } from "../errors";
+import normalize from "path-normalize";
 
 export class TestConfiguration extends DomainConfiguration<
   TranslationTest,
@@ -30,7 +31,7 @@ export class TestConfiguration extends DomainConfiguration<
       // return all tests if no specific path specified
       tests = [...this.tests];
     } else {
-      const pathArray = Array.isArray(paths) ? paths : [paths];
+      const pathArray = (Array.isArray(paths) ? paths : [paths]).map(normalize);
       tests = this.tests.filter((test) => pathArray.includes(test.path));
     }
     return tests;
@@ -59,7 +60,7 @@ export class TestConfiguration extends DomainConfiguration<
   }
 
   remove(path: string): void {
-    const index = this.tests.findIndex((test) => test.path === path);
+    const index = this.tests.findIndex((test) => test.path === normalize(path));
     if (index > -1) {
       this.tests.splice(index, 1);
       log.info(`Test for path ${path} at index ${index} successfully removed`);

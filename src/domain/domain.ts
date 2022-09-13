@@ -25,6 +25,7 @@ import { isDomainName, fetchWrapper } from "../utils";
 import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 import log from "loglevel";
+import normalize from "path-normalize";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -138,6 +139,7 @@ export class Domain {
     }: TranslateOptions = {}
   ): Promise<TargetOutput[]> {
     if (!Array.isArray(paths)) paths = [paths];
+    paths = paths.map(normalize);
 
     let targetsByPattern: Map<string | undefined, string[]>;
     if (forceTemplatePaths !== undefined) {

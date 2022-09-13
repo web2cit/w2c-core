@@ -1,6 +1,7 @@
 import { isDomainName } from "../utils";
 import { HttpCache, CitoidCache } from "./caching";
 import { DomainNameError } from "../errors";
+import normalize from "path-normalize";
 
 class Webpage {
   domain: string;
@@ -48,6 +49,7 @@ class WebpageFactory {
   }
 
   getWebpage(path: string): Webpage {
+    path = normalize(path);
     if (path[0] !== "/") {
       throw new Error('Path must begin with "/"');
     }
