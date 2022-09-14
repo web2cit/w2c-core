@@ -138,6 +138,14 @@ describe("Translation", () => {
     expect(result.translation.outputs.length).toBe(0);
     expect(result.translation.error).toBe(error);
   });
+
+  it("url-normalizes target path before translation", async () => {
+    const domain = new Domain("example.com", window, {
+      templates: [template],
+    });
+    const results = await domain.translate("/path/./to/../to/target");
+    expect(results[0].target.path).toBe("/path/to/target");
+  });
 });
 
 describe("Multiple-target translation", () => {
