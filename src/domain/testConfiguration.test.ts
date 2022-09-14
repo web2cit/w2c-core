@@ -75,6 +75,12 @@ describe("Test array manipulation", () => {
       expect(tests[0].path).toBe("/some/path");
     });
 
+    it("url-normalizes path before using it to get test objects", () => {
+      const tests = config.get("/some/../some/./path");
+      expect(tests.length).toBe(1);
+      expect(tests[0].path).toBe("/some/path");
+    });
+
     it("gets multiple test objects from path array", () => {
       const pathArray = ["/some/path", "/some/other/path"];
       const tests = config.get(pathArray);
@@ -120,6 +126,11 @@ describe("Test array manipulation", () => {
   describe("Remove test objects", () => {
     it("removes a test", () => {
       config.remove("/some/path");
+      expect(config.paths.length).toBe(2);
+    });
+
+    it("url-normalizes path before removing a test object", () => {
+      config.remove("/some/../some/./path");
       expect(config.paths.length).toBe(2);
     });
 
