@@ -51,7 +51,14 @@ it('"**/*" matches all ending without "/"', () => {
 //   expect(() => { new PathPattern("") }).toThrow();
 // })
 
-it("normalizes target path before matching", () => {
+describe("target path normalization", () => {
   const pattern = new PathPattern("/path/to/dir/*.html");
-  expect(pattern.match("/path//to/../to/./dir/page.html")).toBe(true);
+
+  it("normalizes target path before matching", () => {
+    expect(pattern.match("/path/to/../to/./dir/page.html")).toBe(true);
+  });
+
+  it("does not normalize double slashes (T316257)", () => {
+    expect(pattern.match("/path//to/dir/page.html")).toBe(false);
+  });
 });

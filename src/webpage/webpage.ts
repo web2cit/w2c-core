@@ -1,4 +1,4 @@
-import { isDomainName } from "../utils";
+import { isDomainName, normalizeUrlPath } from "../utils";
 import { HttpCache, CitoidCache } from "./caching";
 import { DomainNameError } from "../errors";
 
@@ -51,6 +51,7 @@ class WebpageFactory {
     if (path[0] !== "/") {
       throw new Error('Path must begin with "/"');
     }
+    path = normalizeUrlPath(path);
     let webpage = this.webpages.get(path);
     if (webpage === undefined) {
       // this may fail if the user provided an invalid path string

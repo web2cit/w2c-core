@@ -1,6 +1,6 @@
 import minimatch from "minimatch";
-import normalize from "path-normalize";
 import { PatternDefinition } from "../types";
+import { normalizeUrlPath } from "../utils";
 
 export class PathPattern {
   label: string;
@@ -25,7 +25,7 @@ export class PathPattern {
     // see https://github.com/microsoft/TypeScript/issues/41638
     path = path.split("?")[0] as string;
 
-    path = normalize(path);
+    path = normalizeUrlPath(path);
 
     return this.regexp.test(path);
   }

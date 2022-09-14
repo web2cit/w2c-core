@@ -35,6 +35,13 @@ describe("Webpage factory", () => {
     expect(webpage1 === webpage2).toBe(true);
   });
 
+  it("url-normalizes path before reusing previously created webpage", () => {
+    const factory = new WebpageFactory("example.com");
+    const webpage1 = factory.getWebpage("/some/path");
+    const webpage2 = factory.getWebpage("/some/../some/./path");
+    expect(webpage1 === webpage2).toBe(true);
+  });
+
   it("saves a webpage provided externally", () => {
     const factory = new WebpageFactory("example.com");
     const webpage = new Webpage("https://example.com/some/path");

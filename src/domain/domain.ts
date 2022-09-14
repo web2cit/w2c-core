@@ -21,7 +21,7 @@ import {
   TestDefinition,
   TestOutput,
 } from "../types";
-import { isDomainName, fetchWrapper } from "../utils";
+import { isDomainName, fetchWrapper, normalizeUrlPath } from "../utils";
 import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 import log from "loglevel";
@@ -138,6 +138,7 @@ export class Domain {
     }: TranslateOptions = {}
   ): Promise<TargetOutput[]> {
     if (!Array.isArray(paths)) paths = [paths];
+    paths = paths.map(normalizeUrlPath);
 
     let targetsByPattern: Map<string | undefined, string[]>;
     if (forceTemplatePaths !== undefined) {
