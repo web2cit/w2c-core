@@ -21,6 +21,8 @@ export class PathPattern {
   match(path: string): boolean {
     // ignore query string
     // use control template field to handle these
+    // because the order of the query string parameters does not matter and may
+    // change
 
     // see https://github.com/microsoft/TypeScript/issues/41638
     path = path.split("?")[0] as string;
