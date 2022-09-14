@@ -144,7 +144,7 @@ export class PatternConfiguration extends DomainConfiguration<
     if (!Array.isArray(paths)) {
       paths = [paths];
     }
-    paths = paths.map(normalizeUrlPath);
+    // paths = paths.map(normalizeUrlPath);
 
     let pendingPaths = [...paths];
     for (const pattern of patterns) {
