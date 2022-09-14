@@ -7,7 +7,7 @@ import {
   StepOutput,
   TestFieldDefinition,
 } from "../types";
-import normalize from "path-normalize";
+import { normalizeUrlPath } from "../utils";
 
 // loosely based on template.ts
 export class TranslationTest {
@@ -16,7 +16,7 @@ export class TranslationTest {
   // translation template constructor has a "strict" option to fail on
   // problematic fields (vs simply ignoring them)
   constructor(test: TestDefinition) {
-    this.path = normalize(test.path);
+    this.path = normalizeUrlPath(test.path);
     // we may reject creating translation tests with an empty array of fields
     // but what shall we do if user later removes all fields using removeField?
     test.fields.forEach((definition) => {
@@ -70,7 +70,7 @@ export class TranslationTest {
     }[];
   }): TestOutput {
     // make sure that paths match
-    if (this.path !== normalize(translation.path)) {
+    if (this.path !== normalizeUrlPath(translation.path)) {
       throw new PathMismatch(translation.path, this.path);
     }
 

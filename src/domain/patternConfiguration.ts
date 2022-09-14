@@ -2,7 +2,7 @@ import { PathPattern } from "../patterns/pattern";
 import { DomainConfiguration } from "./domainConfiguration";
 import log from "loglevel";
 import { isPatternDefinition, PatternDefinition } from "../types";
-import normalize from "path-normalize";
+import { normalizeUrlPath } from "../utils";
 
 export class PatternConfiguration extends DomainConfiguration<
   PathPattern,
@@ -144,7 +144,7 @@ export class PatternConfiguration extends DomainConfiguration<
     if (!Array.isArray(paths)) {
       paths = [paths];
     }
-    paths = paths.map(normalize);
+    paths = paths.map(normalizeUrlPath);
 
     let pendingPaths = [...paths];
     for (const pattern of patterns) {

@@ -26,6 +26,12 @@ export function isDomainName(hostname: string): boolean {
   return true;
 }
 
+export function normalizeUrlPath(path: string): string {
+  const url = new URL(path, "https://example.com");
+  const normalizedPath = url.pathname + url.search;
+  return normalizedPath;
+}
+
 // wrap the fetch function to enable defining some global settings, such as
 // user-agent header
 class FetchWrapper {
