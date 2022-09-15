@@ -2,6 +2,7 @@ import { TranslationStep } from "./step";
 import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { StepOutput, SelectionDefinition } from "../types";
+import log from "loglevel";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -10,8 +11,22 @@ export abstract class Selection extends TranslationStep {
   abstract get config(): string;
   abstract set config(config: string);
 
-  apply = this.select;
-  abstract select(target: Webpage): Promise<StepOutput>;
+  apply: typeof this.select = async (target) => {
+    try {
+      const output = await this.select(target);
+      return output;
+    } catch (e) {
+      if (e instanceof UndefinedSelectionConfigError) {
+        // do not catch step application error due to config unset
+        throw e;
+      } else {
+        log.warn(`Selection step of type "${this.type}" failed with: ${e}`);
+        // return empty step output in case of step application error (T305163)
+        return [];
+      }
+    }
+  };
+  protected abstract select(target: Webpage): Promise<StepOutput>;
   abstract suggest(target: Webpage, query: string): Promise<string>;
 
   static create(selection: SelectionDefinition) {
@@ -66,7 +81,7 @@ export class CitoidSelection extends Selection {
     }
   }
 
-  select(target: Webpage): Promise<StepOutput> {
+  protected select(target: Webpage): Promise<StepOutput> {
     if (this.config === "") {
       throw new UndefinedSelectionConfigError();
     }
@@ -134,7 +149,7 @@ export class XPathSelection extends Selection {
     }
   }
 
-  select(target: Webpage): Promise<StepOutput> {
+  protected select(target: Webpage): Promise<StepOutput> {
     if (this._config === "") {
       throw new UndefinedSelectionConfigError();
     }
@@ -231,7 +246,7 @@ export class FixedSelection extends Selection {
     }
   }
 
-  select(target: Webpage): Promise<StepOutput> {
+  protected select(target: Webpage): Promise<StepOutput> {
     return Promise.resolve([this.config]);
   }
 

@@ -86,7 +86,7 @@ export class TranslationProcedure {
     return Promise.all(
       this.selections.map((selection) => {
         // todo: make sure I don't have trouble because of simultaneously refreshing the caches
-        return selection.select(target);
+        return selection.apply(target);
       })
     );
   }
@@ -96,7 +96,7 @@ export class TranslationProcedure {
     let currentInput: StepOutput = input;
     const outputs: Array<StepOutput> = [];
     for (const transformation of this.transformations) {
-      const output = await transformation.transform(currentInput);
+      const output = await transformation.apply(currentInput);
       outputs.push(output);
       currentInput = output;
     }
