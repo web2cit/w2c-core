@@ -5,6 +5,7 @@ import {
   SelectionConfigTypeError,
   UndefinedSelectionConfigError,
   FixedSelection,
+  JsonLdSelection,
 } from "./selection";
 import { Webpage } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
@@ -206,5 +207,67 @@ describe("Fixed selection", () => {
     return selection.apply(target).then((value) => {
       expect(value).toEqual([""]);
     });
+  });
+});
+
+describe("JSON-LD selection", () => {
+  const url = "https://example.com/article1";
+
+  // beforeAll(() => {
+  //   // xpath selection relies on there being a windowContext global object,
+  //   // set up by the Domain constructor
+  //   globalThis.windowContext = new JSDOM().window;
+  // });
+
+  let target: Webpage;
+  beforeEach(() => {
+    mockNodeFetch.__addResponse(url, pages[url].html);
+    target = new Webpage(url);
+  });
+
+  // test("fails selection if configuration unset", () => {
+  //   const selection = new JsonLdSelection();
+  //   return expect(selection.apply(target)).rejects.toThrow(
+  //     UndefinedSelectionConfigError
+  //   );
+  // });
+
+  test("select single value", () => {
+    const selection = new JsonLdSelection("$[0].name");
+    return expect(selection.apply(target)).resolves.toEqual(["Jane Doe"]);
+  });
+
+  test("select multiple values", () => {
+    const selection = new JsonLdSelection("$[0][name,jobTitle]");
+    return expect(selection.apply(target)).resolves.toEqual([
+      "Jane Doe",
+      "Professor",
+    ]);
+  });
+
+  test("select value from additional json-ld object", () => {
+    const selection = new JsonLdSelection("$[1].store.bicycle.color");
+    return expect(selection.apply(target)).resolves.toEqual(["red"]);
+  });
+
+  test("json-stringify returned values", () => {
+    const selection = new JsonLdSelection("$[1].store.bicycle");
+    return expect(selection.apply(target)).resolves.toEqual([
+      '{"color":"red","price":19.95}',
+    ]);
+  });
+
+  test("flatten returned array of results", async () => {
+    const selection = new JsonLdSelection("$[1].store.book");
+    const output = await selection.apply(target);
+    expect(output.length).toBe(4);
+  });
+
+  test("rejects invalid expressions", () => {
+    const selection = new JsonLdSelection();
+    expect(() => {
+      selection.config = "$0].name";
+      // selection.config = "$..book[?(@.isbn)]"
+    }).toThrow(SelectionConfigTypeError);
   });
 });

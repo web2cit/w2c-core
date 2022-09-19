@@ -3,6 +3,7 @@ import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { StepOutput, SelectionDefinition } from "../types";
 import { JSONPath, JSONPathOptions } from "jsonpath-plus";
+import jp from "jsonpath";
 import log from "loglevel";
 
 export abstract class Selection extends TranslationStep {
@@ -256,6 +257,7 @@ export class JsonLdSelection extends Selection {
   private options: Partial<JSONPathOptions> = {
     // disable unsafe script evaluation, see T304332
     preventEval: true,
+    flatten: true, // [ [1, 2, 3] ] -> [1, 2, 3]
   };
 
   get config(): JsonLdSelection["_config"] {
@@ -264,13 +266,24 @@ export class JsonLdSelection extends Selection {
 
   set config(path: JsonLdSelection["_config"]) {
     try {
-      // validation ok?
-      JSONPath({
-        ...this.options,
-        path: this._config,
-        json: {},
-      });
+      // we can't validate syntax with jsonpath-plus
+      // https://github.com/JSONPath-Plus/JSONPath/issues/134
+      // using jsonpath for validation
+      // but we won't be able to use extra features from jsonpath-plus
+      jp.parse(path);
+
+      // code below does not work to reject script evaluation expressions
+      // we can only reject them during the application stage
+      // JSONPath({
+      //   ...this.options,
+      //   path: path,
+      //   json: {},
+      // });
+
       this._config = path;
+
+      // validation below would not be recommended because things like
+      // $.something would be converted to $['something'], which are equivalent
       // const pathArray = JSONPath.toPathArray(path);
       // const pathString = JSONPath.toPathString(pathArray);
       // if (pathString === path) {
@@ -306,14 +319,21 @@ export class JsonLdSelection extends Selection {
             }
           });
 
-          // make sure we get an array of strings
-          // what else can JSONPath return?
-
-          const selection: StepOutput = JSONPath({
+          const result = JSONPath({
             ...this.options,
             path: this._config,
             json: jsonld,
           });
+
+          // make sure we get an array of strings
+          const selection = [].concat(result).map((value) => {
+            if (typeof value === "string") {
+              return value;
+            } else {
+              return JSON.stringify(value);
+            }
+          });
+
           resolve(selection);
         })
         .catch((reason) => {
