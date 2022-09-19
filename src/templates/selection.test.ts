@@ -59,6 +59,11 @@ describe("XPath selection", () => {
     return expect(selection.apply(target)).resolves.toEqual(["James Gleick"]);
   });
 
+  test("correctly identifies HTML element with 'value' attribute (T311925)", () => {
+    const selection = new XPathSelection("//button");
+    return expect(selection.apply(target)).resolves.toEqual(["Button label"]);
+  });
+
   test("selects a text node", async () => {
     const selection = new XPathSelection("//book[2]//text()");
     expect(await selection.apply(target)).toEqual(["The Information"]);

@@ -170,13 +170,14 @@ export class XPathSelection extends Selection {
             );
             let thisNode = result.iterateNext();
             while (thisNode) {
-              // thisNode can't be instance of this.window.HTMLElement, etc
-              // because thisNode comes from a different window (data.doc's)
-              if (isHTMLElement(thisNode)) {
+              if (
+                thisNode instanceof windowContext.HTMLElement &&
+                thisNode.innerText !== undefined
+              ) {
                 // JSDOM does not support innerText anyways
                 // https://github.com/jsdom/jsdom/issues/1245
                 selection.push(thisNode.innerText);
-              } else if (isAttr(thisNode)) {
+              } else if (thisNode instanceof windowContext.Attr) {
                 selection.push(thisNode.value);
               } else {
                 const textContent = (thisNode.textContent ?? "")
@@ -216,14 +217,6 @@ export class XPathSelection extends Selection {
   suggest(target: Webpage, query: string): Promise<XPathSelection["_config"]> {
     return Promise.resolve("");
   }
-}
-
-// HTMLElement and Attr may not be available
-function isHTMLElement(node: Node): node is HTMLElement {
-  return (node as HTMLElement).innerText !== undefined;
-}
-function isAttr(node: Node): node is Attr {
-  return (node as Attr).value !== undefined;
 }
 
 export class FixedSelection extends Selection {

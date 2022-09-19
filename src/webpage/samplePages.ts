@@ -18,6 +18,9 @@ export const pages: {
     <book author='James Gleick'>\
       <title>The Information</title>\
     </book>\
+    <button value='value attr'>\
+      Button label\
+    </button>\
   </body>\
 </html>\
     ",

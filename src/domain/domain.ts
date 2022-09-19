@@ -30,7 +30,7 @@ declare global {
   // eslint-disable-next-line no-var
   var windowContext: Pick<
     typeof window,
-    "document" | "DOMParser" | "XPathResult"
+    "document" | "DOMParser" | "XPathResult" | "HTMLElement" | "Attr"
   >;
 }
 
