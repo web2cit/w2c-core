@@ -67,6 +67,8 @@
                   "enum": ["itemType"]
                 },
                 "goal": {
+                  "minItems": 1,
+                  "options": { "infoText": "" },
                   "maxItems": 1,
                   "items": {
                     "description": "One of the Citoid/Zotero supported types",
@@ -121,6 +123,8 @@
                   "enum": ["title"]
                 },
                 "goal": {
+                  "minItems": 1,
+                  "options": { "infoText": "" },
                   "maxItems": 1,
                   "items": {
                     "description": "A non-empty string",

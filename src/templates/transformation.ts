@@ -3,12 +3,24 @@ import { TranslationStep } from "./step";
 import { Date } from "sugar";
 import "sugar/locales";
 import { TransformationDefinition, StepOutput } from "../types";
+import log from "loglevel";
+
 export abstract class Transformation extends TranslationStep {
   readonly type: TransformationType;
   itemwise: boolean;
   protected _config = "";
-  apply = this.transform;
-  abstract transform(input: StepOutput): Promise<StepOutput>;
+
+  apply: typeof this.transform = async (target) => {
+    try {
+      const output = await this.transform(target);
+      return output;
+    } catch (e) {
+      log.warn(`Transformation step of type "${this.type}" failed with: ${e}`);
+      // return empty step output in case of step application error (T305163)
+      return [];
+    }
+  };
+  protected abstract transform(input: StepOutput): Promise<StepOutput>;
   constructor(
     type: Transformation["type"],
     itemwise: Transformation["itemwise"]
@@ -78,7 +90,7 @@ export class JoinTransformation extends Transformation {
     this.config = separator;
   }
 
-  transform(input: StepOutput): Promise<StepOutput> {
+  protected transform(input: StepOutput): Promise<StepOutput> {
     let output: StepOutput;
     if (this.itemwise) {
       output = input.map((item) => {
@@ -97,7 +109,7 @@ export class SplitTransformation extends Transformation {
     this.config = separator;
   }
 
-  transform(input: StepOutput): Promise<StepOutput> {
+  protected transform(input: StepOutput): Promise<StepOutput> {
     if (!this.itemwise) {
       input = [input.join()];
     }
@@ -141,7 +153,7 @@ export class DateTransformation extends Transformation {
    * @param { string } input - A free-form string
    * @returns { string } A yyyy/mm/dd date string
    */
-  transform(input: StepOutput): Promise<StepOutput> {
+  protected transform(input: StepOutput): Promise<StepOutput> {
     if (!this.itemwise) {
       input = [input.join()];
     }
@@ -216,7 +228,7 @@ export class RangeTransformation extends Transformation {
     return this._config;
   }
 
-  transform(input: StepOutput): Promise<StepOutput> {
+  protected transform(input: StepOutput): Promise<StepOutput> {
     let arrayedInput: Array<typeof input>;
     if (this.itemwise) {
       arrayedInput = input.map((item) => [item]);
@@ -275,8 +287,14 @@ export class MatchTransformation extends Transformation {
     let regex, flags;
     const match = config.match(/^\/(?<regex>.*)\/(?<flags>[a-z]+)?$/);
     if (match === null) {
+      // escape special regex characters
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+      const escaped = config.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&" // $& means the whole matched string
+      );
       // string matching defaults to global matching
-      this._target = new RegExp(config, "g");
+      this._target = new RegExp(escaped, "g");
       this._config = config;
     } else {
       ({ regex, flags } = match.groups ?? {});
@@ -301,7 +319,7 @@ export class MatchTransformation extends Transformation {
     return this._config;
   }
 
-  transform(input: StepOutput): Promise<StepOutput> {
+  protected transform(input: StepOutput): Promise<StepOutput> {
     if (!this.itemwise) {
       input = [input.join()];
     }

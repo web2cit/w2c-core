@@ -9,5 +9,9 @@ module.exports = {
         noUncheckedIndexedAccess: false
       }
     }
-  }
+  },
+  "testPathIgnorePatterns": [
+    "/node_modules/",  // default value
+    "/tests/test.[jt]s"  // ignore translation test files
+  ]
 };

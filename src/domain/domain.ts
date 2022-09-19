@@ -4,10 +4,11 @@ import {
   WebToCitCitation,
 } from "../citation/citationTypes";
 import { FieldName } from "../translationField";
-import { Webpage } from "../webpage/webpage";
+import { Webpage, WebpageFactory } from "../webpage/webpage";
 import { outputToCitation } from "../templates/templateField";
 import { TemplateConfiguration } from "./templateConfiguration";
 import { PatternConfiguration } from "./patternConfiguration";
+import { TestConfiguration } from "./testConfiguration";
 import {
   PatternDefinition,
   FallbackTemplateDefinition,
@@ -17,37 +18,53 @@ import {
   TransformationDefinition,
   TemplateFieldOutput,
   SelectionDefinition,
+  TestDefinition,
+  TestOutput,
 } from "../types";
-import { isDomainName } from "../utils";
+import { isDomainName, fetchWrapper, normalizeUrlPath } from "../utils";
 import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
+import log from "loglevel";
+
+declare global {
+  // eslint-disable-next-line no-var
+  var windowContext: Pick<
+    typeof window,
+    "document" | "DOMParser" | "XPathResult" | "HTMLElement" | "Attr"
+  >;
+}
 
 export class Domain {
   readonly domain: string;
+  readonly webpages: WebpageFactory;
   templates: TemplateConfiguration;
   patterns: PatternConfiguration;
-  // tests: TestConfiguration;
+  tests: TestConfiguration;
+
   constructor(
     domain: string,
+    windowContext: typeof global.windowContext,
     {
       templates,
       patterns,
+      tests,
       fallbackTemplate = fallbackTemplateDefinition,
       catchallPattern = true,
       forceRequiredFields = config.forceRequiredFields,
-    }: {
-      templates?: Array<TemplateDefinition>;
-      patterns?: Array<PatternDefinition>;
-      fallbackTemplate?: FallbackTemplateDefinition;
-      catchallPattern?: boolean;
-      forceRequiredFields?: FieldName[];
-    } = {}
+      userAgentHeaderName,
+      userAgentPrefix,
+      originFetch,
+    }: DomainOptions = {}
   ) {
     if (isDomainName(domain)) {
       this.domain = domain;
     } else {
       throw new DomainNameError(domain);
     }
+
+    // T302589: Create new Webpage objects via the Domain object
+    // T302239: Create new Webpage objects through a method that maintains a cache
+    this.webpages = new WebpageFactory(domain);
     this.templates = new TemplateConfiguration(
       domain,
       forceRequiredFields,
@@ -55,227 +72,355 @@ export class Domain {
       templates
     );
     this.patterns = new PatternConfiguration(domain, patterns, catchallPattern);
+    this.tests = new TestConfiguration(domain, tests);
+
+    if (userAgentHeaderName) {
+      fetchWrapper.userAgentHeaderName = userAgentHeaderName;
+    }
+    fetchWrapper.userAgent = userAgentPrefix
+      ? userAgentPrefix + " " + config.USER_AGENT
+      : config.USER_AGENT;
+
+    const origin = "https://" + domain;
+    fetchWrapper.customFetchByOrigin.set(origin, originFetch);
+
+    // the global window variable may not be available in non-browser contexts
+    globalThis.windowContext = windowContext;
   }
 
-  async translate(
-    target: Webpage,
-    options: {
-      templateFieldInfo?: boolean; // returns the fieldoutput array or not, rename array?
-      allTemplates?: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
-      onlyApplicable?: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
-      fillWithCitoid?: boolean; // replace all invalid fields with citoid response
-      forceTemplatePaths?: string[];
-      forcePattern?: string; // make as if target matched this pattern; ignored if forceTemplates
-    } = {
-      templateFieldInfo: false,
-      allTemplates: false,
-      onlyApplicable: true,
-      fillWithCitoid: false,
-    }
-  ): Promise<TranslationOutput> {
-    let pattern: string | undefined; // remains undefined if forceTemplatePaths
-    let templatePaths: string[];
+  // instantiate domain object from URL
+  // we may need this if we want to follow redirects before instantiating
+  // the domain object (see T304773)
+  static fromURL(
+    url: string,
+    windowContext: typeof global.windowContext,
+    options?: DomainOptions
+  ) {
+    // this may fail
+    const webpage = new Webpage(url);
+    const domain = new Domain(webpage.domain, windowContext, options);
+    domain.webpages.setWebpage(webpage);
+    return domain;
+  }
 
-    if (options.forceTemplatePaths === undefined) {
-      // determine what pattern the target belongs to
-      pattern =
-        options.forcePattern ??
-        this.patterns.sortPaths(target.path).keys().next().value;
-      if (pattern !== undefined) {
-        // get all template paths for that pattern
-        templatePaths = this.patterns.sortPaths(this.templates.paths, pattern);
-      } else {
-        templatePaths = [];
+  // T306555: Add a "fetchAndLoadConfig" method to the "Domain" objects
+  // todo: pending test
+  async fetchAndLoadConfigs(tests = true): Promise<void> {
+    const promises = [
+      this.templates.fetchAndLoad(),
+      this.patterns.fetchAndLoad(),
+    ];
+    if (tests) promises.push(this.tests.fetchAndLoad());
+    const outcomes = await Promise.allSettled(promises);
+    for (const outcome of outcomes) {
+      if (outcome.status === "rejected") {
+        log.warn(outcome.reason);
       }
+    }
+  }
+
+  // get all paths in template and test configurations
+  getPaths(): string[] {
+    const paths = Array.from(
+      new Set([...this.templates.paths, ...this.tests.nonEmptyPaths])
+    );
+    return paths;
+  }
+
+  translate(
+    paths: string | string[],
+    {
+      allTemplates = false,
+      onlyApplicable = true,
+      fillWithCitoid = false,
+      forceTemplatePaths,
+      forcePattern,
+    }: TranslateOptions = {}
+  ): Promise<TargetOutput[]> {
+    if (!Array.isArray(paths)) paths = [paths];
+    paths = paths.map(normalizeUrlPath);
+
+    let targetsByPattern: Map<string | undefined, string[]>;
+    if (forceTemplatePaths !== undefined) {
+      // if translation templates have been forced, pattern group makes no sense
+      targetsByPattern = new Map([[undefined, paths]]);
+    } else if (forcePattern !== undefined) {
+      targetsByPattern = new Map([[forcePattern, paths]]);
     } else {
-      templatePaths = options.forceTemplatePaths;
+      // sort target paths into url path pattern groups
+      targetsByPattern = this.patterns.sortPaths(paths);
     }
 
-    // translate target with templates for paths returned above
-    const templateOutputs = await this.templates.translateWith(
-      target,
-      templatePaths,
-      {
-        tryAllTemplates: options.allTemplates,
-        useFallback: options.forceTemplatePaths === undefined,
-        onlyApplicable: options.onlyApplicable,
+    const templatesByTarget: Map<
+      string,
+      { templatePaths: string[]; patternPath: string | undefined }
+    > = new Map();
+
+    for (const [patternPath, targetPaths] of Array.from(targetsByPattern)) {
+      if (targetPaths.length === 0) continue;
+      let templatePaths: string[];
+      if (patternPath === undefined) {
+        if (forceTemplatePaths === undefined) {
+          throw new Error(
+            "Unexpected undefined pattern path " +
+              'with undefined "forceTemplatePaths" option'
+          );
+        }
+        templatePaths = forceTemplatePaths;
+      } else {
+        // retrieve translation templates that belong to the same url path
+        // pattern group
+        templatePaths = this.patterns.sortPaths(
+          this.templates.paths,
+          patternPath
+        );
+      }
+
+      for (const targetPath of targetPaths) {
+        templatesByTarget.set(targetPath, {
+          templatePaths,
+          patternPath,
+        });
+      }
+    }
+
+    // iterate through target paths, in the order in which they were given,
+    // and queue promises of target outputs into an array
+    const targetOutputPromises: Promise<TargetOutput>[] = paths.map(
+      (targetPath) => {
+        const target = this.webpages.getWebpage(targetPath);
+        const { templatePaths, patternPath } =
+          templatesByTarget.get(targetPath)!;
+
+        if (fillWithCitoid) {
+          // prepare the Citoid cache
+          // target.cache.citoid.getData();
+        }
+
+        const targetOutput: TargetOutput = {
+          domain: {
+            name: this.domain,
+            definitions: {
+              patterns: {
+                revid: this.patterns.currentRevid,
+              },
+              templates: {
+                revid: this.templates.currentRevid,
+              },
+              tests: {
+                revid: this.tests.currentRevid,
+              },
+            },
+          },
+          target: {
+            path: target.path,
+            caches: {
+              http:
+                target.cache.http.timestamp !== undefined
+                  ? { timestamp: target.cache.http.timestamp }
+                  : undefined,
+              citoid:
+                target.cache.citoid.timestamp !== undefined
+                  ? { timestamp: target.cache.citoid.timestamp }
+                  : undefined,
+            },
+          },
+          translation: {
+            pattern: patternPath,
+            outputs: [],
+          },
+        };
+
+        const templateOutputsPromise = this.templates.translateWith(
+          target,
+          templatePaths,
+          {
+            tryAllTemplates: allTemplates,
+            // do not use fallback template if translation templates have been
+            // forced
+            useFallback: forceTemplatePaths === undefined,
+            onlyApplicable: onlyApplicable,
+          }
+        );
+
+        const targetOutputPromise = templateOutputsPromise
+          .then((templateOutputs) => {
+            let baseCitation: MediaWikiBaseFieldCitation | undefined;
+            if (fillWithCitoid) {
+              // baseCitation = (await target.cache.citoid.getData()).citation.simple
+            }
+
+            const translationResults = templateOutputs.map((templateOutput) => {
+              const scores = this.tests.score(templateOutput);
+              const enrichedOutput = makeTranslationResult(
+                templateOutput,
+                scores,
+                baseCitation
+              );
+              return enrichedOutput;
+            });
+
+            targetOutput.translation.outputs.push(...translationResults);
+            return targetOutput;
+          })
+          .catch((reason) => {
+            if (reason instanceof Error) {
+              targetOutput.translation.error = reason;
+            } else {
+              targetOutput.translation.error = new Error(reason);
+            }
+            return targetOutput;
+          });
+
+        return targetOutputPromise;
       }
     );
 
-    let baseCitation: MediaWikiBaseFieldCitation | undefined;
-    if (options.fillWithCitoid) {
-      // baseCitation = (await target.cache.citoid.getData()).citation.simple
-    }
-
-    // compose the final outputs
-    const outputs: Translation[] = templateOutputs.map((templateOutput) => {
-      return this.composeOutput(
-        templateOutput,
-        options.templateFieldInfo,
-        baseCitation
-      );
-    });
-
-    return {
-      domain: {
-        name: this.domain,
-        definitions: {
-          patterns: {
-            revid: this.patterns.currentRevid,
-          },
-          templates: {
-            revid: this.templates.currentRevid,
-          },
-        },
-      },
-      target: {
-        path: target.path,
-        caches: {
-          http:
-            target.cache.http.timestamp !== undefined
-              ? { timestamp: target.cache.http.timestamp }
-              : undefined,
-          citoid:
-            target.cache.citoid.timestamp !== undefined
-              ? { timestamp: target.cache.citoid.timestamp }
-              : undefined,
-        },
-      },
-      translation: {
-        pattern: pattern,
-        outputs: outputs,
-      },
-    };
-  }
-
-  /**
-   * Compose a final translation from a template output
-   * @param templateOutput
-   * @param templateFieldInfo
-   * @param baseCitation
-   * @returns
-   */
-  private composeOutput(
-    templateOutput: TemplateOutput,
-    templateFieldInfo = false,
-    baseCitation?: MediaWikiBaseFieldCitation
-  ): Translation {
-    // create citoid citations from output
-    let citation;
-    if (templateOutput.applicable) {
-      // only make citations for applicable template outputs
-      citation = this.makeCitation(
-        templateOutput.outputs,
-        // With this we are setting the output citation's URL to that of the
-        // target Webpage object, which does not follow redirects.
-        // We may change this to the final response URL, but there may be cases
-        // where we do not want to do that (see T210871).
-        // Alternatively, we may let users manually change this using a URL
-        // template field.
-        templateOutput.target.url.href,
-        baseCitation
-      );
-    }
-
-    let fields: FieldInfo[] | undefined;
-    if (templateFieldInfo) {
-      fields = templateOutput.outputs.map((fieldOutput) => {
-        // fixme: this should be simplified when SelectionOutput is changed
-        const procedures = fieldOutput.procedureOutputs.map(
-          (procedureOutput) => {
-            const selections = procedureOutput.procedure.selections.map(
-              (selection, index) => {
-                return {
-                  type: selection.type,
-                  config: selection.config,
-                  output: procedureOutput.output.selection[index] as StepOutput,
-                };
-              }
-            );
-            const transformations =
-              procedureOutput.procedure.transformations.map(
-                (transformation, index) => {
-                  return {
-                    type: transformation.type,
-                    config: transformation.config,
-                    itemwise: transformation.itemwise,
-                    output: procedureOutput.output.transformation[
-                      index
-                    ] as StepOutput,
-                  };
-                }
-              );
-            return {
-              selections,
-              transformations,
-              output: procedureOutput.output.procedure,
-            };
-          }
-        );
-        const fieldInfo: FieldInfo = {
-          name: fieldOutput.fieldname,
-          required: fieldOutput.required,
-          procedures,
-          output: fieldOutput.output,
-          valid: fieldOutput.valid,
-          applicable: fieldOutput.applicable,
-        };
-        return fieldInfo;
-      });
-    }
-
-    const translation: Translation = {
-      citation: citation,
-      timestamp: templateOutput.timestamp,
-      template: {
-        path: templateOutput.template.path,
-        applicable: templateOutput.applicable,
-        fields,
-      },
-    };
-    return translation;
-  }
-
-  private makeCitation(
-    fieldOutputs: TemplateFieldOutput[],
-    url: string,
-    baseCitation?: MediaWikiBaseFieldCitation
-  ): WebToCitCitation {
-    const tmpCitation = outputToCitation(fieldOutputs);
-
-    const itemType = tmpCitation.itemType ?? baseCitation?.itemType;
-    if (itemType === undefined) {
-      throw new Error(
-        `"itemType" not found in template output or base citation`
-      );
-    }
-    const title = tmpCitation.title ?? baseCitation?.title;
-    if (title === undefined) {
-      throw new Error(`"title" not found in template output or base citation`);
-    }
-
-    const citation: WebToCitCitation = {
-      ...baseCitation,
-      ...tmpCitation,
-
-      // required fields...
-      // ...for which we may have a template output (see above)
-      itemType,
-      title,
-      // ...for which we may have template fields in the future
-      url,
-
-      // optional fields...
-      // ...for which we never want the baseCitation value
-      source: baseCitation ? ["Web2Cit", "Zotero"] : ["Web2Cit"],
-      accessDate: new Date().toISOString().substring(0, 10),
-    };
-    return citation;
+    return Promise.all(targetOutputPromises);
   }
 }
 
+/**
+ * Compose a final translation from a template output
+ * @param templateOutput
+ * @param templateFieldInfo
+ * @param baseCitation
+ * @returns
+ */
+function makeTranslationResult(
+  templateOutput: TemplateOutput,
+  scores: TestOutput,
+  baseCitation?: MediaWikiBaseFieldCitation
+): TranslationResult {
+  // create citoid citations from output
+  let citation;
+  if (templateOutput.applicable) {
+    // only make citations for applicable template outputs
+    citation = makeCitation(
+      templateOutput.outputs,
+      // With this we are setting the output citation's URL to that of the
+      // target Webpage object, which does not follow redirects.
+      // We may change this to the final response URL, but there may be cases
+      // where we do not want to do that (see T210871).
+      // Alternatively, we may let users manually change this using a URL
+      // template field.
+      templateOutput.target.url.href,
+      baseCitation
+    );
+  }
+
+  // templateFieldInfo
+  const fields = templateOutput.outputs.map((fieldOutput) => {
+    // fixme: this should be simplified when SelectionOutput is changed
+    const procedures = fieldOutput.procedureOutputs.map((procedureOutput) => {
+      const selections = procedureOutput.procedure.selections.map(
+        (selection, index) => {
+          return {
+            type: selection.type,
+            config: selection.config,
+            output: procedureOutput.output.selection[index] as StepOutput,
+          };
+        }
+      );
+      const transformations = procedureOutput.procedure.transformations.map(
+        (transformation, index) => {
+          return {
+            type: transformation.type,
+            config: transformation.config,
+            itemwise: transformation.itemwise,
+            output: procedureOutput.output.transformation[index] as StepOutput,
+          };
+        }
+      );
+      return {
+        selections,
+        transformations,
+        output: procedureOutput.output.procedure,
+      };
+    });
+    const fieldInfo: FieldInfo = {
+      name: fieldOutput.fieldname,
+      required: fieldOutput.required,
+      procedures,
+      output: fieldOutput.output,
+      valid: fieldOutput.valid,
+      applicable: fieldOutput.applicable,
+    };
+    return fieldInfo;
+  });
+
+  const result: TranslationResult = {
+    citation: citation,
+    scores,
+    timestamp: templateOutput.timestamp,
+    template: {
+      path: templateOutput.template.path,
+      applicable: templateOutput.applicable,
+      fields,
+    },
+  };
+  return result;
+}
+
+function makeCitation(
+  fieldOutputs: TemplateFieldOutput[],
+  url: string,
+  baseCitation?: MediaWikiBaseFieldCitation
+): WebToCitCitation {
+  const tmpCitation = outputToCitation(fieldOutputs);
+
+  const itemType = tmpCitation.itemType ?? baseCitation?.itemType;
+  if (itemType === undefined) {
+    throw new Error(`"itemType" not found in template output or base citation`);
+  }
+  const title = tmpCitation.title ?? baseCitation?.title;
+  if (title === undefined) {
+    throw new Error(`"title" not found in template output or base citation`);
+  }
+
+  const citation: WebToCitCitation = {
+    ...baseCitation,
+    ...tmpCitation,
+
+    // required fields...
+    // ...for which we may have a template output (see above)
+    itemType,
+    title,
+    // ...for which we may have template fields in the future
+    url,
+
+    // optional fields...
+    // ...for which we never want the baseCitation value
+    source: baseCitation ? ["Web2Cit", "Zotero"] : ["Web2Cit"],
+    accessDate: new Date().toISOString().substring(0, 10),
+  };
+  return citation;
+}
+
+type DomainOptions = {
+  templates?: Array<TemplateDefinition>;
+  patterns?: Array<PatternDefinition>;
+  tests?: Array<TestDefinition>;
+  fallbackTemplate?: FallbackTemplateDefinition;
+  catchallPattern?: boolean;
+  forceRequiredFields?: FieldName[];
+  // todo T306553: consider accepting alternative storage settings
+  userAgentHeaderName?: string;
+  userAgentPrefix?: string;
+  // custom fetch function to use for domain's same-origin requests
+  originFetch?: typeof fetch;
+};
+
+type TranslateOptions = {
+  allTemplates?: boolean; // pass this to template set: don't do sequential, don't stop when first applicable found
+  onlyApplicable?: boolean; // only return results for applicable templates; if allTemplates false, only tried templates will be returned
+  fillWithCitoid?: boolean; // replace all invalid fields with citoid response
+  forceTemplatePaths?: string[];
+  forcePattern?: string; // make as if target matched this pattern; ignored if forceTemplates
+};
+
 // todo: consider extending into the more-specific output types
-export type TranslationOutput = {
+export type TargetOutput = {
   domain: {
     name: string;
     definitions: {
@@ -283,6 +428,9 @@ export type TranslationOutput = {
         revid?: number; // can they be 0?
       };
       templates: {
+        revid?: number;
+      };
+      tests: {
         revid?: number;
       };
     };
@@ -300,20 +448,21 @@ export type TranslationOutput = {
     };
   };
   translation: {
-    outputs: Translation[];
+    outputs: TranslationResult[];
     pattern?: string; // undefined if forced templates
+    error?: Error;
   };
 };
 
-type Translation = {
-  // todo: move out; it's a template output with extra "citation"
+type TranslationResult = {
   template: {
     applicable?: boolean; // for some specific types it should always be true; // may be undefined if wasn't tired (allTemplates = false && onlyApplicable = false)
     path: string | undefined; // undefined for fallback template
-    fields?: FieldInfo[];
+    fields: FieldInfo[];
   };
   citation: WebToCitCitation | undefined;
   timestamp: string;
+  scores: TestOutput;
 };
 
 type FieldInfo = {

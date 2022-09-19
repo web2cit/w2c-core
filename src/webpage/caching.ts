@@ -1,8 +1,7 @@
 // node-fetch 3 does not support jest yet
 // https://github.com/node-fetch/node-fetch/issues/1265
-import fetch from "node-fetch";
+import { fetchWrapper } from "../utils";
 import { fetchCitation } from "../citoid";
-import { JSDOM } from "jsdom";
 import { HTTPResponseError } from "../errors";
 import { Citation } from "../citation/citation";
 
@@ -57,13 +56,23 @@ class HttpCache extends ResponseCache {
     this._refreshing = true;
     return new Promise<HttpCacheData>((resolve, reject) => {
       // alternatively use JSDOM.fromURL();
-      fetch(this.url)
+      fetchWrapper
+        .fetch(this.url)
         .then(async (response) => {
           if (response.ok) {
             const body = await response.text();
-            const { window } = new JSDOM(body, { url: response.url });
-            // const document = cleanDom(window);
-            const document = window.document;
+            // const { window } = new JSDOM(body, { url: response.url });
+            // // const document = cleanDom(window);
+            // const document = window.document;
+
+            // fixme?: document's domain and url seem to come from the window
+            // object, which may be the editor's iframe on the browser, or the
+            // JSDOM window on the server. Would this be a problem?
+            // fixme?: are there cases where "text/html" may not be appropriate?
+            const document = new windowContext.DOMParser().parseFromString(
+              body,
+              "text/html"
+            );
             const data: HttpCacheData = {
               body,
               doc: document,
@@ -84,11 +93,12 @@ class HttpCache extends ResponseCache {
   }
 }
 
-function cleanDom(window: JSDOM["window"]): Document {
+// function cleanDom(window: JSDOM["window"]): Document {
+function cleanDom(window: Window): Document {
   const document = window.document;
   const treeWalker = document.createTreeWalker(
-    document,
-    window.NodeFilter.SHOW_TEXT
+    document
+    // window.NodeFilter.SHOW_TEXT
   );
   let currentNode: Text | null = treeWalker.currentNode as Text;
   while (currentNode) {

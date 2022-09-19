@@ -1,6 +1,6 @@
 import { TemplateField } from "./templateField";
 import { TranslationTemplate } from "./template";
-import { Webpage } from "../webpage/webpage";
+import { Webpage, WebpageFactory } from "../webpage/webpage";
 import * as nodeFetch from "node-fetch";
 import { pages } from "../webpage/samplePages";
 import { TemplateFieldDefinition, TemplateDefinition } from "../types";
@@ -170,4 +170,35 @@ it("rejects creation if a mandatory field is missing", () => {
       forceRequiredFields: ["itemType", "title"],
     });
   }).toThrow('Mandatory field "itemType" missing from template definition');
+});
+
+it("uses a webpage factory", () => {
+  const factory = new WebpageFactory(templateDomain);
+  const template = new TranslationTemplate(
+    templateDomain,
+    {
+      path: templatePath,
+      fields: [],
+    },
+    {
+      webpageFactory: factory,
+    }
+  );
+  expect(template.template === factory.getWebpage(templatePath)).toBe(true);
+});
+
+it("rejects webpage factory for different domain", () => {
+  const factory = new WebpageFactory("other." + templateDomain);
+  expect(() => {
+    new TranslationTemplate(
+      templateDomain,
+      {
+        path: templatePath,
+        fields: [],
+      },
+      {
+        webpageFactory: factory,
+      }
+    );
+  }).toThrow("does not match webpage factory domain");
 });

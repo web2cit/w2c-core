@@ -1,4 +1,5 @@
-import fetch, { Headers } from "node-fetch";
+import { Headers } from "node-fetch";
+import { fetchWrapper } from "./utils";
 import { HTTPResponseError } from "./errors";
 import { CITOID_API_ENDPOINT as API_ENDPOINT } from "./config";
 import { CitoidCitation, isCitoidCitation } from "./citation/citationTypes";
@@ -19,7 +20,8 @@ function translateUrl(
   if (language) headers.append("Accept-Language", language);
 
   return new Promise<CitoidCitation>((resolve, reject) => {
-    fetch(url, { headers })
+    fetchWrapper
+      .fetch(url, { headers })
       .then(async (response) => {
         if (response.ok) {
           const responseText = await response.text();

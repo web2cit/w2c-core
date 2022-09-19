@@ -1,5 +1,5 @@
 import { FieldName } from "../translationField";
-import { Webpage } from "../webpage/webpage";
+import { Webpage, WebpageFactory } from "../webpage/webpage";
 import { TemplateField } from "./templateField";
 import log from "loglevel";
 import { isDomainName } from "../utils";
@@ -134,20 +134,29 @@ export class TranslationTemplate extends BaseTranslationTemplate {
     {
       forceRequiredFields = [],
       strict = true,
+      webpageFactory,
     }: {
       forceRequiredFields?: Array<FieldName>;
       strict?: boolean;
+      webpageFactory?: WebpageFactory;
     } = {}
   ) {
     super(domain, template, { forceRequiredFields, strict });
-    const url = "http://" + this.domain + template.path;
+    if (webpageFactory === undefined) {
+      webpageFactory = new WebpageFactory(this.domain);
+    }
+    if (webpageFactory.domain !== this.domain) {
+      throw new Error(
+        `Translation template domain "${this.domain} does not match ` +
+          `webpage factory domain "${webpageFactory.domain}.`
+      );
+    }
     try {
-      this.template = new Webpage(url);
+      this.template = webpageFactory.getWebpage(template.path);
     } catch {
       throw new Error(
-        "Could not create a Webpage object for the URL " +
-          "formed by the domain and path provided: " +
-          url
+        `Failed to create a webpage object for path "${template.path} ` +
+          `in domain "${this.domain}`
       );
     }
   }

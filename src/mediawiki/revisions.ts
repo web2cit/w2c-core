@@ -1,4 +1,5 @@
-import fetch, { Response } from "node-fetch";
+import { Response } from "node-fetch";
+import { fetchWrapper } from "../utils";
 import log from "loglevel";
 import { HTTPResponseError } from "../errors";
 
@@ -59,6 +60,9 @@ class RevisionsApi {
       rvcontinue: undefined,
       formatversion: "2",
       format: "json",
+      // For anonymous requests, origin * allows requests from anywhere
+      // https://www.mediawiki.org/wiki/Manual:CORS#Description
+      origin: "*",
     };
 
     do {
@@ -77,7 +81,7 @@ class RevisionsApi {
 
       let response: Response;
       try {
-        response = await fetch(url);
+        response = await fetchWrapper.fetch(url);
         if (!response.ok) {
           throw new HTTPResponseError(url, response);
         }
