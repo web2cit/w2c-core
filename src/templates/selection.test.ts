@@ -233,12 +233,16 @@ describe("JSON-LD selection", () => {
   // });
 
   test("select single value", () => {
-    const selection = new JsonLdSelection("$[0].name");
+    // const expression = "$[0].name"  // JSONPath
+    const expression = "[0].name"; // JMESPath
+    const selection = new JsonLdSelection(expression);
     return expect(selection.apply(target)).resolves.toEqual(["Jane Doe"]);
   });
 
   test("select multiple values", () => {
-    const selection = new JsonLdSelection("$[0][name,jobTitle]");
+    // const expression = "$[0][name,jobTitle]"  // JSONPath
+    const expression = "[0].[name,jobTitle]"; // JMESPath
+    const selection = new JsonLdSelection(expression);
     return expect(selection.apply(target)).resolves.toEqual([
       "Jane Doe",
       "Professor",
@@ -246,28 +250,40 @@ describe("JSON-LD selection", () => {
   });
 
   test("select value from additional json-ld object", () => {
-    const selection = new JsonLdSelection("$[1].store.bicycle.color");
+    // const expression = "$[1].store.bicycle.color"  // JSONPath
+    const expression = "[1].store.bicycle.color"; // JMESPath
+    const selection = new JsonLdSelection(expression);
     return expect(selection.apply(target)).resolves.toEqual(["red"]);
   });
 
   test("json-stringify returned values", () => {
-    const selection = new JsonLdSelection("$[1].store.bicycle");
+    // const expression = "$[1].store.bicycle"  // JSONPath
+    const expression = "[1].store.bicycle"; // JMESPath
+    const selection = new JsonLdSelection(expression);
     return expect(selection.apply(target)).resolves.toEqual([
       '{"color":"red","price":19.95}',
     ]);
   });
 
   test("flatten returned array of results", async () => {
-    const selection = new JsonLdSelection("$[1].store.book");
+    // const expression = "$[1].store.book"  // JSONPath
+    const expression = "[1].store.book"; // JMESPath
+    const selection = new JsonLdSelection(expression);
     const output = await selection.apply(target);
     expect(output.length).toBe(4);
   });
 
   test("rejects invalid expressions", () => {
+    const expression = "$0].name";
     const selection = new JsonLdSelection();
     expect(() => {
-      selection.config = "$0].name";
-      // selection.config = "$..book[?(@.isbn)]"
+      selection.config = expression;
     }).toThrow(SelectionConfigTypeError);
+  });
+
+  test("ignores null values", () => {
+    const expression = "[0].[name, lastName, email]";
+    const selection = new JsonLdSelection(expression);
+    return expect(selection.apply(target)).resolves.toEqual(["Jane Doe"]);
   });
 });

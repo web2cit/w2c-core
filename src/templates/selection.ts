@@ -2,8 +2,7 @@ import { TranslationStep } from "./step";
 import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { StepOutput, SelectionDefinition } from "../types";
-import { JSONPath, JSONPathOptions } from "jsonpath-plus";
-import jp from "jsonpath";
+import jmespath from "jmespath";
 import log from "loglevel";
 
 export abstract class Selection extends TranslationStep {
@@ -253,44 +252,14 @@ export class JsonLdSelection extends Selection {
     if (path !== undefined) this.config = path;
   }
 
-  // jsonpath-plus' JSONPath options
-  private options: Partial<JSONPathOptions> = {
-    // disable unsafe script evaluation, see T304332
-    preventEval: true,
-    flatten: true, // [ [1, 2, 3] ] -> [1, 2, 3]
-  };
-
   get config(): JsonLdSelection["_config"] {
     return this._config;
   }
 
   set config(path: JsonLdSelection["_config"]) {
     try {
-      // we can't validate syntax with jsonpath-plus
-      // https://github.com/JSONPath-Plus/JSONPath/issues/134
-      // using jsonpath for validation
-      // but we won't be able to use extra features from jsonpath-plus
-      jp.parse(path);
-
-      // code below does not work to reject script evaluation expressions
-      // we can only reject them during the application stage
-      // JSONPath({
-      //   ...this.options,
-      //   path: path,
-      //   json: {},
-      // });
-
+      jmespath.search({}, path);
       this._config = path;
-
-      // validation below would not be recommended because things like
-      // $.something would be converted to $['something'], which are equivalent
-      // const pathArray = JSONPath.toPathArray(path);
-      // const pathString = JSONPath.toPathString(pathArray);
-      // if (pathString === path) {
-      //   this._config = path;
-      // } else {
-      //   throw new Error();
-      // }
     } catch {
       throw new SelectionConfigTypeError(this.type, path);
     }
@@ -319,19 +288,16 @@ export class JsonLdSelection extends Selection {
             }
           });
 
-          const result = JSONPath({
-            ...this.options,
-            path: this._config,
-            json: jsonld,
-          });
+          const result = jmespath.search(jsonld, this.config);
 
-          // make sure we get an array of strings
-          const selection = [].concat(result).map((value) => {
-            if (typeof value === "string") {
-              return value;
-            } else {
-              return JSON.stringify(value);
-            }
+          // normalize result
+          const selection: StepOutput = [];
+          ([] as any[]).concat(result).forEach((value) => {
+            // ignore null values
+            if (value === null) return;
+            // stringify non-string values
+            if (typeof value !== "string") value = JSON.stringify(value);
+            selection.push(value);
           });
 
           resolve(selection);
