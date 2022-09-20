@@ -540,6 +540,18 @@
                   "type",
                   "config"
                 ]
+              },
+              {
+                "title": "JSON-LD selection",
+                "description": "Selects elements from JSON-LD objects present on the target webpage.",
+                "properties": {
+                  "type": {
+                    "enum": ["json-ld"]
+                  },
+                  "config": {
+                    "description": "Any valid JMESPath (https://jmespath.org/) expression"
+                  }
+                }
               }
             ]
           }

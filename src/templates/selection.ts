@@ -43,6 +43,9 @@ export abstract class Selection extends TranslationStep {
       case "fixed":
         return new FixedSelection(config);
         break;
+      case "json-ld":
+        return new JsonLdSelection(config);
+        break;
       default:
         throw new Error(`Unknown selection of type ${selection.type}`);
     }
@@ -220,30 +223,6 @@ export class XPathSelection extends Selection {
   }
 }
 
-// todo: we will need something to check this online!
-// https://jsonpathfinder.com/
-// https://www.jsonquerytool.com/
-// https://codebeautify.org/jsonpath-tester#
-// https://jsonpath.com/
-// bookmarklet:
-// function concatAndCopy() {
-//   let jsonld = [];
-//   Array.from(
-//     document.querySelectorAll('script[type="application/ld+json"')
-//   ).forEach((script) => {
-//     const content = script.innerHTML;
-//     try {
-//       const json = JSON.parse(content);
-//       jsonld = jsonld.concat(json);
-//     } catch {
-//       console.log("failed to parse");
-//     }
-//   });
-//   navigator.clipboard.writeText(JSON.stringify(jsonld, undefined, 2)).then(() => {
-//     alert("JSON-LD copied to clipboard!")
-//   });
-// };
-// concatAndCopy();
 export class JsonLdSelection extends Selection {
   readonly type: SelectionType = "json-ld";
   protected _config = "";
