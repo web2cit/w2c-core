@@ -2,6 +2,7 @@ import { TranslationStep } from "./step";
 import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
 import { StepOutput, SelectionDefinition } from "../types";
+import jmespath from "jmespath";
 import log from "loglevel";
 
 export abstract class Selection extends TranslationStep {
@@ -41,6 +42,9 @@ export abstract class Selection extends TranslationStep {
         break;
       case "fixed":
         return new FixedSelection(config);
+        break;
+      case "json-ld":
+        return new JsonLdSelection(config);
         break;
       default:
         throw new Error(`Unknown selection of type ${selection.type}`);
@@ -215,6 +219,75 @@ export class XPathSelection extends Selection {
   }
 
   suggest(target: Webpage, query: string): Promise<XPathSelection["_config"]> {
+    return Promise.resolve("");
+  }
+}
+
+export class JsonLdSelection extends Selection {
+  readonly type: SelectionType = "json-ld";
+  protected _config = "";
+  constructor(path?: JsonLdSelection["_config"]) {
+    super();
+    if (path !== undefined) this.config = path;
+  }
+
+  get config(): JsonLdSelection["_config"] {
+    return this._config;
+  }
+
+  set config(path: JsonLdSelection["_config"]) {
+    try {
+      jmespath.search({}, path);
+      this._config = path;
+    } catch {
+      throw new SelectionConfigTypeError(this.type, path);
+    }
+  }
+
+  protected select(target: Webpage): Promise<StepOutput> {
+    if (this._config === "") {
+      throw new UndefinedSelectionConfigError();
+    }
+    return new Promise((resolve, reject) => {
+      target.cache.http
+        .getData(false)
+        .then((data) => {
+          // create an array of json-ld objects
+          let jsonld: ReturnType<JSON["parse"]>[] = [];
+          Array.from(
+            data.doc.querySelectorAll('script[type="application/ld+json"')
+          ).forEach((script, index) => {
+            const content = script.innerHTML;
+            try {
+              const json = JSON.parse(content);
+              // do not push in case it is an array, concat instead
+              jsonld = jsonld.concat(json);
+            } catch {
+              log.warn(`Could not parse JSON-LD object #${index + 1}`);
+            }
+          });
+
+          const result = jmespath.search(jsonld, this.config);
+
+          // normalize result
+          const selection: StepOutput = [];
+          ([] as any[]).concat(result).forEach((value) => {
+            // ignore null values
+            if (value === null) return;
+            // stringify non-string values
+            if (typeof value !== "string") value = JSON.stringify(value);
+            selection.push(value);
+          });
+
+          resolve(selection);
+        })
+        .catch((reason) => {
+          reject(reason);
+        });
+    });
+  }
+
+  suggest(target: Webpage, query: string): Promise<JsonLdSelection["_config"]> {
     return Promise.resolve("");
   }
 }

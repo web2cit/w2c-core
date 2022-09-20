@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/jest": "^27.4.0",
+    "@types/jmespath": "^0.15.0",
     "@types/jsdom": "^16.2.15",
     "@types/minimatch": "^3.0.5",
     "@types/node": "^12.20.46",
@@ -59,6 +60,7 @@
   },
   "dependencies": {
     "fastest-levenshtein": "^1.0.12",
+    "jmespath": "^0.16.0",
     "loglevel": "^1.8.0",
     "minimatch": "^5.1.0",
     "node-fetch": "^2.6.6",
