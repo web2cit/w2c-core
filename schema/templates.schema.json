@@ -549,7 +549,8 @@
                     "enum": ["json-ld"]
                   },
                   "config": {
-                    "description": "Any valid JMESPath (https://jmespath.org/) expression"
+                    "description": "Any valid JMESPath (https://jmespath.org/) expression",
+                    "options": { "infoText": "Expressions are evaluated against an array including all JSON-LD objects found on the target webpage." }
                   }
                 }
               }
