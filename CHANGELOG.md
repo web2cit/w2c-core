@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+-
+
+## [2.0.0-alpha.2] - 2022-09-22
+
 ### Changed
 
 - Update "selection" automatic tests.
@@ -67,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - First version published to npm.
 
 
-[unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.0.0-alpha.1...v2
+[unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.0.0-alpha.2...v2
+[2.0.0-alpha.2]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
 [2.0.0-alpha.1]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-alpha.0...v2.0.0-alpha.1
 [2.0.0-alpha.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v1.0.1...v2.0.0-alpha.0
 [1.0.1]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v1.0.0...v1.0.1
