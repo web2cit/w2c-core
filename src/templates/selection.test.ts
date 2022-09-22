@@ -15,6 +15,12 @@ import log from "loglevel";
 
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
 
+beforeAll(() => {
+  // xpath and json-ld selections rely on there being a windowContext global
+  // object, set up by the Domain constructor
+  globalThis.windowContext = new JSDOM().window;
+});
+
 beforeEach(() => {
   // emulate network error if no implementation given
   mockNodeFetch.__reset();
@@ -22,12 +28,6 @@ beforeEach(() => {
 
 describe("XPath selection", () => {
   const sampleUrl = "https://example.com/article1";
-
-  beforeAll(() => {
-    // xpath selection relies on there being a windowContext global object,
-    // set up by the Domain constructor
-    globalThis.windowContext = new JSDOM().window;
-  });
 
   let target: Webpage;
   beforeEach(() => {
@@ -213,24 +213,18 @@ describe("Fixed selection", () => {
 describe("JSON-LD selection", () => {
   const url = "https://example.com/article1";
 
-  // beforeAll(() => {
-  //   // xpath selection relies on there being a windowContext global object,
-  //   // set up by the Domain constructor
-  //   globalThis.windowContext = new JSDOM().window;
-  // });
-
   let target: Webpage;
   beforeEach(() => {
     mockNodeFetch.__addResponse(url, pages[url].html);
     target = new Webpage(url);
   });
 
-  // test("fails selection if configuration unset", () => {
-  //   const selection = new JsonLdSelection();
-  //   return expect(selection.apply(target)).rejects.toThrow(
-  //     UndefinedSelectionConfigError
-  //   );
-  // });
+  test("fails selection if configuration unset", () => {
+    const selection = new JsonLdSelection();
+    return expect(selection.apply(target)).rejects.toThrow(
+      UndefinedSelectionConfigError
+    );
+  });
 
   test("select single value", () => {
     // const expression = "$[0].name"  // JSONPath
