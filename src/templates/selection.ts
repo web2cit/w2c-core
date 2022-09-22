@@ -257,13 +257,18 @@ export class JsonLdSelection extends Selection {
           Array.from(
             data.doc.querySelectorAll('script[type="application/ld+json"')
           ).forEach((script, index) => {
-            const content = script.innerHTML;
-            try {
-              const json = JSON.parse(content);
-              // do not push in case it is an array, concat instead
-              jsonld = jsonld.concat(json);
-            } catch {
-              log.warn(`Could not parse JSON-LD object #${index + 1}`);
+            let content = script.textContent;
+            if (content !== null) {
+              // drop unescaped control characters (T318336)
+              // eslint-disable-next-line no-control-regex
+              content = content.replace(/[\x00-\x1F\x7F\x80-\x9F]/g, " ");
+              try {
+                const json = JSON.parse(content);
+                // do not push in case it is an array, concat instead
+                jsonld = jsonld.concat(json);
+              } catch {
+                log.warn(`Could not parse JSON-LD object #${index + 1}`);
+              }
             }
           });
 

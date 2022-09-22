@@ -61,6 +61,13 @@ export const pages: {
       }
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "stringWithUnescapedControlCharacters": "unescaped
+control
+characters"
+    }
+    </script>
   </head>
   <body>
     <book author='Virginia Woolf'>

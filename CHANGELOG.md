@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- 
+### Fixed
+
+- Do not fail on JSON-LD objects with unescaped control characters ([T318336]).
 
 ## [2.0.0-alpha.1] - 2022-09-20
 
@@ -67,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.0.1]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v1.0.0...v1.0.1
 [1.0.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/tags/v1.0.0
 
+[T318336]: https://phabricator.wikimedia.org/T318336
 [T316370]: https://phabricator.wikimedia.org/T316370
 [T316257]: https://phabricator.wikimedia.org/T316257
 [T311925]: https://phabricator.wikimedia.org/T311925

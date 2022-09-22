@@ -286,4 +286,12 @@ describe("JSON-LD selection", () => {
     const selection = new JsonLdSelection(expression);
     return expect(selection.apply(target)).resolves.toEqual(["Jane Doe"]);
   });
+
+  test("handles unescaped control characters (T318336)", () => {
+    const expression = "[].stringWithUnescapedControlCharacters";
+    const selection = new JsonLdSelection(expression);
+    return expect(selection.apply(target)).resolves.toEqual([
+      "unescaped control characters",
+    ]);
+  });
 });
