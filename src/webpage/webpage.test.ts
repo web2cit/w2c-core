@@ -12,6 +12,13 @@ describe("Good URL", () => {
   it("isolates the path and query string", () => {
     expect(url.path).toBe("/path/to/route?abc=123&def=234");
   });
+
+  it("ignores fragment identifiers", () => {
+    // fragment identifiers are not sent to the web server and hence cannot
+    // change the server's response; then Web2Cit should just ignore them
+    const url = new Webpage("https://example.com/home?key=value#fragment");
+    expect(url.path).toBe("/home?key=value");
+  });
 });
 
 describe("Webpage factory", () => {
