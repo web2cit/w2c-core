@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
--
+### Added
+
+- Follow config file redirections ([T304772]).
 
 ## [2.0.0-alpha.2] - 2022-09-22
 
@@ -86,4 +88,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [T308666]: https://phabricator.wikimedia.org/T308666
 [T308171]: https://phabricator.wikimedia.org/T308171
 [T305163]: https://phabricator.wikimedia.org/T305163
+[T304772]: https://phabricator.wikimedia.org/T304772
 [T304332]: https://phabricator.wikimedia.org/T304332
