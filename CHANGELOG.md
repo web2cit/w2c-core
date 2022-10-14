@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update "selection" automatic tests.
 - Flexibilized language field validation pattern ([T308328]).
+- Update JSON schema descriptions to link to new documentation ([T320770]).
 
 ### Fixed
 
@@ -82,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.0.1]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v1.0.0...v1.0.1
 [1.0.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/tags/v1.0.0
 
+[T320770]: https://phabricator.wikimedia.org/T320770
 [T318352]: https://phabricator.wikimedia.org/T318352
 [T318336]: https://phabricator.wikimedia.org/T318336
 [T316370]: https://phabricator.wikimedia.org/T316370

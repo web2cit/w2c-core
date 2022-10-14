@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gitlab.wikimedia.org/diegodlh/w2c-core/-/blob/main/tests.schema.json",
   "title": "Domain translation tests configuration for Web2Cit",
-  "description": "Each translation test defines translation output goals for a specific test webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#tests.json)",
+  "description": "Each translation test defines translation output goals for a specific test webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Tests)",
   "type": "array",
   "format": "tabs-top",
   "items": {
@@ -22,7 +22,7 @@
       },
       "fields": {
         "title": "Fields",
-        "description": "Each test field specifies a translation output goal for a specific citation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types)",
+        "description": "Each test field specifies a translation output goal for a specific translation field (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Fields)",
         "options": {
           "infoText": "Duplicate test fields with the same field name will be ignored.",
           "disable_array_reorder": true
