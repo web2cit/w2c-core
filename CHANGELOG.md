@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update "selection" automatic tests.
+- Flexibilized language field validation pattern ([T308328]).
 
 ### Fixed
 
@@ -88,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [T311925]: https://phabricator.wikimedia.org/T311925
 [T311519]: https://phabricator.wikimedia.org/T311519
 [T308666]: https://phabricator.wikimedia.org/T308666
+[T308328]: https://phabricator.wikimedia.org/T308328
 [T308171]: https://phabricator.wikimedia.org/T308171
 [T305163]: https://phabricator.wikimedia.org/T305163
 [T304772]: https://phabricator.wikimedia.org/T304772

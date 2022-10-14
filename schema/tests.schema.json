@@ -242,8 +242,8 @@
                  "goal": {
                   "maxItems": 1,
                   "items": {
-                    "description": "A language code matching xx or xx-xx* formats",
-                    "pattern": "^[a-zA-Z]{2}(?:-?[a-zA-Z]{2,})*$"
+                    "description": "A non-empty string; preferably a xx or xx-xx* language code",
+                    "pattern": "^.+$"
                   }
                 }
               }

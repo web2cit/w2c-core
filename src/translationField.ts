@@ -169,7 +169,7 @@ export class TranslationField {
     language: {
       array: false,
       forceRequired: false,
-      pattern: /^[a-z]{2}(?:-?[a-z]{2,})*$/i, // from Citoid's fixLang()
+      pattern: /^.+$/, // see T308328
       defaultProcedure: {
         selections: [{ type: "citoid", config: "language" }],
         transformations: [],

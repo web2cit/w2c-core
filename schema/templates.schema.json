@@ -258,7 +258,7 @@
             },
             {
               "title": "Language field",
-              "description": "Publishing language | Valid output: a single xx or xx-xx* language code",
+              "description": "Publishing language | Valid output: a single non-empty string; preferably a xx or xx-xx* language code (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Fields)",
               "properties": {
                 "fieldname": {
                   "enum": ["language"]
