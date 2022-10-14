@@ -7,18 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+-
+
+## [2.0.0-beta.0] - 2022-10-14
+
 ### Added
 
 - Follow config file redirections ([T304772]).
 - Include `schema` directory in npm package ([T318352]).
+
+### Changed
+
+- Flexibilized language field validation pattern ([T308328]).
+- Update JSON schema descriptions to link to new documentation ([T320770]).
 
 ## [2.0.0-alpha.2] - 2022-09-22
 
 ### Changed
 
 - Update "selection" automatic tests.
-- Flexibilized language field validation pattern ([T308328]).
-- Update JSON schema descriptions to link to new documentation ([T320770]).
 
 ### Fixed
 
@@ -76,7 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - First version published to npm.
 
 
-[unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.0.0-alpha.2...v2
+[unreleased]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-beta.0...v2
+[2.0.0-beta.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-alpha.2...v2.0.0-beta.0
 [2.0.0-alpha.2]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
 [2.0.0-alpha.1]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-alpha.0...v2.0.0-alpha.1
 [2.0.0-alpha.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v1.0.1...v2.0.0-alpha.0
