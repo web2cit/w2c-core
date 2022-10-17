@@ -27,7 +27,7 @@ export function isDomainName(hostname: string): boolean {
 }
 
 export function normalizeUrlPath(path: string): string {
-  const url = new URL(path, "https://example.com");
+  const url = new URL("https://example.com" + path);
   const normalizedPath = url.pathname + url.search;
   return normalizedPath;
 }

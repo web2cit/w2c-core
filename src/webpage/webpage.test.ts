@@ -79,4 +79,10 @@ describe("Webpage factory", () => {
       factory.getWebpage("some/path");
     }).toThrow();
   });
+
+  it('correctly handles paths beginning with "//" (T321003)', () => {
+    const factory = new WebpageFactory("example.com");
+    const webpage = factory.getWebpage("//path/to/target");
+    expect(webpage.path).toBe("//path/to/target");
+  });
 });

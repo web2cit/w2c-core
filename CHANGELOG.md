@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
--
+### Fixed
+
+- Correctly handle paths beginning with double slashes ([T321003]).
 
 ## [2.0.0-beta.0] - 2022-10-14
 
@@ -91,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.0.1]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v1.0.0...v1.0.1
 [1.0.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/tags/v1.0.0
 
+[T321003]: https://phabricator.wikimedia.org/T321003
 [T320770]: https://phabricator.wikimedia.org/T320770
 [T318352]: https://phabricator.wikimedia.org/T318352
 [T318336]: https://phabricator.wikimedia.org/T318336
