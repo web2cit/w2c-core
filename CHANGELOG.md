@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -
 
+## [2.0.0] - 2022-10-26
 ## [2.0.0-beta.1] - 2022-10-17
 
 ### Fixed
@@ -89,7 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - First version published to npm.
 
 
-[unreleased]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-beta.1...v2
+[unreleased]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0...main
+[2.0.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-beta.1...v2.0.0
 [2.0.0-beta.1]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-beta.0...v2.0.0-beta.1
 [2.0.0-beta.0]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-alpha.2...v2.0.0-beta.0
 [2.0.0-alpha.2]: https://gitlab.wikimedia.org/diegodlh/w2c-core/-/compare/v2.0.0-alpha.1...v2.0.0-alpha.2
