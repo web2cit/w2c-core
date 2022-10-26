@@ -1,8 +1,9 @@
 import { TranslationStep } from "./step";
 import { Webpage } from "../webpage/webpage";
 import { SimpleCitoidField, isSimpleCitoidField } from "../citation/keyTypes";
-import { JSDOM } from "jsdom";
 import { StepOutput, SelectionDefinition } from "../types";
+import jmespath from "jmespath";
+import log from "loglevel";
 
 export abstract class Selection extends TranslationStep {
   abstract readonly type: SelectionType;
@@ -11,8 +12,22 @@ export abstract class Selection extends TranslationStep {
   abstract get config(): string;
   abstract set config(config: string);
 
-  apply = this.select;
-  abstract select(target: Webpage): Promise<StepOutput>;
+  apply: typeof this.select = async (target) => {
+    try {
+      const output = await this.select(target);
+      return output;
+    } catch (e) {
+      if (e instanceof UndefinedSelectionConfigError) {
+        // do not catch step application error due to config unset
+        throw e;
+      } else {
+        log.warn(`Selection step of type "${this.type}" failed with: ${e}`);
+        // return empty step output in case of step application error (T305163)
+        return [];
+      }
+    }
+  };
+  protected abstract select(target: Webpage): Promise<StepOutput>;
   abstract suggest(target: Webpage, query: string): Promise<string>;
 
   static create(selection: SelectionDefinition) {
@@ -27,6 +42,9 @@ export abstract class Selection extends TranslationStep {
         break;
       case "fixed":
         return new FixedSelection(config);
+        break;
+      case "json-ld":
+        return new JsonLdSelection(config);
         break;
       default:
         throw new Error(`Unknown selection of type ${selection.type}`);
@@ -52,7 +70,7 @@ export class CitoidSelection extends Selection {
   protected _config: SimpleCitoidField | "" = "";
   constructor(field?: CitoidSelection["_config"]) {
     super();
-    if (field) this.config = field;
+    if (field !== undefined) this.config = field;
   }
 
   get config(): CitoidSelection["_config"] {
@@ -67,7 +85,7 @@ export class CitoidSelection extends Selection {
     }
   }
 
-  select(target: Webpage): Promise<StepOutput> {
+  protected select(target: Webpage): Promise<StepOutput> {
     if (this.config === "") {
       throw new UndefinedSelectionConfigError();
     }
@@ -103,11 +121,10 @@ export class CitoidSelection extends Selection {
 export class XPathSelection extends Selection {
   readonly type: SelectionType = "xpath";
   protected _config = "";
-  private _parsedXPath: XPathExpression | undefined;
-  private readonly window = new JSDOM().window;
+  // private _parsedXPath: XPathExpression | undefined;
   constructor(expression?: XPathSelection["_config"]) {
     super();
-    if (expression) this.config = expression;
+    if (expression !== undefined) this.config = expression;
   }
 
   get config(): XPathSelection["_config"] {
@@ -116,39 +133,55 @@ export class XPathSelection extends Selection {
 
   set config(expression: string) {
     try {
-      const window = new JSDOM().window;
-      this._parsedXPath = window.document.createExpression(expression);
+      // do not save pre-parsed xpath as it won't be good to evaluate against
+      // another document in Firefox (see T316370)
+      // this._parsedXPath = windowContext.document.createExpression(expression);
+      const parsedXPath = windowContext.document.createExpression(expression);
+      // to workaround #T308666, try parsed expression on the document with
+      // which it was created before confirming config validity
+      // todo: reassess if https://github.com/jsdom/jsdom/issues/3371 is fixed
+      parsedXPath.evaluate(
+        windowContext.document,
+        // @types/jsdom says that the type parameter is optional,
+        // but jsdom seems to be failing without it
+        // see https://github.com/jsdom/jsdom/issues/3422
+        windowContext.XPathResult.ANY_TYPE
+      );
       this._config = expression;
-      window.close();
     } catch {
       throw new SelectionConfigTypeError(this.type, expression);
     }
   }
 
-  select(target: Webpage): Promise<StepOutput> {
-    if (this._parsedXPath === undefined) {
+  protected select(target: Webpage): Promise<StepOutput> {
+    if (this._config === "") {
       throw new UndefinedSelectionConfigError();
     }
-    const parsedXPath = this._parsedXPath;
+    // const parsedXPath = this._parsedXPath;
+    const expression = this._config;
     return new Promise((resolve, reject) => {
       target.cache.http
         .getData(false)
         .then((data) => {
           const selection: StepOutput = [];
+          // parse xpath on the fly (instead of using pre-parsed xpath) to
+          // ensure compatibilty with Firefox (see T316370)
+          const parsedXPath = data.doc.createExpression(expression);
           try {
             const result = parsedXPath.evaluate(
               data.doc,
-              this.window.XPathResult.ORDERED_NODE_ITERATOR_TYPE
+              windowContext.XPathResult.ORDERED_NODE_ITERATOR_TYPE
             );
             let thisNode = result.iterateNext();
             while (thisNode) {
-              // thisNode can't be instance of this.window.HTMLElement, etc
-              // because thisNode comes from a different window (data.doc's)
-              if (isHTMLElement(thisNode)) {
+              if (
+                thisNode instanceof windowContext.HTMLElement &&
+                thisNode.innerText !== undefined
+              ) {
                 // JSDOM does not support innerText anyways
                 // https://github.com/jsdom/jsdom/issues/1245
                 selection.push(thisNode.innerText);
-              } else if (isAttr(thisNode)) {
+              } else if (thisNode instanceof windowContext.Attr) {
                 selection.push(thisNode.value);
               } else {
                 const textContent = (thisNode.textContent ?? "")
@@ -163,16 +196,16 @@ export class XPathSelection extends Selection {
           } catch {
             const result = parsedXPath.evaluate(
               data.doc,
-              this.window.XPathResult.ANY_TYPE
+              windowContext.XPathResult.ANY_TYPE
             );
             switch (result.resultType) {
-              case this.window.XPathResult.NUMBER_TYPE:
+              case windowContext.XPathResult.NUMBER_TYPE:
                 selection.push(result.numberValue.toString());
                 break;
-              case this.window.XPathResult.STRING_TYPE:
+              case windowContext.XPathResult.STRING_TYPE:
                 selection.push(result.stringValue);
                 break;
-              case this.window.XPathResult.BOOLEAN_TYPE:
+              case windowContext.XPathResult.BOOLEAN_TYPE:
                 selection.push(result.booleanValue.toString().trim());
                 break;
             }
@@ -190,12 +223,78 @@ export class XPathSelection extends Selection {
   }
 }
 
-// HTMLElement and Attr may not be available
-function isHTMLElement(node: Node): node is HTMLElement {
-  return (node as HTMLElement).innerText !== undefined;
-}
-function isAttr(node: Node): node is Attr {
-  return (node as Attr).value !== undefined;
+export class JsonLdSelection extends Selection {
+  readonly type: SelectionType = "json-ld";
+  protected _config = "";
+  constructor(path?: JsonLdSelection["_config"]) {
+    super();
+    if (path !== undefined) this.config = path;
+  }
+
+  get config(): JsonLdSelection["_config"] {
+    return this._config;
+  }
+
+  set config(path: JsonLdSelection["_config"]) {
+    try {
+      jmespath.search({}, path);
+      this._config = path;
+    } catch {
+      throw new SelectionConfigTypeError(this.type, path);
+    }
+  }
+
+  protected select(target: Webpage): Promise<StepOutput> {
+    if (this._config === "") {
+      throw new UndefinedSelectionConfigError();
+    }
+    return new Promise((resolve, reject) => {
+      target.cache.http
+        .getData(false)
+        .then((data) => {
+          // create an array of json-ld objects
+          let jsonld: ReturnType<JSON["parse"]>[] = [];
+          Array.from(
+            data.doc.querySelectorAll('script[type="application/ld+json"')
+          ).forEach((script, index) => {
+            let content = script.textContent;
+            if (content !== null) {
+              // drop unescaped control characters (T318336)
+              // eslint-disable-next-line no-control-regex
+              content = content.replace(/[\x00-\x1F\x7F\x80-\x9F]/g, " ");
+              try {
+                const json = JSON.parse(content);
+                // do not push in case it is an array, concat instead
+                jsonld = jsonld.concat(json);
+              } catch {
+                log.warn(`Could not parse JSON-LD object #${index + 1}`);
+              }
+            }
+          });
+
+          const result = jmespath.search(jsonld, this.config);
+
+          // normalize result
+          const selection: StepOutput = [];
+          ([] as any[]).concat(result).forEach((value) => {
+            // ignore null values
+            if (value === null) return;
+            // stringify non-string values
+            if (typeof value !== "string") value = JSON.stringify(value);
+            selection.push(value);
+          });
+
+          resolve(selection);
+        })
+        .catch((reason) => {
+          reject(reason);
+        });
+    });
+  }
+
+  suggest(target: Webpage, query: string): Promise<JsonLdSelection["_config"]> {
+    return Promise.resolve("");
+  }
 }
 
 export class FixedSelection extends Selection {
@@ -203,7 +302,7 @@ export class FixedSelection extends Selection {
   protected _config = "";
   constructor(value?: string) {
     super();
-    if (value) this.config = value;
+    if (value !== undefined) this.config = value;
   }
 
   get config(): string {
@@ -218,7 +317,7 @@ export class FixedSelection extends Selection {
     }
   }
 
-  select(target: Webpage): Promise<StepOutput> {
+  protected select(target: Webpage): Promise<StepOutput> {
     return Promise.resolve([this.config]);
   }
 

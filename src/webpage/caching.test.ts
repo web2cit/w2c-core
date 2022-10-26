@@ -1,9 +1,16 @@
 import { HttpCache, CitoidCache } from "./caching";
 import { pages } from "./samplePages";
 import fetch, * as nodeFetch from "node-fetch";
+import { JSDOM } from "jsdom";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 const mockNodeFetch = nodeFetch as typeof import("../../__mocks__/node-fetch");
+
+beforeAll(() => {
+  // the caching module relies on there being a windowContext global object,
+  // set up by the Domain constructor
+  globalThis.windowContext = new JSDOM().window;
+});
 
 beforeEach(() => {
   mockNodeFetch.__reset();

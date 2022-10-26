@@ -23,6 +23,15 @@ describe("Test instantiation", () => {
     expect(test.toJSON()).toEqual(definition);
   });
 
+  it("url-normalizes path before test object creation", () => {
+    const definition: TestDefinition = {
+      path: "/some/../some/./path",
+      fields: [],
+    };
+    const test = new TranslationTest(definition);
+    expect(test.path).toBe("/some/path");
+  });
+
   it("skips test fields with errors", () => {
     const definition: TestDefinition = {
       path: "/some/path",
@@ -149,6 +158,15 @@ describe("Translation test testing", () => {
         fields: [],
       });
     }).toThrow("paths do not match");
+  });
+
+  it("url-normalizes path before checking for path mismatch", () => {
+    expect(() => {
+      test.test({
+        path: "/some/../some/./path",
+        fields: [],
+      });
+    }).not.toThrow();
   });
 
   describe("Impossible translations", () => {

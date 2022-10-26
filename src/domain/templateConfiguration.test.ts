@@ -419,3 +419,51 @@ describe("Configuration object to JSON", () => {
     expect(configuration.toJSON()).toEqual([applicableTemplate]);
   });
 });
+
+describe("Getting templates", () => {
+  const template: TemplateDefinition = {
+    path: "/path/to/template",
+    fields: [],
+  };
+  const configuration = new TemplateConfiguration(domain, [], undefined, [
+    template,
+  ]);
+
+  it("url-normalizes path before getting matching template", () => {
+    const templates = configuration.get("/path/./to/../to/template");
+    expect(templates[0].path).toBe("/path/to/template");
+  });
+});
+
+describe("Template manipulation", () => {
+  const template1: TemplateDefinition = {
+    path: "/path/to/template/1",
+    fields: [],
+  };
+  const template2: TemplateDefinition = {
+    path: "/path/to/template/2",
+    fields: [],
+  };
+
+  let configuration: TemplateConfiguration;
+  beforeEach(() => {
+    configuration = new TemplateConfiguration(domain, [], undefined, [
+      template1,
+      template2,
+    ]);
+  });
+
+  it("url-normalizes path before moving a template", () => {
+    configuration.move("/path/./to/../to/template/1", 1);
+    const templates = configuration.get();
+    expect(
+      templates.findIndex((template) => template.path === "/path/to/template/1")
+    ).toBe(1);
+  });
+
+  it("url-normalizes path before removing a template", () => {
+    configuration.remove("/path/./to/../to/template/1");
+    const templates = configuration.get();
+    expect(templates.length).toBe(1);
+  });
+});

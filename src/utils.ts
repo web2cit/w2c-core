@@ -26,21 +26,43 @@ export function isDomainName(hostname: string): boolean {
   return true;
 }
 
+export function normalizeUrlPath(path: string): string {
+  const url = new URL("https://example.com" + path);
+  const normalizedPath = url.pathname + url.search;
+  return normalizedPath;
+}
+
 // wrap the fetch function to enable defining some global settings, such as
 // user-agent header
 class FetchWrapper {
   userAgent?: string;
+  userAgentHeaderName = "user-agent";
+  // defines custom fetch functions to be used for specific origins
+  // this is needed to circumvent CORS restrictions in w2c-editor
+  customFetchByOrigin = new Map();
   // headers: Headers;
 
   fetch(
     ...[url, init = {}]: Parameters<typeof fetch>
   ): ReturnType<typeof fetch> {
-    const headers = new Headers(init.headers);
-    if (!headers.has("User-Agent") && this.userAgent) {
-      headers.set("User-Agent", this.userAgent);
+    let origin;
+    if (typeof url === "string")
+      try {
+        origin = new URL(url).origin;
+      } catch {
+        //
+      }
+    const customFetch = this.customFetchByOrigin.get(origin);
+    if (customFetch) {
+      return customFetch(url, init);
+    } else {
+      const headers = new Headers(init.headers);
+      if (!headers.has(this.userAgentHeaderName) && this.userAgent) {
+        headers.set(this.userAgentHeaderName, this.userAgent);
+      }
+      init.headers = headers;
+      return fetch(url, init);
     }
-    init.headers = headers;
-    return fetch(url, init);
   }
 }
 

@@ -12,6 +12,13 @@ describe("Good URL", () => {
   it("isolates the path and query string", () => {
     expect(url.path).toBe("/path/to/route?abc=123&def=234");
   });
+
+  it("ignores fragment identifiers", () => {
+    // fragment identifiers are not sent to the web server and hence cannot
+    // change the server's response; then Web2Cit should just ignore them
+    const url = new Webpage("https://example.com/home?key=value#fragment");
+    expect(url.path).toBe("/home?key=value");
+  });
 });
 
 describe("Webpage factory", () => {
@@ -32,6 +39,13 @@ describe("Webpage factory", () => {
     const factory = new WebpageFactory("example.com");
     const webpage1 = factory.getWebpage("/some/path");
     const webpage2 = factory.getWebpage("/some/path");
+    expect(webpage1 === webpage2).toBe(true);
+  });
+
+  it("url-normalizes path before reusing previously created webpage", () => {
+    const factory = new WebpageFactory("example.com");
+    const webpage1 = factory.getWebpage("/some/path");
+    const webpage2 = factory.getWebpage("/some/../some/./path");
     expect(webpage1 === webpage2).toBe(true);
   });
 
@@ -64,5 +78,11 @@ describe("Webpage factory", () => {
     expect(() => {
       factory.getWebpage("some/path");
     }).toThrow();
+  });
+
+  it('correctly handles paths beginning with "//" (T321003)', () => {
+    const factory = new WebpageFactory("example.com");
+    const webpage = factory.getWebpage("//path/to/target");
+    expect(webpage.path).toBe("//path/to/target");
   });
 });

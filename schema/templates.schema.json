@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gitlab.wikimedia.org/diegodlh/w2c-core/-/blob/main/templates.schema.json",
   "title": "Domain translation templates configuration for Web2Cit",
-  "description": "Each translation template defines translation procedures to extract relevant metadata from a specific template webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#templates.json)",
+  "description": "Each translation template defines translation procedures to extract relevant metadata from a specific template webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Templates)",
   "type": "array",
   "format": "tabs-top",
   "items": {
@@ -27,7 +27,7 @@
       },
       "fields": {
         "title": "Fields",
-        "description": "Each template field defines translation procedures to extract metadata belonging to a specific citation field (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Translation_field_types)",
+        "description": "Each template field defines translation procedures to extract metadata belonging to a specific translation field (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Fields)",
         "options": {
           "infoText": "Mandatory fields \"itemType\" and \"title\" must be included, or template will be ignored. Duplicate template fields with the same field name will be ignored.",
           "disable_array_reorder": true
@@ -69,7 +69,7 @@
           "oneOf": [
             {
               "title": "Item type field (mandatory)",
-              "description": "Type of the cited resource | Valid output: one of the Citoid/Zotero supported types (see https://aurimasv.github.io/z2csl/typeMap.xml)",
+              "description": "Type of the cited resource | Valid output: one of the Citoid/Zotero supported types (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Fields)",
               "properties": {
                 "fieldname": {
                   "enum": ["itemType"]
@@ -258,7 +258,7 @@
             },
             {
               "title": "Language field",
-              "description": "Publishing language | Valid output: a single xx or xx-xx* language code",
+              "description": "Publishing language | Valid output: a single non-empty string; preferably a xx or xx-xx* language code (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Fields)",
               "properties": {
                 "fieldname": {
                   "enum": ["language"]
@@ -317,7 +317,7 @@
       "properties": {
         "selections": {
           "title": "Selection",
-          "description": "Selection steps select and extract individual elements from the target webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Selection_types_and_configs)",
+          "description": "Selection steps select and extract individual elements from the target webpage (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Templates#Selection_steps)",
           "options": { "infoText": "The combined output of all selection steps is given as input to the first transformation step below." },
           "type": "array",
           "format": "tabs",
@@ -540,13 +540,26 @@
                   "type",
                   "config"
                 ]
+              },
+              {
+                "title": "JSON-LD selection",
+                "description": "Selects elements from JSON-LD objects present on the target webpage.",
+                "properties": {
+                  "type": {
+                    "enum": ["json-ld"]
+                  },
+                  "config": {
+                    "description": "Any valid JMESPath (https://jmespath.org/) expression",
+                    "options": { "infoText": "Expressions are evaluated against an array including all JSON-LD objects found on the target webpage." }
+                  }
+                }
               }
             ]
           }
         },
         "transformations": {
           "title": "Transformation",
-          "description": "Transformation steps transform selected elements (if needed) to return the expected output (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Transformation_types_and_configs)",
+          "description": "Transformation steps transform selected elements (if needed) to return the expected output (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Templates#Transformation_steps)",
           "options": { "infoText": "Transformation steps are applied one after the other, and the output of the last transformation step is the procedure's output." },
           "type": "array",
           "format": "tabs",
@@ -690,7 +703,7 @@
                     "enum": ["match"]
                   },
                   "config": {
-                    "description": "The matching target, expressed as either plain string or /regular expression/ (see https://meta.wikimedia.org/wiki/Web2Cit/Early_adopters#Match_transformation)."
+                    "description": "The matching target, expressed as either plain string or /regular expression/ (see https://meta.wikimedia.org/wiki/Web2Cit/Docs/Templates#Match_transformation)."
                   },
                   "itemwise": {
                     "options": { "infoText": "default: true (match transformation)" },

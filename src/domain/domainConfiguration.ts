@@ -88,7 +88,7 @@ export abstract class DomainConfiguration<
    */
   private async fetchRevisionIds(): Promise<RevisionMetadata[]> {
     const api = new RevisionsApi(this.mediawiki.instance);
-    const revisions = await api.fetchRevisions(this.title, false);
+    const { revisions } = await api.fetchRevisions(this.title, false);
     return revisions.map((revision) => {
       return {
         revid: revision.revid,
@@ -108,7 +108,16 @@ export abstract class DomainConfiguration<
     revid?: RevisionMetadata["revid"]
   ): Promise<ContentRevision | undefined> {
     const api = new RevisionsApi(this.mediawiki.instance);
-    const revisions = await api.fetchRevisions(this.title, true, revid, 1);
+    const { revisions } = await api.fetchRevisions(this.title, true, revid, 1);
+    // if (this.title !== title) {
+    //   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    //   const { root, path, filename } = title.match(
+    //     RegExp(`^(?<root>.*?${this.storage.root})?(?<path>.*/)?(?<filename>.*)$`)
+    //   )!.groups ?? {};
+    //   this.storage.root = root ?? "";
+    //   this.storage.path = path ?? "";
+    //   this.storage.filename = filename ?? "";
+    // }
     const revision = revisions[0];
 
     if (revision === undefined) {

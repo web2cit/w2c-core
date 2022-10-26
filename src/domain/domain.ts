@@ -21,10 +21,18 @@ import {
   TestDefinition,
   TestOutput,
 } from "../types";
-import { isDomainName, fetchWrapper } from "../utils";
+import { isDomainName, fetchWrapper, normalizeUrlPath } from "../utils";
 import { DomainNameError } from "../errors";
 import { fallbackTemplate as fallbackTemplateDefinition } from "../fallbackTemplate";
 import log from "loglevel";
+
+declare global {
+  // eslint-disable-next-line no-var
+  var windowContext: Pick<
+    typeof window,
+    "document" | "DOMParser" | "XPathResult" | "HTMLElement" | "Attr"
+  >;
+}
 
 export class Domain {
   readonly domain: string;
@@ -33,20 +41,21 @@ export class Domain {
   patterns: PatternConfiguration;
   tests: TestConfiguration;
 
-  constructor(domain: string, options: DomainOptions = {}) {
-    // set default values
-    options.fallbackTemplate ??= fallbackTemplateDefinition;
-    options.catchallPattern ??= true;
-    options.forceRequiredFields ??= config.forceRequiredFields;
-
-    const {
+  constructor(
+    domain: string,
+    windowContext: typeof global.windowContext,
+    {
       templates,
       patterns,
       tests,
-      fallbackTemplate,
-      catchallPattern,
-      forceRequiredFields,
-    } = options;
+      fallbackTemplate = fallbackTemplateDefinition,
+      catchallPattern = true,
+      forceRequiredFields = config.forceRequiredFields,
+      userAgentHeaderName,
+      userAgentPrefix,
+      originFetch,
+    }: DomainOptions = {}
+  ) {
     if (isDomainName(domain)) {
       this.domain = domain;
     } else {
@@ -65,18 +74,31 @@ export class Domain {
     this.patterns = new PatternConfiguration(domain, patterns, catchallPattern);
     this.tests = new TestConfiguration(domain, tests);
 
-    fetchWrapper.userAgent = options.userAgentPrefix
-      ? options.userAgentPrefix + " " + config.USER_AGENT
+    if (userAgentHeaderName) {
+      fetchWrapper.userAgentHeaderName = userAgentHeaderName;
+    }
+    fetchWrapper.userAgent = userAgentPrefix
+      ? userAgentPrefix + " " + config.USER_AGENT
       : config.USER_AGENT;
+
+    const origin = "https://" + domain;
+    fetchWrapper.customFetchByOrigin.set(origin, originFetch);
+
+    // the global window variable may not be available in non-browser contexts
+    globalThis.windowContext = windowContext;
   }
 
   // instantiate domain object from URL
   // we may need this if we want to follow redirects before instantiating
   // the domain object (see T304773)
-  static fromURL(url: string, options?: DomainOptions) {
+  static fromURL(
+    url: string,
+    windowContext: typeof global.windowContext,
+    options?: DomainOptions
+  ) {
     // this may fail
     const webpage = new Webpage(url);
-    const domain = new Domain(webpage.domain, options);
+    const domain = new Domain(webpage.domain, windowContext, options);
     domain.webpages.setWebpage(webpage);
     return domain;
   }
@@ -107,21 +129,23 @@ export class Domain {
 
   translate(
     paths: string | string[],
-    options: TranslateOptions = {}
+    {
+      allTemplates = false,
+      onlyApplicable = true,
+      fillWithCitoid = false,
+      forceTemplatePaths,
+      forcePattern,
+    }: TranslateOptions = {}
   ): Promise<TargetOutput[]> {
-    // set default values
-    options.allTemplates ??= false;
-    options.onlyApplicable ??= true;
-    options.fillWithCitoid ??= false;
-
     if (!Array.isArray(paths)) paths = [paths];
+    paths = paths.map(normalizeUrlPath);
 
     let targetsByPattern: Map<string | undefined, string[]>;
-    if (options.forceTemplatePaths !== undefined) {
+    if (forceTemplatePaths !== undefined) {
       // if translation templates have been forced, pattern group makes no sense
       targetsByPattern = new Map([[undefined, paths]]);
-    } else if (options.forcePattern !== undefined) {
-      targetsByPattern = new Map([[options.forcePattern, paths]]);
+    } else if (forcePattern !== undefined) {
+      targetsByPattern = new Map([[forcePattern, paths]]);
     } else {
       // sort target paths into url path pattern groups
       targetsByPattern = this.patterns.sortPaths(paths);
@@ -136,13 +160,13 @@ export class Domain {
       if (targetPaths.length === 0) continue;
       let templatePaths: string[];
       if (patternPath === undefined) {
-        if (options.forceTemplatePaths === undefined) {
+        if (forceTemplatePaths === undefined) {
           throw new Error(
             "Unexpected undefined pattern path " +
               'with undefined "forceTemplatePaths" option'
           );
         }
-        templatePaths = options.forceTemplatePaths;
+        templatePaths = forceTemplatePaths;
       } else {
         // retrieve translation templates that belong to the same url path
         // pattern group
@@ -168,7 +192,7 @@ export class Domain {
         const { templatePaths, patternPath } =
           templatesByTarget.get(targetPath)!;
 
-        if (options.fillWithCitoid) {
+        if (fillWithCitoid) {
           // prepare the Citoid cache
           // target.cache.citoid.getData();
         }
@@ -211,18 +235,18 @@ export class Domain {
           target,
           templatePaths,
           {
-            tryAllTemplates: options.allTemplates,
+            tryAllTemplates: allTemplates,
             // do not use fallback template if translation templates have been
             // forced
-            useFallback: options.forceTemplatePaths === undefined,
-            onlyApplicable: options.onlyApplicable,
+            useFallback: forceTemplatePaths === undefined,
+            onlyApplicable: onlyApplicable,
           }
         );
 
         const targetOutputPromise = templateOutputsPromise
           .then((templateOutputs) => {
             let baseCitation: MediaWikiBaseFieldCitation | undefined;
-            if (options.fillWithCitoid) {
+            if (fillWithCitoid) {
               // baseCitation = (await target.cache.citoid.getData()).citation.simple
             }
 
@@ -381,7 +405,10 @@ type DomainOptions = {
   catchallPattern?: boolean;
   forceRequiredFields?: FieldName[];
   // todo T306553: consider accepting alternative storage settings
+  userAgentHeaderName?: string;
   userAgentPrefix?: string;
+  // custom fetch function to use for domain's same-origin requests
+  originFetch?: typeof fetch;
 };
 
 type TranslateOptions = {

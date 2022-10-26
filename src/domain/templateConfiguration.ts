@@ -12,6 +12,7 @@ import {
   TemplateDefinition,
   TemplateOutput,
 } from "../types";
+import { normalizeUrlPath } from "../utils";
 
 export class TemplateConfiguration extends DomainConfiguration<
   TranslationTemplate,
@@ -64,7 +65,10 @@ export class TemplateConfiguration extends DomainConfiguration<
       // return all templates if no specific path specified
       templates = [...this.templates];
     } else {
-      const pathArray = Array.isArray(paths) ? paths : [paths];
+      const pathArray = (Array.isArray(paths) ? paths : [paths]).map(
+        normalizeUrlPath
+      );
+
       templates = this.templates.filter((template) =>
         pathArray.includes(template.path)
       );
@@ -97,7 +101,7 @@ export class TemplateConfiguration extends DomainConfiguration<
 
   move(path: string, newIndex: number): void {
     const oldIndex = this.templates.findIndex(
-      (template) => template.path === path
+      (template) => template.path === normalizeUrlPath(path)
     );
     const template = this.templates.splice(oldIndex, 1)[0];
     if (template !== undefined) {
@@ -108,7 +112,7 @@ export class TemplateConfiguration extends DomainConfiguration<
 
   remove(path: string): void {
     const index = this.templates.findIndex(
-      (template) => template.path === path
+      (template) => template.path === normalizeUrlPath(path)
     );
     if (index > -1) {
       this.templates.splice(index, 1);

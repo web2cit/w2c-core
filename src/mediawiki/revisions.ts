@@ -34,7 +34,7 @@ class RevisionsApi {
     fetchContent: boolean,
     startid?: number,
     max?: number
-  ): Promise<ContentRevision[]> {
+  ): Promise<PageRevisions> {
     const revisions: ContentRevision[] = [];
 
     const rvprop = ["ids", "timestamp"];
@@ -51,6 +51,7 @@ class RevisionsApi {
       [param: string]: string | number | undefined;
     } = {
       action: "query",
+      redirects: 1,
       prop: "revisions",
       titles: title,
       rvprop: rvprop.join("|"),
@@ -60,6 +61,9 @@ class RevisionsApi {
       rvcontinue: undefined,
       formatversion: "2",
       format: "json",
+      // For anonymous requests, origin * allows requests from anywhere
+      // https://www.mediawiki.org/wiki/Manual:CORS#Description
+      origin: "*",
     };
 
     do {
@@ -105,6 +109,10 @@ class RevisionsApi {
 
       const page = Object.values(jsonResponse.query.pages)[0];
       if (page !== undefined) {
+        if (title !== page.title) {
+          log.info(`Page ${title} redirected to ${page.title}`);
+          title = page.title;
+        }
         if ("missing" in page) {
           log.info(`Page ${title} does not exist`);
         } else {
@@ -121,7 +129,10 @@ class RevisionsApi {
       params.rvcontinue = jsonResponse.continue?.rvcontinue;
     } while (params.rvcontinue !== undefined);
 
-    return revisions.slice(0, max);
+    return {
+      title,
+      revisions: revisions.slice(0, max),
+    };
   }
 }
 
@@ -132,6 +143,11 @@ type RevisionMetadata = {
 
 interface ContentRevision extends RevisionMetadata {
   content?: string;
+}
+
+interface PageRevisions {
+  title: string;
+  revisions: ContentRevision[];
 }
 
 interface RevisionsApiResponse {
@@ -164,6 +180,7 @@ interface PageApiResponse {
 }
 
 interface MissingPageApiResponse {
+  title: string;
   missing: true;
 }
 

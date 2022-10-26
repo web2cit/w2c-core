@@ -1,6 +1,6 @@
 import minimatch from "minimatch";
-import { normalize } from "path";
 import { PatternDefinition } from "../types";
+import { normalizeUrlPath } from "../utils";
 
 export class PathPattern {
   label: string;
@@ -21,11 +21,13 @@ export class PathPattern {
   match(path: string): boolean {
     // ignore query string
     // use control template field to handle these
+    // because the order of the query string parameters does not matter and may
+    // change
 
     // see https://github.com/microsoft/TypeScript/issues/41638
     path = path.split("?")[0] as string;
 
-    path = normalize(path);
+    path = normalizeUrlPath(path);
 
     return this.regexp.test(path);
   }

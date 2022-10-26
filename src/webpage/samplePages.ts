@@ -7,20 +7,81 @@ export const pages: {
   };
 } = {
   "https://example.com/article1": {
-    html: "\
-<!DOCTYPE html>\
-<html>\
-  <head></head>\
-  <body>\
-    <book author='Virginia Woolf'>\
-      <title>Orlando</title>\
-    </book>\
-    <book author='James Gleick'>\
-      <title>The Information</title>\
-    </book>\
-  </body>\
-</html>\
-    ",
+    html: `
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--https://json-ld.org/playground/-->
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org/",
+      "@type": "Person",
+      "name": "Jane Doe",
+      "jobTitle": "Professor",
+      "telephone": "(425) 123-4567",
+      "url": "http://www.janedoe.com"
+    }
+    </script>
+    <!--https://github.com/JSONPath-Plus/JSONPath-->
+    <script type="application/ld+json">
+    {
+      "store": {
+        "book": [
+          {
+            "category": "reference",
+            "author": "Nigel Rees",
+            "title": "Sayings of the Century",
+            "price": 8.95
+          },
+          {
+            "category": "fiction",
+            "author": "Evelyn Waugh",
+            "title": "Sword of Honour",
+            "price": 12.99
+          },
+          {
+            "category": "fiction",
+            "author": "Herman Melville",
+            "title": "Moby Dick",
+            "isbn": "0-553-21311-3",
+            "price": 8.99
+          },
+          {
+            "category": "fiction",
+            "author": "J. R. R. Tolkien",
+            "title": "The Lord of the Rings",
+            "isbn": "0-395-19395-8",
+            "price": 22.99
+          }
+        ],
+        "bicycle": {
+          "color": "red",
+          "price": 19.95
+        }
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "stringWithUnescapedControlCharacters": "unescaped
+control
+characters"
+    }
+    </script>
+  </head>
+  <body>
+    <book author='Virginia Woolf'>
+      <title>Orlando</title>
+    </book>
+    <book author='James Gleick'>
+      <title>The Information</title>
+    </book>
+    <button value='value attr'>
+      Button label
+    </button>
+  </body>
+</html>
+`,
     citoid: [
       {
         itemType: "webpage",
